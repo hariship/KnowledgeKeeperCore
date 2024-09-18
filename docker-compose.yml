@@ -17,7 +17,6 @@ services:
       - KAFKA_HOST=kafka:9092
     depends_on:
       - db
-      - kafka
 
   db:
     image: postgres:14-alpine
