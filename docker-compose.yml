@@ -7,8 +7,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    command: >
-      /bin/sh -c "
-      npm run migration:run:dev &&
-      npm start
-      "
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
