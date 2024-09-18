@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3.8'
 
 services:
   app:
@@ -16,8 +16,6 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=admin
       - DB_NAME=knowledgekeeper
-    depends_on:
-      - postgres-db
     networks:
       - app-network
     command: >
