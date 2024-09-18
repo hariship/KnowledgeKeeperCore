@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity()
+@Entity('user')
 export class User {
     @PrimaryGeneratedColumn()
     id: number;
@@ -13,7 +13,7 @@ export class User {
 
     @Column({
         type: "enum",
-        enum: ["MICROSOFT", "GOOGLE", "APPLE"]
+        enum: ["MICROSOFT", "GOOGLE", "APPLE", "LOCAL"],
     })
     oAuthProvider: string;
 
