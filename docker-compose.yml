@@ -11,3 +11,21 @@ services:
       - .env
     environment:
       - NODE_ENV=development
+      - DB_HOST=postgres-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_NAME=knowledgekeeper
+    depends_on:
+      - postgres-db
+    networks:
+      - app-network
+    command: >
+      /bin/sh -c "
+      npm run migration:run:dev &&
+      npm start
+      "
+
+networks:
+  app-network:
+    driver: bridge
