@@ -11,7 +11,7 @@ import { Document } from '../entities/document';
 
 export const AppDataSource = new DataSource({
     type: "postgres",
-    host: "localhost",
+    host: process.env.DB_HOST || 'localhost',
     port: 5432,
     username: "postgres",
     password: "admin",
