@@ -15,19 +15,7 @@ services:
       - DB_PASSWORD=admin
       - DB_NAME=knowledgekeeper
       - KAFKA_HOST=kafka:9092
-    depends_on:
-      - db
 
-  db:
-    image: postgres:14-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: knowledgekeeper
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
 
 volumes:
   db_data:
