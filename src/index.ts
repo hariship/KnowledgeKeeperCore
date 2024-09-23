@@ -5,9 +5,12 @@ import bodyParser from 'body-parser';
 import routes from './routes';
 import swaggerJsDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import cors from 'cors';  // Import cors
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(cors());  // Use the cors middleware
 
 app.use(bodyParser.json());
 
