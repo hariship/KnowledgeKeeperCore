@@ -10,7 +10,7 @@ export const GOOGLE_OAUTH_URL = `https://www.googleapis.com/oauth2/v3/tokeninfo`
 export const MESSAGES = {
     USER :{
         REGISTRATION : {
-            SUCCESS: 'User registered successfully',
+            SUCCESS: 'UserDetails registered successfully',
             FAILURE: 'Error registering user'
         },
         LOGIN : {

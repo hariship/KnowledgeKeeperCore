@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Client } from './client';
-import { User } from './user';
+import { UserDetails } from './user_details';
 import { Folder } from './folder';
 
 @Entity()
@@ -25,13 +25,13 @@ export class Document {
     @Column({ type: "float" })
     versionNumber: number;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => UserDetails)
     @JoinColumn({ name: "createdBy" })
-    createdBy: User;
+    createdBy: UserDetails;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => UserDetails)
     @JoinColumn({ name: "updatedBy" })
-    updatedBy: User;
+    updatedBy: UserDetails;
 
     @Column()
     updatedAt: Date;

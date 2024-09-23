@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { User } from './user';
+import { UserDetails } from './user_details';
 
 @Entity()
 export class Byte {
@@ -9,9 +9,9 @@ export class Byte {
     @Column()
     byteInfo: string;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => UserDetails)
     @JoinColumn({ name: "requestedBy" })
-    requestedBy: User;
+    requestedBy: UserDetails;
 
     @Column({ nullable: true })
     noOfRecommendations: number;

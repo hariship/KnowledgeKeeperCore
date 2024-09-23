@@ -192,7 +192,7 @@ router.post('/login', authenticate, async (req, res, next) => {
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "User registered successfully"
+ *                   example: "UserDetails registered successfully"
  *                 userId:
  *                   type: integer
  *                   example: 1

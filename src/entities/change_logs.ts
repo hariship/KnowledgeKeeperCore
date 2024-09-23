@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Document } from './document';
 import { Byte } from './byte';
-import { User } from './user';
+import { UserDetails } from './user_details';
 
 @Entity()
 export class ChangeLog {
@@ -16,9 +16,9 @@ export class ChangeLog {
     @JoinColumn({ name: "byteId" })
     byte: Byte;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => UserDetails)
     @JoinColumn({ name: "changedBy" })
-    changedBy: User;
+    changedBy: UserDetails;
 
     @Column()
     changeRequestType: string;

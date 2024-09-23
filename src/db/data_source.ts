@@ -1,7 +1,7 @@
 // src/data-source.ts
 import { DataSource } from 'typeorm';
 import path from 'path';
-import { User } from '../entities/user';
+import { UserDetails } from '../entities/user_details';
 import { Client } from '../entities/client';
 import { Byte } from '../entities/byte';
 import { ChangeLog } from '../entities/change_logs';
@@ -18,7 +18,7 @@ export const AppDataSource = new DataSource({
     database: "knowledgekeeper",
     synchronize: false,
     logging: true,
-    entities: [User,Client,Byte, ChangeLog, Folder, Recommendation, Document],
+    entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document],
     migrations: [path.join(__dirname, "migration/*.ts")]
 });
 
