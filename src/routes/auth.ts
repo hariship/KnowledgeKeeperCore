@@ -93,15 +93,22 @@ router.post('/login', authenticate, async (req, res, next) => {
                   const googleOauthUrl = `${GOOGLE_OAUTH_URL}?id_token=${oAuthToken}`
                   const googleOauthResponse = await axios.get(googleOauthUrl);
                   oAuthUserData = googleOauthResponse.data;
+
+                  if (!oAuthUserData || !oAuthUserData.email) {
+                    throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
+                }
+
               } catch (error) {
                   throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
               }
+          }else if (oAuthProvider == OAUTH_PROVIDERS.MICROSOFT || oAuthProvider === OAUTH_PROVIDERS.APPLE){
+            // Add apple authentication
+          }else if (oAuthProvider == OAUTH_PROVIDERS.LOCAL){
+            oAuthUserData = {
+                email: email
+            }
           }
           // Add more providers here (e.g., Apple, Microsoft)
-
-          if (!oAuthUserData || !oAuthUserData.email) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
-          }
 
           // Find user by OAuth provider
           user = await userRepository.findUserByOAuthProvider(oAuthUserData.email, oAuthProvider);
