@@ -1,4 +1,9 @@
 export const KNOWLEDGE_KEEPER_ERROR = {
+    USER_EXISTS: {
+        HTTP_STATUS: 400,
+        ERROR_CODE: 'User already exists',
+        ERROR_MESSAGE: 'User has already been registered'
+    },
     VALIDATION_ERROR: {
         HTTP_STATUS: 400,
         ERROR_CODE: 'VALIDATION_ERROR',
@@ -12,7 +17,7 @@ export const KNOWLEDGE_KEEPER_ERROR = {
     AUTHENTICATION_ERROR: {
         HTTP_STATUS: 401,
         ERROR_CODE: 'AUTHENTICATION_ERROR',
-        ERROR_MESSAGE: 'Authentication failed',
+        ERROR_MESSAGE: 'User email and token/password does not match',
     },
     AUTHORIZATION_ERROR: {
         HTTP_STATUS: 403,

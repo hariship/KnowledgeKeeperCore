@@ -92,9 +92,15 @@ router.post('/login', authenticate, async (req, res, next) => {
                   // Validate Google OAuth token and get user data
                   const googleOauthUrl = `${GOOGLE_OAUTH_URL}?id_token=${oAuthToken}`
                   const googleOauthResponse = await axios.get(googleOauthUrl);
+
+                  console.log(googleOauthResponse)
+
                   oAuthUserData = googleOauthResponse.data;
 
+                  console.log(oAuthUserData)
+
                   if (!oAuthUserData || !oAuthUserData.email) {
+                    console.log(oAuthUserData)
                     throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
                 }
 
@@ -214,7 +220,7 @@ router.post('/login', authenticate, async (req, res, next) => {
  *                   example: "Email already exists"
  */
 router.post('/register',authenticate, async (req, res, next) => {
-  const { email, password, username, oAuthProvider, oAuthToken } = req.body;
+  let { email, password, username, oAuthProvider, oAuthToken } = req.body;
 
   try {
       let user;
@@ -229,6 +235,8 @@ router.post('/register',authenticate, async (req, res, next) => {
                   const googleResponse = await axios.get(`${GOOGLE_OAUTH_URL}?id_token=${oAuthToken}`);
                   oAuthUserData = googleResponse.data;
 
+                  console.log(oAuthUserData)
+
                   if (!oAuthUserData || !oAuthUserData.email) {
                     throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
                 }
@@ -239,10 +247,14 @@ router.post('/register',authenticate, async (req, res, next) => {
             // Add apple authentication
           }
 
+          if(!oAuthProvider){
+            oAuthProvider = OAUTH_PROVIDERS.LOCAL
+          }
+
           // Check if the user already exists with this OAuth provider
           user = await userRepository.findUserByOAuthProvider(oAuthUserData.email, oAuthProvider);
           if (user) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
+              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.USER_EXISTS);
           }
 
           // Create new user with OAuth provider
@@ -253,6 +265,7 @@ router.post('/register',authenticate, async (req, res, next) => {
 
       } else {
           // Handle manual registration
+          console.log(email,password)
           if (!email || !password) {
               throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
           }
@@ -260,7 +273,7 @@ router.post('/register',authenticate, async (req, res, next) => {
           // Check if the user already exists with this email
           const userExists = await userRepository.findUserByEmail(email);
           if (userExists) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
+              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.USER_EXISTS);
           }
 
           // Hash the password and create the user
