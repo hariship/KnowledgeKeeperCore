@@ -232,14 +232,19 @@ router.post('/register',authenticate, async (req, res, next) => {
                   // Validate Google OAuth token and get user data
                   const googleResponse = await axios.get(`${GOOGLE_OAUTH_URL}?id_token=${oAuthToken}`);
                   oAuthUserData = googleResponse.data;
+
+                  if (!oAuthUserData || !oAuthUserData.email) {
+                    throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
+                }
               } catch (error) {
                   throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
               }
-          }
-          // Add more OAuth providers here (e.g., Apple, Microsoft)
-
-          if (!oAuthUserData || !oAuthUserData.email) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
+          }else if (oAuthProvider == OAUTH_PROVIDERS.MICROSOFT || oAuthProvider === OAUTH_PROVIDERS.APPLE){
+            // Add apple authentication
+          }else if (oAuthProvider == OAUTH_PROVIDERS.LOCAL){
+            oAuthUserData = {
+                email: email
+            }
           }
 
           // Check if the user already exists with this OAuth provider
