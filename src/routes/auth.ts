@@ -83,7 +83,7 @@ router.post('/login', authenticate, async (req, res, next) => {
   try {
       let user;
 
-      if (oAuthProvider) {
+      if (oAuthProvider && oAuthProvider !== OAUTH_PROVIDERS.LOCAL) {
           // Handle OAuth login
           let oAuthUserData;
 
@@ -103,10 +103,6 @@ router.post('/login', authenticate, async (req, res, next) => {
               }
           }else if (oAuthProvider == OAUTH_PROVIDERS.MICROSOFT || oAuthProvider === OAUTH_PROVIDERS.APPLE){
             // Add apple authentication
-          }else if (oAuthProvider == OAUTH_PROVIDERS.LOCAL){
-            oAuthUserData = {
-                email: email
-            }
           }
           // Add more providers here (e.g., Apple, Microsoft)
 
@@ -223,7 +219,7 @@ router.post('/register',authenticate, async (req, res, next) => {
   try {
       let user;
 
-      if (oAuthProvider) {
+      if (oAuthProvider && oAuthProvider !== OAUTH_PROVIDERS.LOCAL) {
           // Handle OAuth registration
           let oAuthUserData;
 
@@ -241,10 +237,6 @@ router.post('/register',authenticate, async (req, res, next) => {
               }
           }else if (oAuthProvider == OAUTH_PROVIDERS.MICROSOFT || oAuthProvider === OAUTH_PROVIDERS.APPLE){
             // Add apple authentication
-          }else if (oAuthProvider == OAUTH_PROVIDERS.LOCAL){
-            oAuthUserData = {
-                email: email
-            }
           }
 
           // Check if the user already exists with this OAuth provider
