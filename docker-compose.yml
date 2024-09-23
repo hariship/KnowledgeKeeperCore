@@ -2,28 +2,18 @@ version: '3.8'
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: knowledgekeeper-core:latest
+    container_name: node_app
     ports:
       - "5000:5000"
-    env_file:
-      - .env
     environment:
-      - NODE_ENV=development
-      - DB_HOST=postgres-db
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=admin
-      - DB_NAME=knowledgekeeper
-    networks:
-      - app-network
-    command: >
-      /bin/sh -c "
-      npm run migration:run:dev &&
-      npm start
-      "
-
-networks:
-  app-network:
-    driver: bridge
+      NODE_ENV: production
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - /app/node_modules
+    deploy:
+      resources:
+        limits:
+          memory: 8g   # Adjust memory limit here (e.g., 4 GB)
+          cpus: "2.0"  # Adjust CPU limit (optional)
