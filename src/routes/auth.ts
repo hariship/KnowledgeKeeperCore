@@ -129,13 +129,14 @@ router.post('/login', authenticate, async (req, res, next) => {
           user = await userRepository.findUserByEmail(email);
           if (!user) {
             response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.NOT_FOUND);
+          }else{
+            // Validate password
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
+            }
           }
 
-          // Validate password
-          const isPasswordValid = await bcrypt.compare(password, user.password);
-          if (!isPasswordValid) {
-            response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
-          }
       }
 
       // Generate JWT token
