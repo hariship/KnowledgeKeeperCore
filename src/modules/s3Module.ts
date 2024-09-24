@@ -1,19 +1,21 @@
-import { KafkaClient, Producer } from 'kafka-node';  // or kafkajs, depending on your setup
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';  // Use the v3 package
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';  // AWS S3 SDK
+import amqp from 'amqplib/callback_api';  // RabbitMQ client for Node.js
+import { RABBIT_MQ } from '../utils/constants';
 
+// S3 client setup
 const s3 = new S3Client({
     region: process.env.AWS_REGION || 'us-east-2',
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
     },
-  });
-  
-  
-  export const uploadToS3 = async (file: Express.Multer.File): Promise<string> => {
+});
+
+// Function to upload file to S3
+export const uploadToS3 = async (file: Express.Multer.File, clientName: string): Promise<string> => {
     const params = {
       Bucket: process.env.S3_BUCKET_NAME,  // Your bucket name
-      Key: `documents/${Date.now()}-${file.originalname}`,  // Unique file name
+      Key: `${clientName}/${file.originalname}`,  // Unique file name
       Body: file.buffer,
       ContentType: file.mimetype,
     };
@@ -24,49 +26,45 @@ const s3 = new S3Client({
   
     // Manually construct the S3 file URL
     return `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
-  };
+};
 
-export  const kafkaClient = new KafkaClient({ kafkaHost: process.env.KAFKA_BROKER_URL });
-
-export const kafkaProducer = new Producer(kafkaClient);
-
-
-kafkaProducer.on('ready', () => {
-    console.log('Kafka Producer is connected and ready.');
-  });
-  
-kafkaProducer.on('error', (err) => {
-console.error('Error in Kafka Producer:', err);
-});
-  
-  // Function to send messages to Kafka
-export const sendMessageToKafka = async (message: any) => {
-    const payloads = [
-      {
-        topic: 'document-topic',  // Adjust your Kafka topic name
-        messages: JSON.stringify(message),
-        partition: 0,
-      }
-    ];
-  
-    kafkaProducer.send(payloads, (err, data) => {
+// RabbitMQ setup
+export const connectToRabbitMQ = (callback: (channel: amqp.Channel) => void) => {
+  amqp.connect(process.env.RABBITMQ_URL || 'amqp://localhost', (err, connection) => {
+    if (err) {
+      throw new Error(`Error connecting to RabbitMQ: ${err}`);
+    }
+    connection.createChannel((err, channel) => {
       if (err) {
-        console.error('Error sending message to Kafka:', err);
-      } else {
-        console.log('Message sent to Kafka:', data);
+        throw new Error(`Error creating channel: ${err}`);
       }
+      callback(channel);
     });
-  };
+  });
+};
 
+// Function to send messages to RabbitMQ
+export const sendMessageToRabbitMQ = async (message: any) => {
+  connectToRabbitMQ(async(channel) => {
+    const queue = RABBIT_MQ.DOCUMENT_UPLOADED;  // Your RabbitMQ queue name
+    await channel.assertQueue(queue, { durable: true });
 
+    const msgBuffer = Buffer.from(JSON.stringify(message));
+    await channel.sendToQueue(queue, msgBuffer, { persistent: true });
+
+    console.log(`Message sent to RabbitMQ queue "${queue}":`, message);
+  });
+};
+
+// Function to extract headers from HTML content
 export const extractHeadersFromHtml = (htmlContent: string): any => {
     const headerRegex = /<h[1-6]>(.*?)<\/h[1-6]>/g;
     const headers = [];
     let match;
-  
+
     while ((match = headerRegex.exec(htmlContent)) !== null) {
       headers.push(match[1]);
     }
-  
+
     return headers;
-  };
+};
