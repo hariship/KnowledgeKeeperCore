@@ -3,7 +3,7 @@ import { AppDataSource } from '../db/data_source';
 import { Document } from '../entities/document'; // Your document entity
 import { Client } from '../entities/client';
 import multer from 'multer';
-import { extractHeadersFromHtml, sendMessageToKafka, uploadToS3 } from '../modules/s3Module';
+import { extractHeadersFromHtml, sendMessageToRabbitMQ, uploadToS3 } from '../modules/s3Module';
 import { DocumentRepository } from '../repository/documentRepository';
 import { ClientRepository } from '../repository/clientRepository';
 import { KnowledgeKeeperError } from '../errors/errors';
@@ -30,9 +30,9 @@ router.get('/clientDetails', (req, res) => {
 
 /**
  * @swagger
- * /api/v1/load-document:
+ * /load-document:
  *   post:
- *     summary: "Upload an HTML document to S3, extract headers, and place a request in Kafka"
+ *     summary: "Upload an HTML document to S3, extract headers, and place a request in RabbitMQ"
  *     tags:
  *       - Document Management
  *     requestBody:
@@ -46,6 +46,12 @@ router.get('/clientDetails', (req, res) => {
  *                 type: string
  *                 format: binary
  *                 description: "The HTML file to upload"
+ *               clientId:
+ *                 type: integer
+ *                 description: "The client ID associated with the document"
+ *               clientName:
+ *                 type: string
+ *                 description: "The client name associated with the document"
  *     responses:
  *       200:
  *         description: "Document uploaded successfully"
@@ -69,13 +75,40 @@ router.get('/clientDetails', (req, res) => {
  *                     versionNumber:
  *                       type: number
  *                       example: 1.0
+ *                     docUrl:
+ *                       type: string
+ *                       example: "https://bucket-name.s3.region.amazonaws.com/file-name"
  *                     clientId:
  *                       type: integer
  *                       example: 456
  *       400:
- *         description: "Bad request"
+ *         description: "Bad request - Missing file, clientId or clientName"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "No file uploaded"  
+ *       500:
+ *         description: "Internal server error"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
  */
-router.post('/api/v1/load-document', verifyToken, upload.single('file'), async (req: Request, res: Response) => {
+router.post('/load-document', verifyToken, upload.single('file'), async (req: Request, res: Response) => {
   const file = req?.file;
 
   if (!file) {
@@ -83,17 +116,44 @@ router.post('/api/v1/load-document', verifyToken, upload.single('file'), async (
   }
 
   try {
-    // Step 1: Upload the file to S3
-    const s3Url = await uploadToS3(file);
-    let clientId = req.body?.clientId
+    let clientId = req.body?.clientId;
+    let clientName = req.body?.clientName;
+    let client: Partial<Client> = {};
 
-    // Step 2: Create and save document to database
+    if(!clientName && !clientId){
+      return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.BAD_CLIENT_REQUEST))
+    }
+
+    // Step 1: Create and save document to database
     const documentRepo = new DocumentRepository();
     const clientRepo = new ClientRepository();
-    const clientExists = await clientRepo.findClientById(clientId)
-    if(!clientExists){
-      return new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.CLIENT_NOT_FOUND)
+    if(clientId){
+      const clientFound = await clientRepo.findClientById(clientId)
+      if(!clientFound || Object.values(clientFound) == null){
+        return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.CLIENT_NOT_FOUND))
+      }
+      client = clientFound
+    }else{
+      if(clientName){
+        const clientFound = await clientRepo.findClientByName(clientName)
+        if(!clientFound || Object.values(clientFound) == null){
+          return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.CLIENT_NOT_FOUND))
+        }
+        client = clientFound
+      }else{
+        // Create client using clientName
+        client = await clientRepo.createClient(clientName)
+      }
     }
+
+         
+    clientId = client?.id
+    clientName = client.clientName
+
+
+    // Step 2: Upload the file to S3 
+    const s3Url = await uploadToS3(file, clientName);
+
     const savedDocument = await documentRepo.createDocument({
       docContentUrl: s3Url,
       versionNumber: 1.0,
@@ -103,11 +163,12 @@ router.post('/api/v1/load-document', verifyToken, upload.single('file'), async (
       client: clientId
     });
     
-    // Step 3: Place a request in Kafka
-    await sendMessageToKafka({
+    // Step 3: Place a request in RabbitMQ
+    await sendMessageToRabbitMQ({
       docId: savedDocument.id,
       versionNumber: savedDocument.versionNumber,
-      clientId: savedDocument.client.id
+      clientId,
+      isTrained: false
     });
 
     return res.json({
@@ -116,7 +177,8 @@ router.post('/api/v1/load-document', verifyToken, upload.single('file'), async (
       document: {
         docId: savedDocument.id,
         versionNumber: savedDocument.versionNumber,
-        clientId: savedDocument.client.id
+        docUrl: s3Url,
+        clientId,
       }
     });
   } catch (error) {

@@ -1,4 +1,9 @@
 export const KNOWLEDGE_KEEPER_ERROR = {
+    BAD_CLIENT_REQUEST: {
+        HTTP_STATUS: 400,
+        ERROR_CODE: 'clientId or clientName is required',
+        ERROR_MESSAGE: 'Client Id or Client Name is mandatory'
+    },
     USER_EXISTS: {
         HTTP_STATUS: 400,
         ERROR_CODE: 'User already exists',

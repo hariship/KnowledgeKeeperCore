@@ -17,7 +17,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.json());
 app.use('/api/v1', routes);
 
-// Swagger setup
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
@@ -32,8 +31,22 @@ const swaggerOptions = {
         description: 'Development server',
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],  // Apply the Bearer token globally
+      },
+    ],
   },
-  apis: ['./src/routes/*.ts'],  // Path to the API docs
+  apis: ['./src/routes/*.ts'],  // Path to your API docs
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);

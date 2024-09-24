@@ -19,3 +19,7 @@ export const MESSAGES = {
         }
     }
 }
+
+export const RABBIT_MQ = {
+    DOCUMENT_UPLOADED: 'document-uploaded'
+}
