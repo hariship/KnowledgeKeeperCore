@@ -153,19 +153,26 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     // Step 2: Upload the file to S3 
     const s3Url = await uploadToS3(file, clientName);
 
-    const savedDocument = await documentRepo.createDocument({
-      docContentUrl: s3Url,
-      versionNumber: 1.0,
-      isTrained: false,
-      reTrainingRequired: false,
-      updatedAt: new Date(),
-      client: clientId
-    });
+    let document = await documentRepo.findDocumentByDocUrl(s3Url);
+
+    console.log(s3Url)
+
+    if(!document || Object.values(document) == null){
+      document = await documentRepo.createDocument({
+        docContentUrl: s3Url,
+        versionNumber: 1.0,
+        isTrained: false,
+        reTrainingRequired: false,
+        updatedAt: new Date(),
+        client: clientId
+      });
+    }
+    
     
     // Step 3: Place a request in RabbitMQ
     await sendMessageToRabbitMQ({
-      docId: savedDocument.id,
-      versionNumber: savedDocument.versionNumber,
+      docId: document.id,
+      versionNumber: document.versionNumber,
       clientId,
       isTrained: false
     });
@@ -174,8 +181,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       status: true,
       message: 'Document uploaded successfully',
       document: {
-        docId: savedDocument.id,
-        versionNumber: savedDocument.versionNumber,
+        docId: document.id,
+        versionNumber: document.versionNumber,
         docUrl: s3Url,
         clientId,
       }

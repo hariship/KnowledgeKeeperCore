@@ -20,6 +20,15 @@ export class DocumentRepository {
         return await this.documentRepo.findOneBy({ id: docId });
     }
 
+    // Find a document by its Doc Url
+    async findDocumentByDocUrl(docContentUrl: string): Promise<Document | null> {
+        return await this.documentRepo.findOne({ 
+            where: {
+                docContentUrl
+            }  
+        });
+    }
+
     // Update a document's details
     async updateDocument(docId: number, updatedData: Partial<Document>): Promise<Document | null> {
         await this.documentRepo.update(docId, updatedData);  // Update the document data
