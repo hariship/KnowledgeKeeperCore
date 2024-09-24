@@ -9,6 +9,10 @@ import { ClientRepository } from '../repository/clientRepository';
 import { KnowledgeKeeperError } from '../errors/errors';
 import { KNOWLEDGE_KEEPER_ERROR } from '../errors/errorConstants';
 import { verifyToken } from '../modules/authModule';
+import { ByteRepository } from '../repository/ byteRepository';
+import { UserRepository } from '../repository/userRepository';
+import { UserDetails } from '../entities/user_details';
+import { ChangeLogRepository } from '../repository/changeLogRespository';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() }); // Store in memory for easy access
@@ -190,6 +194,178 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     console.error('Error during document upload:', error);
     return res.status(500).json({ status: false, message: 'Server error' });
   }
+});
+
+
+/**
+ * @swagger
+ * /clients/modify:
+ *   post:
+ *     summary: "Modify a document and log the changes"
+ *     description: "This API allows users to modify a document and log the changes in the change log, with optional byte creation if not provided."
+ *     tags:
+ *       - ChangeLog
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 description: "The ID of the user requesting the modification"
+ *                 example: 1
+ *               docId:
+ *                 type: integer
+ *                 description: "The ID of the document being modified"
+ *                 example: 123
+ *               byteId:
+ *                 type: integer
+ *                 description: "The ID of the byte related to the modification, if already exists"
+ *                 example: 456
+ *                 nullable: true
+ *               byte:
+ *                 type: string
+ *                 description: "Optional byte information in case a new byte needs to be created"
+ *                 example: "byte data here"
+ *                 nullable: true
+ *               changeRequestType:
+ *                 type: string
+ *                 description: "The type of request being performed, e.g., 'Update', 'Delete'"
+ *                 example: "Update"
+ *               changes:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     externalAttributeId:
+ *                       type: string
+ *                       description: "The ID of the attribute being modified"
+ *                       example: "attr123"
+ *                     sectionHeadingType:
+ *                       type: string
+ *                       enum: [ "h1", "h2", "h3", "h4" ]
+ *                       description: "The type of section heading being modified"
+ *                       example: "h1"
+ *                     sectionHeadingText:
+ *                       type: string
+ *                       description: "The text of the section heading"
+ *                       example: "Introduction"
+ *                     sectionContent:
+ *                       type: string
+ *                       description: "The content of the section"
+ *                       example: "This is the updated content for the introduction section."
+ *               changeSummary:
+ *                 type: string
+ *                 description: "A summary of the changes made to the document"
+ *                 example: "Updated the introduction section with new content"
+ *               isTrained:
+ *                 type: boolean
+ *                 description: "Indicates if the changes have been trained"
+ *                 example: false
+ *     responses:
+ *       200:
+ *         description: "Modification successful and logged"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Change log created successfully"
+ *                 result:
+ *                   type: object
+ *                   description: "The change log created"
+ *       400:
+ *         description: "Bad request - Missing required fields or invalid data"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "failed"
+ *                 message:
+ *                   type: string
+ *                   example: "Missing required fields"
+ *       500:
+ *         description: "Internal server error"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "failed"
+ *                 message:
+ *                   type: string
+ *                   example: "Error creating change log"
+ */
+router.post('/modify', async (req: Request, res: Response) => {
+  let { userId, docId, byteId,byteInfo, changeRequestType, changes, changeSummary, isTrained } = req.body;
+
+  if (!userId || !docId || !changeRequestType || !changes || !changeSummary || isTrained === undefined) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Missing required fields',
+    });
+  }
+  let userDetails: any, docDetails:any, byteDetails:any; 
+
+  if(userId){
+    const userRepo = new UserRepository();
+    userDetails = await userRepo.findUserById(userId)
+  }
+
+  if(docId){
+    const documentRepo = new DocumentRepository();
+    docDetails = await documentRepo.findDocumentById(docId)
+  }
+
+  if(!userDetails){
+    return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.NOT_FOUND));
+  }
+
+  if(!docDetails){
+    return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.DOCUMENT_NOT_FOUND));
+  }
+
+  // If no byteId - create one
+
+  if(!byteId){
+    const byteRepo = new ByteRepository();
+    byteDetails = await byteRepo.createByte(byteInfo, userDetails)
+  }else{
+    const byteRepo = new ByteRepository();
+    byteDetails = await byteRepo.findByteById(byteId)
+  }
+
+  if(!byteDetails){
+    return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.BYTE_NOT_FOUND));
+  }
+
+  byteId = byteDetails?.id
+
+  // Call the service to create the change log
+  const changeLogRepo = new ChangeLogRepository();
+  const result = await changeLogRepo.createChangeLog(
+    userId,
+    docId,
+    byteId,
+    changeRequestType,
+    changes,
+    changeSummary,
+    isTrained,
+  );
+
+  return res.json(result);
 });
 
   
