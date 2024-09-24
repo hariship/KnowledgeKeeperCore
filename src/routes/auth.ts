@@ -262,7 +262,7 @@ router.post('/register',authenticate, async (req, res, next) => {
           // Check if the user already exists with this OAuth provider
           user = await userRepository.findUserByOAuthProvider(email, oAuthProvider);
           if (user) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.USER_EXISTS);
+              response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.USER_EXISTS);
           }
 
           // Create new user with OAuth provider
