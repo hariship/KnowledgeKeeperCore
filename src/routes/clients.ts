@@ -136,10 +136,9 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     }else{
       if(clientName){
         const clientFound = await clientRepo.findClientByName(clientName)
-        if(!clientFound || Object.values(clientFound) == null){
-          return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.CLIENT_NOT_FOUND))
+        if(clientFound){
+          client = clientFound
         }
-        client = clientFound
       }else{
         // Create client using clientName
         client = await clientRepo.createClient(clientName)
