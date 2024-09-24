@@ -30,9 +30,9 @@ router.get('/clientDetails', (req, res) => {
 
 /**
  * @swagger
- * /api/v1/load-document:
+ * /load-document:
  *   post:
- *     summary: "Upload an HTML document to S3, extract headers, and place a request in Kafka"
+ *     summary: "Upload an HTML document to S3, extract headers, and place a request in RabbitMQ"
  *     tags:
  *       - Document Management
  *     requestBody:
@@ -46,6 +46,12 @@ router.get('/clientDetails', (req, res) => {
  *                 type: string
  *                 format: binary
  *                 description: "The HTML file to upload"
+ *               clientId:
+ *                 type: integer
+ *                 description: "The client ID associated with the document"
+ *               clientName:
+ *                 type: string
+ *                 description: "The client name associated with the document"
  *     responses:
  *       200:
  *         description: "Document uploaded successfully"
@@ -69,11 +75,38 @@ router.get('/clientDetails', (req, res) => {
  *                     versionNumber:
  *                       type: number
  *                       example: 1.0
+ *                     docUrl:
+ *                       type: string
+ *                       example: "https://bucket-name.s3.region.amazonaws.com/file-name"
  *                     clientId:
  *                       type: integer
  *                       example: 456
  *       400:
- *         description: "Bad request"
+ *         description: "Bad request - Missing file, clientId or clientName"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "No file uploaded"  
+ *       500:
+ *         description: "Internal server error"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
  */
 router.post('/load-document', verifyToken, upload.single('file'), async (req: Request, res: Response) => {
   const file = req?.file;
@@ -121,7 +154,6 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     // Step 2: Upload the file to S3 
     const s3Url = await uploadToS3(file, clientName);
 
-
     const savedDocument = await documentRepo.createDocument({
       docContentUrl: s3Url,
       versionNumber: 1.0,
@@ -130,8 +162,6 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       updatedAt: new Date(),
       client: clientId
     });
-
-    console.log(savedDocument)
     
     // Step 3: Place a request in RabbitMQ
     await sendMessageToRabbitMQ({
