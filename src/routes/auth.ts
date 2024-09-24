@@ -141,8 +141,8 @@ router.post('/login', authenticate, async (req, res, next) => {
       }
 
       // Generate JWT token
-      const token = generateToken(user);
       if(!response.errorCode){
+        const token = generateToken(user);
         response = { 
             status: 'success', 
             message: MESSAGES.USER.LOGIN.SUCCESS, 
@@ -294,8 +294,9 @@ router.post('/register',authenticate, async (req, res, next) => {
       }
 
       // Generate JWT token for the user
-      const token = generateToken(user);
       if(!response.errorCode){
+        const token = generateToken(user);
+
         response = { 
             status: 'success', 
             message: MESSAGES.USER.REGISTRATION.SUCCESS, 
