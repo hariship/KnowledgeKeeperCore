@@ -14,7 +14,7 @@ const userRepository = new UserRepository(); // Initialize the repository
 
 /**
  * @swagger
- * /login:
+ * /auth/login:
  *   post:
  *     summary: "Log in a user with email/password or OAuth provider"
  *     tags:
@@ -158,7 +158,7 @@ router.post('/login', authenticate, async (req, res, next) => {
 
 /**
  * @swagger
- * /register:
+ * /auth/register:
  *   post:
  *     summary: "Register a new user with email and password or using an OAuth provider"
  *     tags:

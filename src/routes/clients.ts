@@ -30,7 +30,7 @@ router.get('/clientDetails', (req, res) => {
 
 /**
  * @swagger
- * /load-document:
+ * /clients/load-document:
  *   post:
  *     summary: "Upload an HTML document to S3, extract headers, and place a request in RabbitMQ"
  *     tags:

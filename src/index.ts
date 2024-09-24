@@ -27,7 +27,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'https://api-core.knowledgekeeper.ai',
+        url: 'https://api-core.knowledgekeeper.ai/api/v1',
         description: 'Development server',
       },
     ],
