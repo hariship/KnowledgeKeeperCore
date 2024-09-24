@@ -81,7 +81,8 @@ router.post('/login', authenticate, async (req, res, next) => {
   const { email, password, oAuthProvider, oAuthToken } = req.body;
 
   try {
-      let user;
+      let user: any;
+      let response:any = {};
 
       if (oAuthProvider && oAuthProvider !== OAUTH_PROVIDERS.LOCAL) {
           // Handle OAuth login
@@ -115,35 +116,38 @@ router.post('/login', authenticate, async (req, res, next) => {
           // Find user by OAuth provider
           user = await userRepository.findUserByOAuthProvider(email, oAuthProvider);
           if (!user) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.NOT_FOUND);
+              response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.NOT_FOUND);
           }
 
       } else {
           // Handle manual login
           if (!email || !password) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
+            response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
           }
 
           // Find user by email
           user = await userRepository.findUserByEmail(email);
           if (!user) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.NOT_FOUND);
+            response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.NOT_FOUND);
           }
 
           // Validate password
           const isPasswordValid = await bcrypt.compare(password, user.password);
           if (!isPasswordValid) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
+            response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
           }
       }
 
       // Generate JWT token
       const token = generateToken(user);
-      res.json({ 
-        status: 'success', 
-        message: MESSAGES.USER.LOGIN.SUCCESS, 
-        token 
-      });
+      if(!response.errorCode){
+        response = { 
+            status: 'success', 
+            message: MESSAGES.USER.LOGIN.SUCCESS, 
+            token 
+          }
+      }
+      res.json(response);
 
   } catch (error) {
       next(error); // Pass the error to the error handler middleware
