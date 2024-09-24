@@ -115,6 +115,7 @@ router.post('/login', authenticate, async (req, res, next) => {
 
           // Find user by OAuth provider
           user = await userRepository.findUserByOAuthProvider(email, oAuthProvider);
+          console.log(user)
           if (!user) {
               response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.NOT_FOUND);
           }
