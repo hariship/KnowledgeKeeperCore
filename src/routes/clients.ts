@@ -138,13 +138,12 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
         const clientFound = await clientRepo.findClientByName(clientName)
         if(clientFound){
           client = clientFound
+        }else{
+          // Create client using clientName
+          client = await clientRepo.createClient(clientName)
         }
-      }else{
-        // Create client using clientName
-        client = await clientRepo.createClient(clientName)
       }
     }
-
          
     clientId = client?.id
     clientName = client.clientName
