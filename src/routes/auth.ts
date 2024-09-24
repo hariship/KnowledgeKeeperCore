@@ -224,6 +224,8 @@ router.post('/register',authenticate, async (req, res, next) => {
 
   try {
       let user;
+      let response:any = {}
+
 
       if (oAuthProvider && oAuthProvider !== OAUTH_PROVIDERS.LOCAL) {
           // Handle OAuth registration
@@ -267,13 +269,13 @@ router.post('/register',authenticate, async (req, res, next) => {
           // Handle manual registration
           console.log(email,password)
           if (!email || !password) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
+            response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
           }
 
           // Check if the user already exists with this email
           const userExists = await userRepository.findUserByEmail(email);
           if (userExists) {
-              throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.USER_EXISTS);
+              response = new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.USER_EXISTS);
           }
 
           // Hash the password and create the user
@@ -287,11 +289,15 @@ router.post('/register',authenticate, async (req, res, next) => {
 
       // Generate JWT token for the user
       const token = generateToken(user);
-      res.json({ 
-        status: 'success', 
-        message: MESSAGES.USER.REGISTRATION.SUCCESS, 
-        token 
-      });
+      if(!response.errorCode){
+        response = { 
+            status: 'success', 
+            message: MESSAGES.USER.REGISTRATION.SUCCESS, 
+            token 
+          }
+      }
+
+      res.json(response);
   } catch (error) {
       next(error); 
   }
