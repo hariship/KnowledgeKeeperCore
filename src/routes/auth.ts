@@ -88,32 +88,32 @@ router.post('/login', authenticate, async (req, res, next) => {
           let oAuthUserData;
 
           if (oAuthProvider === OAUTH_PROVIDERS.GOOGLE) {
-              try {
-                  // Validate Google OAuth token and get user data
-                  const googleOauthUrl = `${GOOGLE_OAUTH_URL}?id_token=${oAuthToken}`
-                  const googleOauthResponse = await axios.get(googleOauthUrl);
+            //   try {
+            //       // Validate Google OAuth token and get user data
+            //       const googleOauthUrl = `${GOOGLE_OAUTH_URL}?id_token=${oAuthToken}`
+            //       const googleOauthResponse = await axios.get(googleOauthUrl);
 
-                  console.log(googleOauthResponse)
+            //       console.log(googleOauthResponse)
 
-                  oAuthUserData = googleOauthResponse.data;
+            //       oAuthUserData = googleOauthResponse.data;
 
-                  console.log(oAuthUserData)
+            //       console.log(oAuthUserData)
 
-                  if (!oAuthUserData || !oAuthUserData.email) {
-                    console.log(oAuthUserData)
-                    throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
-                }
+            //       if (!oAuthUserData || !oAuthUserData.email) {
+            //         console.log(oAuthUserData)
+            //         throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
+            //     }
 
-              } catch (error) {
-                  throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
-              }
+            //   } catch (error) {
+            //       throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
+            //   }
           }else if (oAuthProvider == OAUTH_PROVIDERS.MICROSOFT || oAuthProvider === OAUTH_PROVIDERS.APPLE){
             // Add apple authentication
           }
           // Add more providers here (e.g., Apple, Microsoft)
 
           // Find user by OAuth provider
-          user = await userRepository.findUserByOAuthProvider(oAuthUserData.email, oAuthProvider);
+          user = await userRepository.findUserByOAuthProvider(email, oAuthProvider);
           if (!user) {
               throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.NOT_FOUND);
           }
@@ -230,19 +230,19 @@ router.post('/register',authenticate, async (req, res, next) => {
           let oAuthUserData;
 
           if (oAuthProvider === OAUTH_PROVIDERS.GOOGLE) {
-              try {
-                  // Validate Google OAuth token and get user data
-                  const googleResponse = await axios.get(`${GOOGLE_OAUTH_URL}?id_token=${oAuthToken}`);
-                  oAuthUserData = googleResponse.data;
+            //   try {
+            //       // Validate Google OAuth token and get user data
+            //       const googleResponse = await axios.get(`${GOOGLE_OAUTH_URL}?id_token=${oAuthToken}`);
+            //       oAuthUserData = googleResponse.data;
 
-                  console.log(oAuthUserData)
+            //       console.log(oAuthUserData)
 
-                  if (!oAuthUserData || !oAuthUserData.email) {
-                    throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
-                }
-              } catch (error) {
-                  throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
-              }
+            //       if (!oAuthUserData || !oAuthUserData.email) {
+            //         throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.AUTHENTICATION_ERROR);
+            //     }
+            //   } catch (error) {
+            //       throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.VALIDATION_ERROR);
+            //   }
           }else if (oAuthProvider == OAUTH_PROVIDERS.MICROSOFT || oAuthProvider === OAUTH_PROVIDERS.APPLE){
             // Add apple authentication
           }
@@ -252,14 +252,14 @@ router.post('/register',authenticate, async (req, res, next) => {
           }
 
           // Check if the user already exists with this OAuth provider
-          user = await userRepository.findUserByOAuthProvider(oAuthUserData.email, oAuthProvider);
+          user = await userRepository.findUserByOAuthProvider(email, oAuthProvider);
           if (user) {
               throw new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.USER_EXISTS);
           }
 
           // Create new user with OAuth provider
           user = await userRepository.createUser({
-              email: oAuthUserData.email,
+              email: email,
               oAuthProvider: oAuthProvider,
           });
 
