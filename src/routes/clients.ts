@@ -371,43 +371,35 @@ router.post('/modify', async (req: Request, res: Response) => {
 });
 
 /**
- * swagger: '2.0'
-    info:
-      version: '1.0.0'
-      title: 'Open Bytes API'
-      description: 'Returns all bytes marked as "open" with a high recommendation count.'
-    basePath: '/v1'
-    schemes:
-      - http
-      - https
-    paths:
-      /bytes/open:
-        get:
-          tags:
-            - 'Byte Management'
-          summary: 'Get all bytes with an open status and high recommendation count'
-          description: 'Returns a list of all bytes that are marked as "open" and have a high recommendation count.'
-          responses:
-            200:
-              description: 'Successfully retrieved all open bytes with high recommendation count.'
-              schema:
-                type: array
-                items:
-                  $ref: '#/definitions/Byte'
-            500:
-              description: 'Internal server error.'
-    definitions:
-      Byte:
-        type: object
-        properties:
-          id:
-            type: integer
-          recommendationCount:
-            type: integer
-          status:
-            type: string
-            enum:
-              - 'open'
+ * @swagger
+ * /clients/bytes/open:
+ *   get:
+ *     tags:
+ *       - Bytes
+ *     summary: "Get all bytes with an open status and high recommendation count"
+ *     description: "Returns a list of all bytes that are marked as 'open' and have a high recommendation count."
+ *     responses:
+ *       200:
+ *         description: "Successfully retrieved all open bytes with high recommendation count."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/definitions/Byte'
+ *       500:
+ *         description: "Internal server error."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
  */
 
 
@@ -427,43 +419,36 @@ router.get('/bytes/open', verifyToken, async (req, res) => {
 });
 
 /**
- * swagger: '2.0'
-    info:
-      version: '1.0.0'
-      title: 'Closed Bytes API'
-      description: 'Returns all bytes marked as "closed" with a high resolved recommendation count.'
-    basePath: '/v1'
-    schemes:
-      - http
-      - https
-    paths:
-      /bytes/closed:
-        get:
-          tags:
-            - 'Byte Management'
-          summary: 'Get all bytes with a closed status and high resolved recommendation count'
-          description: 'Returns a list of all bytes that are marked as "closed" and have a high resolved recommendation count.'
-          responses:
-            200:
-              description: 'Successfully retrieved all closed bytes with high resolved recommendation count.'
-              schema:
-                type: array
-                items:
-                  $ref: '#/definitions/Byte'
-            500:
-              description: 'Internal server error.'
-    definitions:
-      Byte:
-        type: object
-        properties:
-          id:
-            type: integer
-          resolvedRecommendationCount:
-            type: integer
-          status:
-            type: string
-            enum:
-              - 'closed'
+ * @swagger
+ * /clients/bytes/closed:
+ *   get:
+ *     tags:
+ *       - Bytes
+ *     summary: "Get all bytes with a closed status and high resolved recommendation count"
+ *     description: "Returns a list of all bytes that are marked as 'closed' and have a high resolved recommendation count."
+ *     responses:
+ *       200:
+ *         description: "Successfully retrieved all closed bytes with high resolved recommendation count."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/definitions/Byte'
+ *       500:
+ *         description: "Internal server error."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ * 
  */
 
 // Get all bytes with a status of 'closed' and high resolved recommendation counts
@@ -481,8 +466,69 @@ router.get('/bytes/closed', verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /clients/bytes/delete:
+ *   post:
+ *     tags:
+ *       - Bytes
+ *     summary: "Delete a byte (recommendation)"
+ *     description: "This API allows users to delete an existing byte. Note that this action cannot be undone."
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               byteId:
+ *                 type: integer
+ *                 description: "The ID of the byte to be deleted"
+ *                 example: 456
+ *     responses:
+ *       200:
+ *         description: "Byte deleted successfully."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Byte deleted successfully"
+ *       400:
+ *         description: "Bad request - Byte ID is missing or invalid"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "failed"
+ *                 message:
+ *                   type: string
+ *                   example: "Byte ID is required"
+ *       500:
+ *         description: "Internal server error"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "failed"
+ *                 message:
+ *                   type: string
+ *                   example: "Error deleting byte"
+ */
+
 // Delete a byte (recommendation)
-router.post('/deleteByte', verifyToken, async (req, res) => {
+router.post('/bytes/delete', verifyToken, async (req, res) => {
   const { byteId } = req.body;
   if (!byteId) {
       return res.status(400).json({ status: 'error', message: 'Byte ID is required' });
@@ -499,8 +545,80 @@ router.post('/deleteByte', verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /clients/bytes/create:
+ *   post:
+ *     tags:
+ *       - Bytes
+ *     summary: "Create a byte (recommendation)"
+ *     description: "This API allows users to create a new byte based on document interactions or suggestions."
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               documentId:
+ *                 type: integer
+ *                 description: "The ID of the document associated with the new byte"
+ *                 example: 102
+ *               recommendation:
+ *                 type: string
+ *                 description: "Detailed description or data for the byte"
+ *                 example: "Potential update to section 4.3 regarding compliance."
+ *               action:
+ *                 type: string
+ *                 enum: ["CREATE", "UPDATE", "DELETE"]
+ *                 description: "The action associated with this byte"
+ *                 example: "CREATE"
+ *     responses:
+ *       200:
+ *         description: "Byte created successfully."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Byte created successfully"
+ *                 byte:
+ *                   $ref: '#/definitions/ByteDetails'
+ *       400:
+ *         description: "Bad request - Missing required fields or invalid data"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "failed"
+ *                 message:
+ *                   type: string
+ *                   example: "Missing required fields"
+ *       500:
+ *         description: "Internal server error"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "failed"
+ *                 message:
+ *                   type: string
+ *                   example: "Error creating byte"
+ */
+
 // Create a new byte (recommendation)
-router.post('/createByte', verifyToken, async (req, res) => {
+router.post('/bytes/create', verifyToken, async (req, res) => {
   const { documentId, recommendation, action,userId } = req.body;
   if (!documentId || !recommendation || !action) {
       return res.status(400).json({ status: 'error', message: 'All fields (documentId, recommendation, action) are required' });
@@ -521,40 +639,62 @@ router.post('/createByte', verifyToken, async (req, res) => {
   });
 
   /**
-   * swagger: '2.0'
-    info:
-      version: '1.0.0'
-      title: 'Knowledge Keeper API'
-      description: 'API for managing documents, bytes, and client details in Knowledge Keeper'
-    basePath: '/v1'
-    schemes:
-      - http
-      - https
-
-    paths:
-      /clientDetails:
-        get:
-          tags:
-            - 'Client'
-          summary: 'Retrieve client details by client ID'
-          parameters:
-            - in: 'query'
-              name: 'clientId'
-              required: true
-              type: 'integer'
-              description: 'The ID of the client to retrieve'
-          responses:
-            200:
-              description: 'Client details retrieved successfully'
-              schema:
-                $ref: '#/definitions/Client'
-            400:
-              description: 'Client ID is missing'
-            404:
-              description: 'Client not found'
-            500:
-              description: 'Internal server error'
-   */
+ * @swagger
+ * /clients/clientDetails:
+ *   get:
+ *     tags:
+ *       - Clients
+ *     summary: "Retrieve client details by client ID"
+ *     description: "Fetches detailed information for a specific client based on their unique identifier."
+ *     parameters:
+ *       - in: query
+ *         name: clientId
+ *         required: true
+ *         type: string
+ *         description: "The ID of the client to retrieve, expected as a string."
+ *     responses:
+ *       200:
+ *         description: "Client details retrieved successfully."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Client details fetched successfully"
+ *                 client:
+ *                   $ref: '#/definitions/ClientResponse'
+ *       400:
+ *         description: "Client ID is missing or invalid."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Client ID is required"
+ *       500:
+ *         description: "Internal server error."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
 
   router.get('/clientDetails', verifyToken, async (req, res) => {
     const clientId = Array.isArray(req.query.clientId) ? req.query.clientId[0] : req.query.clientId;
@@ -584,55 +724,60 @@ router.post('/createByte', verifyToken, async (req, res) => {
 });
 
 /**
- * swagger: '2.0'
-  info:
-    version: '1.0.0'
-    title: 'Recommendations API'
-    description: 'API for fetching document recommendations from an external service.'
-  basePath: '/v1'
-  schemes:
-    - http
-    - https
-  paths:
-    /recommendations:
-      get:
-        tags:
-          - 'Recommendation Management'
-        summary: 'Fetch recommendations for a specific document'
-        description: 'Makes an external API call to retrieve recommendations based on the document ID.'
-        parameters:
-          - in: query
-            name: docId
-            required: true
-            type: string
-            description: 'The ID of the document for which recommendations are being requested.'
-        responses:
-          200:
-            description: 'Recommendations retrieved successfully.'
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  example: 'success'
-                data:
-                  type: array
-                  items:
-                    $ref: '#/definitions/Recommendation'
-          400:
-            description: 'Document ID is missing or invalid.'
-          500:
-            description: 'Failed to retrieve recommendations or internal server error.'
-  definitions:
-    Recommendation:
-      type: object
-      properties:
-        recommendationId:
-          type: integer
-        recommendationText:
-          type: string
-        recommendationAction:
-          type: string
+ * @swagger
+ * /clients/recommendations:
+ *   get:
+ *     tags:
+ *       - Recommendations
+ *     summary: "Fetch recommendations for a specific document"
+ *     description: "Makes an external API call to retrieve recommendations based on the document ID."
+ *     parameters:
+ *       - in: query
+ *         name: docId
+ *         required: true
+ *         type: string
+ *         description: "The ID of the document for which recommendations are being requested."
+ *     responses:
+ *       200:
+ *         description: "Recommendations retrieved successfully."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/definitions/Recommendation'
+ *       400:
+ *         description: "Document ID is missing or invalid."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Document ID is required"
+ *       500:
+ *         description: "Failed to retrieve recommendations or internal server error."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
  */
 router.get('/recommendations', verifyToken, async (req, res) => {
   const { byteId, docId } = req.query;
