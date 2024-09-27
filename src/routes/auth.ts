@@ -146,7 +146,8 @@ router.post('/login', authenticate, async (req, res, next) => {
         response = { 
             status: 'success', 
             message: MESSAGES.USER.LOGIN.SUCCESS, 
-            token 
+            token,
+            userId: user?.id
           }
       }
       res.json(response);
@@ -300,7 +301,8 @@ router.post('/register',authenticate, async (req, res, next) => {
         response = { 
             status: 'success', 
             message: MESSAGES.USER.REGISTRATION.SUCCESS, 
-            token 
+            token,
+            userId: user?.id
           }
       }
 
