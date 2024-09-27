@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { UserDetails } from './user_details';
+import { Document } from './document';
 
 @Entity()
 export class Byte {
@@ -18,4 +19,11 @@ export class Byte {
 
     @Column()
     isProcessedByRecommendation: boolean;
+
+    @Column()
+    status: string;
+
+    @ManyToOne(() => Document)
+    @JoinColumn({name: 'docId'})
+    docId: Document;
 }

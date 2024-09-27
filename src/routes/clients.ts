@@ -197,6 +197,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 });
 
 
+
+
 /**
  * @swagger
  * /clients/modify:
@@ -368,5 +370,301 @@ router.post('/modify', async (req: Request, res: Response) => {
   return res.json(result);
 });
 
+/**
+ * swagger: '2.0'
+    info:
+      version: '1.0.0'
+      title: 'Open Bytes API'
+      description: 'Returns all bytes marked as "open" with a high recommendation count.'
+    basePath: '/v1'
+    schemes:
+      - http
+      - https
+    paths:
+      /bytes/open:
+        get:
+          tags:
+            - 'Byte Management'
+          summary: 'Get all bytes with an open status and high recommendation count'
+          description: 'Returns a list of all bytes that are marked as "open" and have a high recommendation count.'
+          responses:
+            200:
+              description: 'Successfully retrieved all open bytes with high recommendation count.'
+              schema:
+                type: array
+                items:
+                  $ref: '#/definitions/Byte'
+            500:
+              description: 'Internal server error.'
+    definitions:
+      Byte:
+        type: object
+        properties:
+          id:
+            type: integer
+          recommendationCount:
+            type: integer
+          status:
+            type: string
+            enum:
+              - 'open'
+ */
+
+
+// Get all bytes with a status of 'open' and high recommendation counts
+router.get('/bytes/open', verifyToken, async (req, res) => {
+  try {
+    const {docId} = req.query;
+    const byteRepo = new ByteRepository();
+      const bytes = await byteRepo.findAllOpenWithHighRecommendations(docId);
+      res.json({
+          status: 'success',
+          data: bytes
+      });
+  } catch (error) {
+      res.status(500).json({ status: 'error', message: 'Failed to retrieve open bytes' });
+  }
+});
+
+/**
+ * swagger: '2.0'
+    info:
+      version: '1.0.0'
+      title: 'Closed Bytes API'
+      description: 'Returns all bytes marked as "closed" with a high resolved recommendation count.'
+    basePath: '/v1'
+    schemes:
+      - http
+      - https
+    paths:
+      /bytes/closed:
+        get:
+          tags:
+            - 'Byte Management'
+          summary: 'Get all bytes with a closed status and high resolved recommendation count'
+          description: 'Returns a list of all bytes that are marked as "closed" and have a high resolved recommendation count.'
+          responses:
+            200:
+              description: 'Successfully retrieved all closed bytes with high resolved recommendation count.'
+              schema:
+                type: array
+                items:
+                  $ref: '#/definitions/Byte'
+            500:
+              description: 'Internal server error.'
+    definitions:
+      Byte:
+        type: object
+        properties:
+          id:
+            type: integer
+          resolvedRecommendationCount:
+            type: integer
+          status:
+            type: string
+            enum:
+              - 'closed'
+ */
+
+// Get all bytes with a status of 'closed' and high resolved recommendation counts
+router.get('/bytes/closed', verifyToken, async (req, res) => {
+  try {
+    const { docId } = req.query;
+    const byteRepo = new ByteRepository();
+      const bytes = await byteRepo.findAllClosedWithHighResolvedRecommendations(docId);
+      res.json({
+          status: 'success',
+          data: bytes
+      });
+  } catch (error) {
+      res.status(500).json({ status: 'error', message: 'Failed to retrieve closed bytes' });
+  }
+});
+
+// Delete a byte (recommendation)
+router.post('/deleteByte', verifyToken, async (req, res) => {
+  const { byteId } = req.body;
+  if (!byteId) {
+      return res.status(400).json({ status: 'error', message: 'Byte ID is required' });
+  }
+  try {
+    const byteRepo = new ByteRepository();
+      const result = await byteRepo.deleteByte(byteId);
+      res.json({
+          status: 'success',
+          message: 'Byte deleted successfully'
+      });
+  } catch (error) {
+      res.status(500).json({ status: 'error', message: 'Failed to delete byte' });
+  }
+});
+
+// Create a new byte (recommendation)
+router.post('/createByte', verifyToken, async (req, res) => {
+  const { documentId, recommendation, action,userId } = req.body;
+  if (!documentId || !recommendation || !action) {
+      return res.status(400).json({ status: 'error', message: 'All fields (documentId, recommendation, action) are required' });
+  }
+  try {
+      const byteRepo = new ByteRepository();
+      const newByte = await byteRepo.createByte({
+          documentId,
+          recommendation,
+          recommendationAction: action
+      }, userId);
+      res.json({
+          status: 'success',
+        });
+      } catch (error) {
+          res.status(500).json({ status: 'error', message: 'Failed to create byte' });
+      }
+  });
+
+  /**
+   * swagger: '2.0'
+    info:
+      version: '1.0.0'
+      title: 'Knowledge Keeper API'
+      description: 'API for managing documents, bytes, and client details in Knowledge Keeper'
+    basePath: '/v1'
+    schemes:
+      - http
+      - https
+
+    paths:
+      /clientDetails:
+        get:
+          tags:
+            - 'Client'
+          summary: 'Retrieve client details by client ID'
+          parameters:
+            - in: 'query'
+              name: 'clientId'
+              required: true
+              type: 'integer'
+              description: 'The ID of the client to retrieve'
+          responses:
+            200:
+              description: 'Client details retrieved successfully'
+              schema:
+                $ref: '#/definitions/Client'
+            400:
+              description: 'Client ID is missing'
+            404:
+              description: 'Client not found'
+            500:
+              description: 'Internal server error'
+   */
+
+  router.get('/clientDetails', verifyToken, async (req, res) => {
+    const clientId = Array.isArray(req.query.clientId) ? req.query.clientId[0] : req.query.clientId;
+    if (!clientId || typeof clientId !== 'string') {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Client ID is required'
+        });
+    }
+    try {
+        const clientRepo = new ClientRepository();
+        const client = await clientRepo.findClientById(parseInt(clientId,10));
+        if (!client) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Client not found'
+            });
+        }
+        res.json({
+            status: 'success',
+            message: 'Client details fetched successfully',
+            client: client
+        });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+/**
+ * swagger: '2.0'
+  info:
+    version: '1.0.0'
+    title: 'Recommendations API'
+    description: 'API for fetching document recommendations from an external service.'
+  basePath: '/v1'
+  schemes:
+    - http
+    - https
+  paths:
+    /recommendations:
+      get:
+        tags:
+          - 'Recommendation Management'
+        summary: 'Fetch recommendations for a specific document'
+        description: 'Makes an external API call to retrieve recommendations based on the document ID.'
+        parameters:
+          - in: query
+            name: docId
+            required: true
+            type: string
+            description: 'The ID of the document for which recommendations are being requested.'
+        responses:
+          200:
+            description: 'Recommendations retrieved successfully.'
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: 'success'
+                data:
+                  type: array
+                  items:
+                    $ref: '#/definitions/Recommendation'
+          400:
+            description: 'Document ID is missing or invalid.'
+          500:
+            description: 'Failed to retrieve recommendations or internal server error.'
+  definitions:
+    Recommendation:
+      type: object
+      properties:
+        recommendationId:
+          type: integer
+        recommendationText:
+          type: string
+        recommendationAction:
+          type: string
+ */
+router.get('/recommendations', verifyToken, async (req, res) => {
+  const { byteId, docId } = req.query;
+  if (!byteId || byteId !== 'string' || docId !== 'string') {
+      return res.status(400).json({
+          status: 'error',
+          message: 'Document ID is required'
+      });
+  }
+
+  try {
+      const byteRepo = new ByteRepository();
+      const byte =  await byteRepo.findByteById(parseInt(byteId, 10));
+      if(byte){
+        const recommendations = await byteRepo.getRecommendations(docId,byte?.byteInfo);
+        res.json({
+            status: 'success',
+            data: recommendations
+        });
+      }else{
+        res.status(400).json({
+          status: 'error',
+          message: 'Byte is incorrect'
+      });
+      }
+      
+  } catch (error) {
+      res.status(500).json({
+          status: 'error',
+          message: 'Failed to retrieve recommendations'
+      });
+  }
+});
   
 export default router;
