@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Client } from './client';
 
 @Entity()
 export class Folder {
@@ -16,4 +17,8 @@ export class Folder {
 
     @Column()
     reTrainingRequired: boolean;
+
+    @ManyToOne(() => Client)
+    @JoinColumn({ name: "clientId" })
+    clientId: Client
 }
