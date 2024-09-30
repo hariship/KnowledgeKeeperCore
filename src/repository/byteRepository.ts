@@ -43,8 +43,21 @@ export class ByteRepository {
 
     // Find a byte by its ID
     async findByteById(byteId: number): Promise<Byte | null> {
-        return await this.byteRepo.findOneBy({ id: byteId });
+        return await this.byteRepo.findOne({
+            where: { id: byteId },
+            relations: ['docId']
+        });
     }
+
+    async findByteByClientAndDocument(documentId: number, byteId: number): Promise<Byte | null> {
+        return await this.byteRepo.findOne({
+          where: {
+            id: byteId,
+            docId: { id: documentId}, // Ensure it belongs to the correct document
+          },
+          relations: ['requestedBy', 'docId'],
+        });
+      }
 
     // Find a byte by its ID
     async createByte(byteInfo: any, user: UserDetails): Promise<Byte | null> {
@@ -64,7 +77,7 @@ export class ByteRepository {
         return byte;
     }
 
-    async getRecommendations(docId:string, byteInfo: string) {
+    async getRecommendations(docId:number | undefined, byteInfo: string) {
         try {
           const response = await axios.get(`http://18.116.71.195:5000/v1/recommend-bytes`, { params: { 
             input_text: byteInfo,

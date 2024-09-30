@@ -433,7 +433,7 @@ router.post('/modify', async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /clients/bytes/open:
+ * /clients/{clientId}/documents/{documentId}/bytes/open:
  *   get:
  *     tags:
  *       - Bytes
@@ -465,9 +465,22 @@ router.post('/modify', async (req: Request, res: Response) => {
 
 
 // Get all bytes with a status of 'open' and high recommendation counts
-router.get('/bytes/open', verifyToken, async (req, res) => {
+router.get('/:clientId/documents/:documentId/bytes/open', verifyToken, async (req, res) => {
   try {
-    const {docId} = req.query;
+    const docId = req.params.documentId;
+    const clientId = req.params.clientId;
+    // const documentRepository = new DocumentRepository();
+    const document = documentRepository.findDocumentByClientAndId(
+      parseInt(clientId),
+      parseInt(docId)
+    )
+    if(!docId){
+      return res.status(404).json({ 
+        status:'failed',
+        errorCode: 'DOCUMENT_NOT_FOUND',
+        message: 'Document not found'
+      });
+    }
     const byteRepo = new ByteRepository();
       const bytes = await byteRepo.findAllOpenWithHighRecommendations(docId);
       res.json({
@@ -481,12 +494,25 @@ router.get('/bytes/open', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /clients/bytes/closed:
+ * /clients/{clientId}/documents/{documentId}/bytes/closed:
  *   get:
  *     tags:
  *       - Bytes
  *     summary: "Get all bytes with a closed status and high resolved recommendation count"
- *     description: "Returns a list of all bytes that are marked as 'closed' and have a high resolved recommendation count."
+ *     description: "Returns a list of all bytes that are marked as 'closed' and have a high resolved recommendation count for a specific document and client."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         description: "The ID of the client"
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         description: "The ID of the document"
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: "Successfully retrieved all closed bytes with high resolved recommendation count."
@@ -495,7 +521,26 @@ router.get('/bytes/open', verifyToken, async (req, res) => {
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/definitions/Byte'
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     description: "ID of the byte"
+ *                   byteInfo:
+ *                     type: string
+ *                     description: "Information about the byte"
+ *                   noOfRecommendations:
+ *                     type: integer
+ *                     description: "Number of resolved recommendations"
+ *                   status:
+ *                     type: string
+ *                     description: "Status of the byte (closed)"
+ *                   isProcessedByRecommendation:
+ *                     type: boolean
+ *                     description: "Flag indicating if the byte is processed by recommendation"
+ *                   docId:
+ *                     type: integer
+ *                     description: "The document ID associated with this byte"
  *       500:
  *         description: "Internal server error."
  *         content:
@@ -509,32 +554,68 @@ router.get('/bytes/open', verifyToken, async (req, res) => {
  *                 message:
  *                   type: string
  *                   example: "Server error"
- * 
  */
 
 // Get all bytes with a status of 'closed' and high resolved recommendation counts
-router.get('/bytes/closed', verifyToken, async (req, res) => {
+router.get('/:clientId/documents/:documentId/bytes/closed', verifyToken, async (req, res) => {
   try {
-    const { docId } = req.query;
-    const byteRepo = new ByteRepository();
-      const bytes = await byteRepo.findAllClosedWithHighResolvedRecommendations(docId);
-      res.json({
-          status: 'success',
-          data: bytes
+    let { clientId, documentId }: any = req.params;
+
+    clientId = parseInt(clientId)
+    documentId = parseInt(documentId)
+    
+    // Validate if clientId and documentId are valid integers
+    if (clientId && isNaN(clientId) || isNaN(documentId)) {
+      return res.status(400).json({
+        status: 'failed',
+        message: 'Invalid clientId or documentId. Both should be integers.',
       });
+    }
+
+    const byteRepo = new ByteRepository();
+
+    // Fetch bytes with a status of 'closed' and high resolved recommendation counts for the given documentId
+    let bytes = await byteRepo.findAllClosedWithHighResolvedRecommendations(parseInt(documentId));
+
+    if (!bytes || bytes.length === 0) {
+      bytes = []
+    }
+
+    // If bytes are found, return them
+    res.json({
+      status: 'success',
+      data: bytes,
+    });
   } catch (error) {
-      res.status(500).json({ status: 'error', message: 'Failed to retrieve closed bytes' });
+    console.error('Error retrieving closed bytes:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to retrieve closed bytes. Please try again later.',
+    });
   }
 });
 
 /**
  * @swagger
- * /clients/bytes/delete:
+ * /clients/{clientId}/documents/{documentId}/bytes/delete:
  *   post:
  *     tags:
  *       - Bytes
  *     summary: "Delete a byte (recommendation)"
  *     description: "This API allows users to delete an existing byte. Note that this action cannot be undone."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         description: "The ID of the client"
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         description: "The ID of the document"
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -573,6 +654,19 @@ router.get('/bytes/closed', verifyToken, async (req, res) => {
  *                 message:
  *                   type: string
  *                   example: "Byte ID is required"
+ *       404:
+ *         description: "Byte not found"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Byte not found"
  *       500:
  *         description: "Internal server error"
  *         content:
@@ -589,31 +683,57 @@ router.get('/bytes/closed', verifyToken, async (req, res) => {
  */
 
 // Delete a byte (recommendation)
-router.post('/bytes/delete', verifyToken, async (req, res) => {
+router.post('/clients/:clientId/documents/:documentId/bytes/delete', verifyToken, async (req, res) => {
   const { byteId } = req.body;
-  if (!byteId) {
-      return res.status(400).json({ status: 'error', message: 'Byte ID is required' });
+  
+  if (!byteId || isNaN(byteId)) {
+    return res.status(400).json({ status: 'error', message: 'Valid Byte ID is required' });
   }
+
   try {
     const byteRepo = new ByteRepository();
-      const result = await byteRepo.deleteByte(byteId);
-      res.json({
-          status: 'success',
-          message: 'Byte deleted successfully'
-      });
+    
+    // Check if the byte exists before attempting to delete
+    const byteExists = await byteRepo.findByteById(byteId);
+    
+    if (!byteExists) {
+      return res.status(404).json({ status: 'error', message: 'Byte not found' });
+    }
+
+    // Delete the byte
+    await byteRepo.deleteByte(byteId);
+
+    res.json({
+      status: 'success',
+      message: 'Byte deleted successfully',
+    });
   } catch (error) {
-      res.status(500).json({ status: 'error', message: 'Failed to delete byte' });
+    console.error('Error deleting byte:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to delete byte' });
   }
 });
 
 /**
  * @swagger
- * /clients/bytes/create:
+ * /clients/{clientId}/documents/{documentId}/bytes/create:
  *   post:
  *     tags:
  *       - Bytes
  *     summary: "Create a byte (recommendation)"
  *     description: "This API allows users to create a new byte based on document interactions or suggestions."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         description: "The ID of the client"
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         description: "The ID of the document"
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -621,10 +741,6 @@ router.post('/bytes/delete', verifyToken, async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               documentId:
- *                 type: integer
- *                 description: "The ID of the document associated with the new byte"
- *                 example: 102
  *               recommendation:
  *                 type: string
  *                 description: "Detailed description or data for the byte"
@@ -634,6 +750,10 @@ router.post('/bytes/delete', verifyToken, async (req, res) => {
  *                 enum: ["CREATE", "UPDATE", "DELETE"]
  *                 description: "The action associated with this byte"
  *                 example: "CREATE"
+ *               userId:
+ *                 type: integer
+ *                 description: "The ID of the user creating the byte"
+ *                 example: 1001
  *     responses:
  *       200:
  *         description: "Byte created successfully."
@@ -679,27 +799,45 @@ router.post('/bytes/delete', verifyToken, async (req, res) => {
  */
 
 // Create a new byte (recommendation)
-router.post('/bytes/create', verifyToken, async (req, res) => {
-  const { documentId, recommendation, action,userId } = req.body;
-  if (!documentId || !recommendation || !action) {
-      return res.status(400).json({ status: 'error', message: 'All fields (documentId, recommendation, action) are required' });
-  }
-  try {
-      const byteRepo = new ByteRepository();
-      const newByte = await byteRepo.createByte({
-          documentId,
-          recommendation,
-          recommendationAction: action
-      }, userId);
-      res.json({
-          status: 'success',
-        });
-      } catch (error) {
-          res.status(500).json({ status: 'error', message: 'Failed to create byte' });
-      }
-  });
+router.post('/clients/:clientId/documents/:documentId/bytes/create', verifyToken, async (req, res) => {
+  const { recommendation, action, userId } = req.body;
+  let { clientId, documentId }: any = req.params;
 
-  /**
+  documentId = parseInt(documentId)
+  clientId = parseInt(clientId)
+
+  
+  // Validate the input fields
+  if (!documentId || !recommendation || !action || !userId) {
+    return res.status(400).json({ status: 'error', message: 'All fields (documentId, recommendation, action, userId) are required' });
+  }
+
+  if (isNaN(documentId) || isNaN(userId)) {
+    return res.status(400).json({ status: 'error', message: 'documentId and userId must be valid integers' });
+  }
+
+  try {
+    const byteRepo = new ByteRepository();
+
+    // Create the new byte
+    const newByte = await byteRepo.createByte({
+      documentId: parseInt(documentId),
+      recommendation,
+      recommendationAction: action,
+    }, userId);
+
+    res.json({
+      status: 'success',
+      message: 'Byte created successfully',
+      byte: newByte,  // Include byte data in response
+    });
+  } catch (error) {
+    console.error('Error creating byte:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to create byte' });
+  }
+});
+
+/**
  * @swagger
  * /clients/clientDetails:
  *   get:
@@ -786,7 +924,7 @@ router.post('/bytes/create', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /clients/recommendations:
+ * /clients/{clientId}/bytes/{byteId}/recommendations:
  *   get:
  *     tags:
  *       - Recommendations
@@ -840,18 +978,22 @@ router.post('/bytes/create', verifyToken, async (req, res) => {
  *                   type: string
  *                   example: "Server error"
  */
-router.get('/recommendations', verifyToken, async (req, res) => {
-  const { byteId, docId } = req.query;
-  if (!byteId || byteId !== 'string' || docId !== 'string') {
-      return res.status(400).json({
-          status: 'error',
-          message: 'Document ID is required'
-      });
-  }
+router.get('/:clientId/bytes/:byteId/recommendations', verifyToken, async (req, res) => {
+  const byteId = parseInt(req.params.documentId);
+  const clientId = parseInt(req.params.clientId)
+
 
   try {
       const byteRepo = new ByteRepository();
-      const byte =  await byteRepo.findByteById(parseInt(byteId, 10));
+      const byte =  await byteRepo.findByteById(byteId);
+      const docId = byte?.docId?.id
+      if(!docId){
+        return res.status(404).json({ 
+          status:'failed',
+          errorCode: 'DOCUMENT_NOT_FOUND',
+          message: 'Document not found'
+        });
+      }
       if(byte){
         const recommendations = await byteRepo.getRecommendations(docId,byte?.byteInfo);
         res.json({
@@ -860,14 +1002,14 @@ router.get('/recommendations', verifyToken, async (req, res) => {
         });
       }else{
         res.status(400).json({
-          status: 'error',
+          status: 'failed',
           message: 'Byte is incorrect'
       });
       }
       
   } catch (error) {
       res.status(500).json({
-          status: 'error',
+          status: 'failed',
           message: 'Failed to retrieve recommendations'
       });
   }
@@ -1346,11 +1488,23 @@ router.get('/:clientId/documents/:docId/html', verifyToken, async (req: Request,
 
 /**
  * @swagger
- * /clients/bytes/{id}:
+ * /clients/{clientId}/documents/{documentId}/bytes/{id}:
  *   get:
- *     summary: Get a Byte by ID
+ *     summary: Get a Byte by ID for a specific client and document
  *     tags: [Bytes]
  *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *       - in: path
+ *         name: documentId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the document
  *       - in: path
  *         name: id
  *         schema:
@@ -1381,20 +1535,28 @@ router.get('/:clientId/documents/:docId/html', verifyToken, async (req: Request,
  *                   $ref: '#/components/schemas/Document'
  *       404:
  *         description: Byte not found
+ *       400:
+ *         description: Invalid Byte ID
  *       500:
  *         description: Server error
  */
-router.get('/bytes/:id', verifyToken, async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
+router.get('/clients/:clientId/documents/:documentId/bytes/:byteId', verifyToken, async (req: Request, res: Response) => {
+  let { clientId, documentId, byteId }: any = req.params;
 
-  if (!id) {
-    return res.status(400).json({ message: 'Invalid Byte ID' });
+  clientId = parseInt(byteId)
+  documentId = parseInt(documentId)
+  byteId = parseInt(byteId)
+
+  // Validate clientId, documentId, and byteId
+  if (isNaN(parseInt(clientId)) || isNaN(parseInt(documentId)) || isNaN(parseInt(byteId))) {
+    return res.status(400).json({ message: 'Invalid clientId, documentId, or byteId' });
   }
 
   try {
     const byteRepository = new ByteRepository();
-    // Fetch the byte by id
-    const byte = await byteRepository.findByteById(id);
+
+    // Fetch the byte by id, ensuring it belongs to the correct client and document
+    const byte = await byteRepository.findByteByClientAndDocument(documentId, byteId);
 
     if (!byte) {
       return res.status(404).json({ message: 'Byte not found' });
