@@ -39,4 +39,10 @@ export class UserRepository {
     async deleteUser(userId: number): Promise<void> {
         await this.userRepo.delete(userId); // Delete the user by ID
     }
+
+    // Check if a user exists by email or username
+    async isUserExists(email: string): Promise<boolean> {
+        const user = await this.userRepo.findOne({ where: { email } });
+        return !!user; // Return true if user exists, false otherwise
+    }
 }

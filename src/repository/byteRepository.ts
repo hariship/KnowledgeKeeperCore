@@ -18,7 +18,15 @@ export class ByteRepository {
             where: {
                 status: 'open',
                 docId
-            }
+            },
+            relations: ['docId']
+        });
+    }
+
+    async findByteWithDocById(id: number): Promise<Byte | null> {
+        return await this.byteRepo.findOne({
+            where: { id },
+            relations: ['requestedBy', 'docId'],
         });
     }
 
@@ -28,7 +36,8 @@ export class ByteRepository {
             where: {
                 status: 'closed',
                 docId
-            }
+            },
+            relations: ['docId']
         });
     }
 

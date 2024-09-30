@@ -9,7 +9,7 @@ import { ClientRepository } from '../repository/clientRepository';
 import { KnowledgeKeeperError } from '../errors/errors';
 import { KNOWLEDGE_KEEPER_ERROR } from '../errors/errorConstants';
 import { verifyToken } from '../modules/authModule';
-import { ByteRepository } from '../repository/ byteRepository';
+import { ByteRepository } from '../repository/byteRepository';
 import { UserRepository } from '../repository/userRepository';
 import { UserDetails } from '../entities/user_details';
 import { ChangeLogRepository } from '../repository/changeLogRespository';
@@ -19,20 +19,58 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage() }); // Store in memory for easy access
 const documentRepository = new DocumentRepository();
 
-router.get('/clientDetails', (req, res) => {
-    // Fetch client details logic
-    res.json({
-      status: true,
-      message: "Client details fetched successfully",
-      client: {
-        clientId: 1,
-        clientName: "Client Name",
-        documents: ["Folder1/Document1", "Folder2/Document2"]
-      }
-    });
-  });
 
+/**
+ * @swagger
+ * /users/exists:
+ *   post:
+ *     summary: Check if a user exists
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: The email of the user to check
+ *     responses:
+ *       200:
+ *         description: Returns whether the user exists or not
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exists:
+ *                   type: boolean
+ *                   description: True if the user exists, false otherwise
+ *       400:
+ *         description: Invalid email provided
+ *       500:
+ *         description: Server error
+ */
+router.post('/users/exists', verifyToken, async (req: Request, res: Response) => {
+  const { email } = req.body;
 
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+    const userRepository = new UserRepository();
+    // Check if the user exists
+    const exists = await userRepository.isUserExists(email);
+    
+    // Return the result
+    return res.status(200).json({ exists });
+  } catch (error: any) {
+    console.error('Error checking if user exists:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -1303,6 +1341,70 @@ router.get('/:clientId/documents/:docId/html', verifyToken, async (req: Request,
   } catch (error: any) {
       console.error('Error fetching HTML document:', error);
       return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /clients/bytes/{id}:
+ *   get:
+ *     summary: Get a Byte by ID
+ *     tags: [Bytes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the byte to retrieve
+ *     responses:
+ *       200:
+ *         description: The requested Byte
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 byteInfo:
+ *                   type: string
+ *                 requestedBy:
+ *                   $ref: '#/components/schemas/UserDetails'
+ *                 noOfRecommendations:
+ *                   type: integer
+ *                 isProcessedByRecommendation:
+ *                   type: boolean
+ *                 status:
+ *                   type: string
+ *                 docId:
+ *                   $ref: '#/components/schemas/Document'
+ *       404:
+ *         description: Byte not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/bytes/:id', verifyToken, async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({ message: 'Invalid Byte ID' });
+  }
+
+  try {
+    const byteRepository = new ByteRepository();
+    // Fetch the byte by id
+    const byte = await byteRepository.findByteById(id);
+
+    if (!byte) {
+      return res.status(404).json({ message: 'Byte not found' });
+    }
+
+    // Return the byte information as the response
+    return res.status(200).json(byte);
+  } catch (error: any) {
+    console.error('Error fetching Byte:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
   
