@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Folder } from './folder';
+import { Document } from './document';
 
 @Entity()
 export class Client {
@@ -19,4 +21,10 @@ export class Client {
 
     @Column({ nullable: true })
     totalNumberOfFolders: number;
+
+    @OneToMany(() => Folder, (folder: { client: any; }) => folder.client)
+    folders: Folder[];
+
+    @OneToMany(() => Document, (document) => document.client)
+    documents: Document[];
 }

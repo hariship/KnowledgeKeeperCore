@@ -20,5 +20,5 @@ export class Folder {
 
     @ManyToOne(() => Client)
     @JoinColumn({ name: "clientId" })
-    clientId: Client
+    client: Client
 }

@@ -11,8 +11,11 @@ export class ClientRepository {
 
     // Find a client by its ID
     async findClientById(clientId: number): Promise<Client | null> {
-        return await this.clientRepo.findOneBy({ id: clientId });
-    }
+      return await this.clientRepo.findOne({
+          where: { id: clientId },
+          relations: ['documents', 'folders'] // Include related entities
+      });
+  }
 
     // Find a client by its ID
     async findClientByName(clientName: string): Promise<Client | null> {
