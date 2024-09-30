@@ -1,12 +1,23 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../db/data_source';  // Import your data source
 import { Document } from '../entities/document';  // Import your Document entity
+import { Folder } from '../entities/folder';
 
 export class DocumentRepository {
     private documentRepo: Repository<Document>;
+    private folderRepo: Repository<Folder>;
 
     constructor() {
         this.documentRepo = AppDataSource.getRepository(Document);  // Get the Document repository from the AppDataSource
+        this.folderRepo = AppDataSource.getRepository(Folder);  // Get the Document repository from the AppDataSource
+    }
+
+    // Find document by both clientId and docId
+    async findDocumentByClientAndId(clientId: number, docId: number): Promise<Document | null> {
+        return await this.documentRepo.findOne({
+            where: { id: docId, client: { id: clientId } },
+            relations: ['client', 'folder', 'createdBy', 'updatedBy'],
+        });
     }
 
     // Create and save a new document
@@ -49,4 +60,23 @@ export class DocumentRepository {
     async deleteDocument(docId: number): Promise<void> {
         await this.documentRepo.delete(docId);
     }
+
+    // CRUD for Folders
+    async createFolder(folder: Partial<Folder>): Promise<Folder> {
+        return this.folderRepo.save(folder);
+    }
+
+    async getFolderById(id: number): Promise<Folder | null> {
+        return this.folderRepo.findOne({ where: { id }, relations: ['client'] });
+    }
+
+    async updateFolder(id: number, folderData: Partial<Folder>): Promise<Folder | null> {
+        await this.folderRepo.update(id, folderData);
+        return this.getFolderById(id);
+    }
+
+    async deleteFolder(id: number): Promise<void> {
+        await this.folderRepo.delete(id);
+    }
+
 }
