@@ -1147,7 +1147,7 @@ router.get('/:clientId/documents/:documentId', async (req, res) => {
 *       404:
 *         description: Document not found
 */
-router.put('/clients/:clientId/documents/:documentId', async (req, res) => {
+router.put('/:clientId/documents/:documentId', async (req, res) => {
   const documentId = parseInt(req.params.documentId);
   const documentData = req.body;
 
