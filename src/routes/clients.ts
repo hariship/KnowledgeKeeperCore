@@ -8,7 +8,7 @@ import { DocumentRepository } from '../repository/documentRepository';
 import { ClientRepository } from '../repository/clientRepository';
 import { KnowledgeKeeperError } from '../errors/errors';
 import { KNOWLEDGE_KEEPER_ERROR } from '../errors/errorConstants';
-import { verifyToken } from '../modules/authModule';
+import { authenticate, verifyToken } from '../modules/authModule';
 import { ByteRepository } from '../repository/byteRepository';
 import { UserRepository } from '../repository/userRepository';
 import { UserDetails } from '../entities/user_details';
@@ -52,7 +52,7 @@ const documentRepository = new DocumentRepository();
  *       500:
  *         description: Server error
  */
-router.post('/users/exists', verifyToken, async (req: Request, res: Response) => {
+router.post('/users/exists', authenticate, async (req: Request, res: Response) => {
   const { email } = req.body;
 
   if (!email) {
