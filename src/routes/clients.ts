@@ -1221,6 +1221,54 @@ router.post('/clients/:clientId/folders', async (req, res) => {
 });
 
 /**
+ * @swagger
+ * /clients/{clientId}/folders:
+ *   get:
+ *     summary: Get all folders for a specific client
+ *     tags: [Folders]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved all folders for the client
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Folder'
+ *       404:
+ *         description: No folders found for the client
+ *       400:
+ *         description: Invalid client ID
+ */
+router.get('/clients/:clientId/folders', async (req, res) => {
+  const clientId = parseInt(req.params.clientId);
+
+  if (isNaN(clientId)) {
+    return res.status(400).json({ error: 'Invalid client ID' });
+  }
+
+  try {
+    // Fetch all folders for the specific client
+    const folders = await documentRepository.findFoldersByClientId(clientId);
+
+    if (folders.length === 0) {
+      return res.status(404).json({ message: 'No folders found for this client' });
+    }
+
+    res.status(200).json(folders);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching folders' });
+  }
+});
+
+/**
 * @swagger
 * /clients/{clientId}/folders/{folderId}:
 *   get:

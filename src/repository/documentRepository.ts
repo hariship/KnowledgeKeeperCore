@@ -12,6 +12,15 @@ export class DocumentRepository {
         this.folderRepo = AppDataSource.getRepository(Folder);  // Get the Document repository from the AppDataSource
     }
 
+    async findFoldersByClientId(clientId: number): Promise<Folder[]> {
+        return await this.folderRepo.find({
+          where: {
+            client: { id: clientId },
+          },
+          relations: ['client'], // Fetch related client information
+        });
+      }
+
     // Find document by both clientId and docId
     async findDocumentByClientAndId(clientId: number, docId: number): Promise<Document | null> {
         return await this.documentRepo.findOne({
