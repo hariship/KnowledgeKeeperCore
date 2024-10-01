@@ -721,7 +721,7 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
  */
 
 // Delete a byte (recommendation)
-router.post('/clients/:clientId/bytes/delete', verifyToken, async (req, res) => {
+router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
   const { byteId } = req.body;
   
   if (!byteId || isNaN(byteId)) {
