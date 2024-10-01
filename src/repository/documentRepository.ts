@@ -71,7 +71,7 @@ export class DocumentRepository {
     }
 
     // CRUD for Folders
-    async createFolder(folder: Partial<Folder>): Promise<Folder> {
+    async createFolder(folder: any): Promise<Folder> {
         return this.folderRepo.save(folder);
     }
 

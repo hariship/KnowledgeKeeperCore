@@ -3,7 +3,7 @@ import { Client } from './client';
 
 @Entity()
 export class Folder {
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn({ type: 'int', name: 'id', unsigned: true })
     id: number;
 
     @Column()

@@ -1201,22 +1201,43 @@ router.delete('/clients/:clientId/documents/:documentId', async (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Folder'
+ *             type: object
+ *             properties:
+ *               folderName:
+ *                 type: string
+ *                 description: The name of the folder
+ *                 example: "New Project Folder"
  *     responses:
  *       201:
  *         description: Folder created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Folder'
  *       400:
  *         description: Invalid data
  */
 router.post('/clients/:clientId/folders', async (req, res) => {
   const clientId = parseInt(req.params.clientId);
-  const folderData = { ...req.body, client: { id: clientId } };
+  const { folderName } = req.body;
+
+  if (!folderName) {
+    return res.status(400).json({ error: 'Folder name is required' });
+  }
 
   try {
-      const newFolder = await documentRepository.createFolder(folderData);
-      res.status(201).json(newFolder);
+    const folderData = {
+      folderName,
+      client: { id: clientId }, // Link to client
+      isTrained: false,
+      reTrainingRequired: false,
+      totalNumberOfDocs: 0, // Initialize with 0 documents
+    };
+
+    const newFolder = await documentRepository.createFolder(folderData);
+    res.status(201).json(newFolder);
   } catch (error) {
-      res.status(400).json({ error: 'Could not create folder' });
+    res.status(400).json({ error: 'Could not create folder' });
   }
 });
 
