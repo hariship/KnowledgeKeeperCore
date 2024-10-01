@@ -24,7 +24,4 @@ export class Client {
 
     @OneToMany(() => Folder, (folder: { client: any; }) => folder.client)
     folders: Folder[];
-
-    @OneToMany(() => Document, (document) => document.client)
-    documents: Document[];
 }

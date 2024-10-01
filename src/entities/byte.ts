@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { UserDetails } from './user_details';
 import { Document } from './document';
+import { Client } from './client';
 
 @Entity()
 export class Byte {
@@ -26,4 +27,8 @@ export class Byte {
     @ManyToOne(() => Document)
     @JoinColumn({name: 'docId'})
     docId: Document;
+
+    @ManyToOne(() => Client)
+    @JoinColumn({name: 'clientId'})
+    clientId: Client;
 }

@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Client } from './client';
+import {Document} from './document';
 
 @Entity()
 export class Folder {
@@ -21,4 +22,7 @@ export class Folder {
     @ManyToOne(() => Client)
     @JoinColumn({ name: "clientId" })
     client: Client
+    
+    @OneToMany(() => Document, (document: { folder: any; }) => document.folder)
+    documents: Document[];
 }

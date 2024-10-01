@@ -96,6 +96,12 @@ router.post('/users/exists', verifyToken, async (req: Request, res: Response) =>
  *               clientName:
  *                 type: string
  *                 description: "The client name associated with the document"
+ *               folderId:
+ *                 type: integer
+ *                 description: "The folderId associated with the document"
+ *               folderName:
+ *                 type: string
+ *                 description: "The folder name associated with the document"
  *     responses:
  *       200:
  *         description: "Document uploaded successfully"
@@ -162,14 +168,18 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
   try {
     let clientId = req.body?.clientId;
     let clientName = req.body?.clientName;
+    let folderId = req.body?.folderId;
+    let folderName = req.body?.folderName;
+
+    console.log('folderName',folderName)
     let client: Partial<Client> = {};
 
     if(!clientName && !clientId){
       return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.BAD_CLIENT_REQUEST))
     }
+    const documentRepo = new DocumentRepository();
 
     // Step 1: Create and save document to database
-    const documentRepo = new DocumentRepository();
     const clientRepo = new ClientRepository();
     if(clientId){
       const clientFound = await clientRepo.findClientById(clientId)
@@ -192,6 +202,26 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     clientId = client?.id
     clientName = client.clientName
 
+    let folder;
+    if(folderId){
+      folder = await documentRepo.getFolderById(folderId)
+      if(!folder){
+        return res.json({
+          status: false,
+          message: 'No folder found with the id'
+        });
+      }
+    }else if(folderName){
+      const folderReq = {
+        folderName,
+        isTrained:false,
+        reTrainingRequired: false,
+        totalNumberOfDocs: 0,
+        client: clientId
+      }
+      folder = await documentRepo.createFolder(folderReq)
+      console.log(folder)
+    }
 
     // Step 2: Upload the file to S3 
     const s3Url = await uploadToS3(file, clientName);
@@ -199,16 +229,30 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let document = await documentRepo.findDocumentByDocUrl(s3Url);
 
     console.log(s3Url)
-
+    folder = folder?.id ? folder.id : null
+    let createdocumentRequest = {}
     if(!document || Object.values(document) == null){
-      document = await documentRepo.createDocument({
-        docContentUrl: s3Url,
-        versionNumber: 1.0,
-        isTrained: false,
-        reTrainingRequired: false,
-        updatedAt: new Date(),
-        client: clientId
-      });
+      if(folder){
+        createdocumentRequest = {
+          docContentUrl: s3Url,
+          versionNumber: 1.0,
+          isTrained: false,
+          reTrainingRequired: false,
+          updatedAt: new Date(),
+          client: clientId,
+          folder
+        }
+      }else{
+        createdocumentRequest = {
+          docContentUrl: s3Url,
+          versionNumber: 1.0,
+          isTrained: false,
+          reTrainingRequired: false,
+          updatedAt: new Date(),
+          client: clientId,
+        }
+      }
+      document = await documentRepo.createDocument(createdocumentRequest);
     }
     
     
@@ -228,6 +272,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
         versionNumber: document.versionNumber,
         docUrl: s3Url,
         clientId,
+        folder
       }
     });
   } catch (error) {
@@ -433,7 +478,7 @@ router.post('/modify', async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /clients/{clientId}/documents/{documentId}/bytes/open:
+ * /clients/{clientId}/bytes/open:
  *   get:
  *     tags:
  *       - Bytes
@@ -465,24 +510,11 @@ router.post('/modify', async (req: Request, res: Response) => {
 
 
 // Get all bytes with a status of 'open' and high recommendation counts
-router.get('/:clientId/documents/:documentId/bytes/open', verifyToken, async (req, res) => {
+router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
   try {
-    const docId = req.params.documentId;
     const clientId = req.params.clientId;
-    // const documentRepository = new DocumentRepository();
-    const document = documentRepository.findDocumentByClientAndId(
-      parseInt(clientId),
-      parseInt(docId)
-    )
-    if(!docId){
-      return res.status(404).json({ 
-        status:'failed',
-        errorCode: 'DOCUMENT_NOT_FOUND',
-        message: 'Document not found'
-      });
-    }
     const byteRepo = new ByteRepository();
-      const bytes = await byteRepo.findAllOpenWithHighRecommendations(docId);
+      const bytes = await byteRepo.findAllOpenWithHighRecommendations(parseInt(clientId));
       res.json({
           status: 'success',
           data: bytes
@@ -557,25 +589,16 @@ router.get('/:clientId/documents/:documentId/bytes/open', verifyToken, async (re
  */
 
 // Get all bytes with a status of 'closed' and high resolved recommendation counts
-router.get('/:clientId/documents/:documentId/bytes/closed', verifyToken, async (req, res) => {
+router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
   try {
     let { clientId, documentId }: any = req.params;
 
     clientId = parseInt(clientId)
-    documentId = parseInt(documentId)
     
-    // Validate if clientId and documentId are valid integers
-    if (clientId && isNaN(clientId) || isNaN(documentId)) {
-      return res.status(400).json({
-        status: 'failed',
-        message: 'Invalid clientId or documentId. Both should be integers.',
-      });
-    }
-
     const byteRepo = new ByteRepository();
 
     // Fetch bytes with a status of 'closed' and high resolved recommendation counts for the given documentId
-    let bytes = await byteRepo.findAllClosedWithHighResolvedRecommendations(parseInt(documentId));
+    let bytes = await byteRepo.findAllClosedWithHighResolvedRecommendations(parseInt(clientId));
 
     if (!bytes || bytes.length === 0) {
       bytes = []
@@ -683,7 +706,7 @@ router.get('/:clientId/documents/:documentId/bytes/closed', verifyToken, async (
  */
 
 // Delete a byte (recommendation)
-router.post('/clients/:clientId/documents/:documentId/bytes/delete', verifyToken, async (req, res) => {
+router.post('/clients/:clientId/bytes/delete', verifyToken, async (req, res) => {
   const { byteId } = req.body;
   
   if (!byteId || isNaN(byteId)) {

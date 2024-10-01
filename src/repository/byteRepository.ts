@@ -11,31 +11,31 @@ export class ByteRepository {
         this.byteRepo = AppDataSource.getRepository(Byte);  // Get the Document repository from the AppDataSource
     }
 
-    async findAllOpenWithHighRecommendations(docId:any) {
+    async findAllOpenWithHighRecommendations(clientId:any) {
         // This method should fetch all bytes marked as 'open' with a high recommendationCount.
         // Implement the query based on your database schema.
         return this.byteRepo.find({
             where: {
                 status: 'open',
-                docId
+                clientId
             },
-            relations: ['docId']
+            relations: ['clientId']
         });
     }
 
     async findByteWithDocById(id: number): Promise<Byte | null> {
         return await this.byteRepo.findOne({
             where: { id },
-            relations: ['requestedBy', 'docId'],
+            relations: ['requestedBy', 'clientId','docId'],
         });
     }
 
         // Fetch all bytes with 'closed' status and high resolved recommendation count
-    async findAllClosedWithHighResolvedRecommendations(docId:any) {
+    async findAllClosedWithHighResolvedRecommendations(clientId:any) {
         return this.byteRepo.find({
             where: {
                 status: 'closed',
-                docId
+                clientId
             },
             relations: ['docId']
         });
