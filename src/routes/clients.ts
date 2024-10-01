@@ -1062,7 +1062,7 @@ router.get('/:clientId/bytes/:byteId/recommendations', verifyToken, async (req, 
  *       400:
  *         description: Invalid data
  */
-router.post('/clients/:clientId/documents', async (req, res) => {
+router.post('/:clientId/documents', async (req, res) => {
   const clientId = parseInt(req.params.clientId);
   const documentData = { ...req.body, client: { id: clientId } };
 
@@ -1099,7 +1099,7 @@ router.post('/clients/:clientId/documents', async (req, res) => {
 *       404:
 *         description: Document not found
 */
-router.get('/clients/:clientId/documents/:documentId', async (req, res) => {
+router.get('/:clientId/documents/:documentId', async (req, res) => {
   const documentId = parseInt(req.params.documentId);
 
   try {
@@ -1187,7 +1187,7 @@ router.put('/clients/:clientId/documents/:documentId', async (req, res) => {
 *       404:
 *         description: Document not found
 */
-router.delete('/clients/:clientId/documents/:documentId', async (req, res) => {
+router.delete('/:clientId/documents/:documentId', async (req, res) => {
   const documentId = parseInt(req.params.documentId);
 
   try {
