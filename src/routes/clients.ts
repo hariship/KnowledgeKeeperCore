@@ -1247,7 +1247,7 @@ router.post('/clients/:clientId/folders', async (req, res) => {
  *       400:
  *         description: Invalid client ID
  */
-router.get('/clients/:clientId/folders', async (req, res) => {
+router.get('/:clientId/folders', async (req, res) => {
   const clientId = parseInt(req.params.clientId);
 
   if (isNaN(clientId)) {
