@@ -17,6 +17,9 @@ export class Document {
     folder: Folder;
 
     @Column()
+    documentName: string;
+
+    @Column()
     docContentUrl: string;
 
     @Column()

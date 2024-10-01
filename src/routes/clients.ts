@@ -93,6 +93,9 @@ router.post('/users/exists', authenticate, async (req: Request, res: Response) =
  *               clientId:
  *                 type: integer
  *                 description: "The client ID associated with the document"
+ *               documentName:
+ *                 type: string
+ *                 description: "The document name associated with the document"
  *               clientName:
  *                 type: string
  *                 description: "The client name associated with the document"
@@ -170,6 +173,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let clientName = req.body?.clientName;
     let folderId = req.body?.folderId;
     let folderName = req.body?.folderName;
+    let documentName = req?.body?.documentName;
 
     console.log('folderName',folderName)
     let client: Partial<Client> = {};
@@ -235,6 +239,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       if(folder){
         createdocumentRequest = {
           docContentUrl: s3Url,
+          documentName,
           versionNumber: 1.0,
           isTrained: false,
           reTrainingRequired: false,
