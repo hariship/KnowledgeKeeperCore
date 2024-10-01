@@ -22,7 +22,7 @@ const documentRepository = new DocumentRepository();
 
 /**
  * @swagger
- * /users/exists:
+ * /clients/users/exists:
  *   post:
  *     summary: Check if a user exists
  *     tags: [Users]
@@ -1217,7 +1217,7 @@ router.delete('/clients/:clientId/documents/:documentId', async (req, res) => {
  *       400:
  *         description: Invalid data
  */
-router.post('/clients/:clientId/folders', async (req, res) => {
+router.post('/:clientId/folders', async (req, res) => {
   const clientId = parseInt(req.params.clientId);
   const { folderName } = req.body;
 
@@ -1314,7 +1314,7 @@ router.get('/:clientId/folders', async (req, res) => {
 *       404:
 *         description: Folder not found
 */
-router.get('/clients/:clientId/folders/:folderId', async (req, res) => {
+router.get('/:clientId/folders/:folderId', async (req, res) => {
   const folderId = parseInt(req.params.folderId);
 
   try {
@@ -1362,7 +1362,7 @@ router.get('/clients/:clientId/folders/:folderId', async (req, res) => {
 *       404:
 *         description: Folder not found
 */
-router.put('/clients/:clientId/folders/:folderId', async (req, res) => {
+router.put('/:clientId/folders/:folderId', async (req, res) => {
   const folderId = parseInt(req.params.folderId);
   const folderData = req.body;
 
@@ -1402,7 +1402,7 @@ router.put('/clients/:clientId/folders/:folderId', async (req, res) => {
 *       404:
 *         description: Folder not found
 */
-router.delete('/clients/:clientId/folders/:folderId', async (req, res) => {
+router.delete('/:clientId/folders/:folderId', async (req, res) => {
   const folderId = parseInt(req.params.folderId);
 
   try {
@@ -1609,7 +1609,7 @@ router.get('/:clientId/documents/:docId/html', verifyToken, async (req: Request,
  *       500:
  *         description: Server error
  */
-router.get('/clients/:clientId/documents/:documentId/bytes/:byteId', verifyToken, async (req: Request, res: Response) => {
+router.get('/:clientId/documents/:documentId/bytes/:byteId', verifyToken, async (req: Request, res: Response) => {
   let { clientId, documentId, byteId }: any = req.params;
 
   clientId = parseInt(byteId)
