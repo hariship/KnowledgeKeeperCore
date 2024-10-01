@@ -202,7 +202,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     clientId = client?.id
     clientName = client.clientName
 
-    let folder;
+    let folder:any;
     if(folderId){
       folder = await documentRepo.getFolderById(folderId)
       if(!folder){
@@ -229,7 +229,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let document = await documentRepo.findDocumentByDocUrl(s3Url);
 
     console.log(s3Url)
-    folder = folder?.id ? folder.id : null
+    folderId = folder?.id ? folder.id : null
     let createdocumentRequest = {}
     if(!document || Object.values(document) == null){
       if(folder){
@@ -240,7 +240,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           reTrainingRequired: false,
           updatedAt: new Date(),
           client: clientId,
-          folder
+          folder: folderId
         }
       }else{
         createdocumentRequest = {
@@ -254,7 +254,11 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       }
       document = await documentRepo.createDocument(createdocumentRequest);
     }
-    
+
+    if(folder){
+      console.log(folder)
+      folder = await documentRepo.updateFolder(folder?.id, {totalNumberOfDocs: folder?.totalNumberOfDocs + 1});
+    }
     
     // Step 3: Place a request in RabbitMQ
     await sendMessageToRabbitMQ({
@@ -332,6 +336,11 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
  *                 type: integer
  *                 description: "The ID of the byte related to the modification, if already exists"
  *                 example: 456
+ *                 nullable: true
+ *               clientId:
+ *                 type: integer
+ *                 description: "The ID of the client related to the modification, if already exists"
+ *                 example: 2
  *                 nullable: true
  *               byte:
  *                 type: string
@@ -417,9 +426,9 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
  *                   example: "Error creating change log"
  */
 router.post('/modify', async (req: Request, res: Response) => {
-  let { userId, docId, byteId,byteInfo, changeRequestType, changes, changeSummary, isTrained } = req.body;
+  let { userId, docId, byteId,byteInfo, changeRequestType, changes, changeSummary, isTrained, clientId } = req.body;
 
-  if (!userId || !docId || !changeRequestType || !changes || !changeSummary || isTrained === undefined) {
+  if (!userId || !docId || !changeRequestType || !changes || !changeSummary || isTrained === undefined || clientId) {
     return res.status(400).json({
       status: 'failed',
       message: 'Missing required fields',
@@ -449,7 +458,7 @@ router.post('/modify', async (req: Request, res: Response) => {
 
   if(!byteId){
     const byteRepo = new ByteRepository();
-    byteDetails = await byteRepo.createByte(byteInfo, userDetails)
+    byteDetails = await byteRepo.createByte(byteInfo, userDetails,clientId)
   }else{
     const byteRepo = new ByteRepository();
     byteDetails = await byteRepo.findByteById(byteId)
@@ -483,7 +492,14 @@ router.post('/modify', async (req: Request, res: Response) => {
  *     tags:
  *       - Bytes
  *     summary: "Get all bytes with an open status and high recommendation count"
- *     description: "Returns a list of all bytes that are marked as 'open' and have a high recommendation count."
+ *     description: "Returns a list of all bytes that are marked as 'open' and have a high recommendation count for a specific client."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the client whose open bytes need to be fetched
  *     responses:
  *       200:
  *         description: "Successfully retrieved all open bytes with high recommendation count."
@@ -526,7 +542,7 @@ router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /clients/{clientId}/documents/{documentId}/bytes/closed:
+ * /clients/{clientId}/bytes/closed:
  *   get:
  *     tags:
  *       - Bytes
@@ -537,12 +553,6 @@ router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
  *         name: clientId
  *         required: true
  *         description: "The ID of the client"
- *         schema:
- *           type: integer
- *       - in: path
- *         name: documentId
- *         required: true
- *         description: "The ID of the document"
  *         schema:
  *           type: integer
  *     responses:
@@ -591,7 +601,7 @@ router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
 // Get all bytes with a status of 'closed' and high resolved recommendation counts
 router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
   try {
-    let { clientId, documentId }: any = req.params;
+    let { clientId }: any = req.params;
 
     clientId = parseInt(clientId)
     
@@ -620,7 +630,7 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /clients/{clientId}/documents/{documentId}/bytes/delete:
+ * /clients/{clientId}/bytes/delete:
  *   post:
  *     tags:
  *       - Bytes
@@ -738,7 +748,7 @@ router.post('/clients/:clientId/bytes/delete', verifyToken, async (req, res) => 
 
 /**
  * @swagger
- * /clients/{clientId}/documents/{documentId}/bytes/create:
+ * /clients/{clientId}/bytes/create:
  *   post:
  *     tags:
  *       - Bytes
@@ -749,12 +759,6 @@ router.post('/clients/:clientId/bytes/delete', verifyToken, async (req, res) => 
  *         name: clientId
  *         required: true
  *         description: "The ID of the client"
- *         schema:
- *           type: integer
- *       - in: path
- *         name: documentId
- *         required: true
- *         description: "The ID of the document"
  *         schema:
  *           type: integer
  *     requestBody:
@@ -768,15 +772,14 @@ router.post('/clients/:clientId/bytes/delete', verifyToken, async (req, res) => 
  *                 type: string
  *                 description: "Detailed description or data for the byte"
  *                 example: "Potential update to section 4.3 regarding compliance."
- *               action:
- *                 type: string
- *                 enum: ["CREATE", "UPDATE", "DELETE"]
- *                 description: "The action associated with this byte"
- *                 example: "CREATE"
+ *               docId:
+ *                 type: integer
+ *                 description: "The document for which the byte belong to (optional)"
+ *                 example: 1
  *               userId:
  *                 type: integer
  *                 description: "The ID of the user creating the byte"
- *                 example: 1001
+ *                 example: 2
  *     responses:
  *       200:
  *         description: "Byte created successfully."
@@ -822,32 +825,27 @@ router.post('/clients/:clientId/bytes/delete', verifyToken, async (req, res) => 
  */
 
 // Create a new byte (recommendation)
-router.post('/clients/:clientId/documents/:documentId/bytes/create', verifyToken, async (req, res) => {
-  const { recommendation, action, userId } = req.body;
-  let { clientId, documentId }: any = req.params;
+router.post('/:clientId/bytes/create', verifyToken, async (req, res) => {
+  const { recommendation, userId } = req.body;
+  let { clientId }: any = req.params;
 
-  documentId = parseInt(documentId)
   clientId = parseInt(clientId)
 
   
   // Validate the input fields
-  if (!documentId || !recommendation || !action || !userId) {
-    return res.status(400).json({ status: 'error', message: 'All fields (documentId, recommendation, action, userId) are required' });
+  if (!recommendation || !userId) {
+    return res.status(400).json({ status: 'error', message: 'All fields (documentId, recommendation, userId) are required' });
   }
 
-  if (isNaN(documentId) || isNaN(userId)) {
-    return res.status(400).json({ status: 'error', message: 'documentId and userId must be valid integers' });
+  if (isNaN(userId)) {
+    return res.status(400).json({ status: 'error', message: 'userId must be valid integers' });
   }
 
   try {
     const byteRepo = new ByteRepository();
 
     // Create the new byte
-    const newByte = await byteRepo.createByte({
-      documentId: parseInt(documentId),
-      recommendation,
-      recommendationAction: action,
-    }, userId);
+    const newByte = await byteRepo.createByte(recommendation, userId,clientId);
 
     res.json({
       status: 'success',
@@ -1580,7 +1578,7 @@ router.get('/:clientId/documents/:docId/html', verifyToken, async (req: Request,
 
 /**
  * @swagger
- * /clients/{clientId}/documents/{documentId}/bytes/{id}:
+ * /clients/{clientId}/bytes/{id}:
  *   get:
  *     summary: Get a Byte by ID for a specific client and document
  *     tags: [Bytes]
@@ -1591,12 +1589,6 @@ router.get('/:clientId/documents/:docId/html', verifyToken, async (req: Request,
  *           type: integer
  *         required: true
  *         description: The ID of the client
- *       - in: path
- *         name: documentId
- *         schema:
- *           type: integer
- *         required: true
- *         description: The ID of the document
  *       - in: path
  *         name: id
  *         schema:
@@ -1632,15 +1624,14 @@ router.get('/:clientId/documents/:docId/html', verifyToken, async (req: Request,
  *       500:
  *         description: Server error
  */
-router.get('/:clientId/documents/:documentId/bytes/:byteId', verifyToken, async (req: Request, res: Response) => {
-  let { clientId, documentId, byteId }: any = req.params;
+router.get('/:clientId/bytes/:byteId', verifyToken, async (req: Request, res: Response) => {
+  let { clientId, byteId }: any = req.params;
 
   clientId = parseInt(byteId)
-  documentId = parseInt(documentId)
   byteId = parseInt(byteId)
 
   // Validate clientId, documentId, and byteId
-  if (isNaN(parseInt(clientId)) || isNaN(parseInt(documentId)) || isNaN(parseInt(byteId))) {
+  if (isNaN(parseInt(clientId)) ||  isNaN(parseInt(byteId))) {
     return res.status(400).json({ message: 'Invalid clientId, documentId, or byteId' });
   }
 
@@ -1648,7 +1639,7 @@ router.get('/:clientId/documents/:documentId/bytes/:byteId', verifyToken, async 
     const byteRepository = new ByteRepository();
 
     // Fetch the byte by id, ensuring it belongs to the correct client and document
-    const byte = await byteRepository.findByteByClientAndDocument(documentId, byteId);
+    const byte = await byteRepository.findByteByClientAndDocument(byteId);
 
     if (!byte) {
       return res.status(404).json({ message: 'Byte not found' });

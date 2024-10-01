@@ -80,7 +80,8 @@ export class DocumentRepository {
     }
 
     async updateFolder(id: number, folderData: Partial<Folder>): Promise<Folder | null> {
-        await this.folderRepo.update(id, folderData);
+        console.log(id,folderData)
+        await this.folderRepo.update({id}, folderData);
         return this.getFolderById(id);
     }
 

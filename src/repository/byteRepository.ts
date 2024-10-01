@@ -49,23 +49,24 @@ export class ByteRepository {
         });
     }
 
-    async findByteByClientAndDocument(documentId: number, byteId: number): Promise<Byte | null> {
+    async findByteByClientAndDocument(byteId: number): Promise<Byte | null> {
         return await this.byteRepo.findOne({
           where: {
-            id: byteId,
-            docId: { id: documentId}, // Ensure it belongs to the correct document
+            id: byteId
           },
           relations: ['requestedBy', 'docId'],
         });
       }
 
     // Find a byte by its ID
-    async createByte(byteInfo: any, user: UserDetails): Promise<Byte | null> {
+    async createByte(byteInfo: any, user: UserDetails, clientId:any): Promise<Byte | null> {
         const newByte = await this.byteRepo.create({
             byteInfo,
             requestedBy: user,
             noOfRecommendations: 0,
-            isProcessedByRecommendation: false
+            isProcessedByRecommendation: false,
+            status: 'open',
+            clientId
           });
           return await this.byteRepo.save(newByte);
     }
