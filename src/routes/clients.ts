@@ -648,12 +648,6 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
  *         description: "The ID of the client"
  *         schema:
  *           type: integer
- *       - in: path
- *         name: documentId
- *         required: true
- *         description: "The ID of the document"
- *         schema:
- *           type: integer
  *     requestBody:
  *       required: true
  *       content:
