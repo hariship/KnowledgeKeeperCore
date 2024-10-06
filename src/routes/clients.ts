@@ -951,11 +951,17 @@ router.post('/:clientId/bytes/create', verifyToken, async (req, res) => {
  *     summary: "Fetch recommendations for a specific document"
  *     description: "Makes an external API call to retrieve recommendations based on the document ID."
  *     parameters:
- *       - in: query
- *         name: docId
+ *       - in: path
+ *         name: clientId
  *         required: true
  *         type: string
- *         description: "The ID of the document for which recommendations are being requested."
+ *         description: "The ID of the client for which recommendations are being requested."
+ *       - in: path
+ *         name: byteId
+ *         required: true
+ *         description: "The ID of the byte for which recommendations is required"
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: "Recommendations retrieved successfully."
