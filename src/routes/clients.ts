@@ -14,6 +14,8 @@ import { UserRepository } from '../repository/userRepository';
 import { UserDetails } from '../entities/user_details';
 import { ChangeLogRepository } from '../repository/changeLogRespository';
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() }); // Store in memory for easy access
@@ -1043,39 +1045,195 @@ router.get('/:clientId/bytes/:byteId/recommendations', verifyToken, async (req, 
 
 /**
  * @swagger
- * /clients/{clientId}/documents:
+ * /{clientId}/documents:
  *   post:
- *     summary: Create a new document for a client
- *     tags: [Documents]
+ *     summary: "Upload an HTML document to S3, associate it with a client and folder, and create a document entry in the database"
+ *     tags:
+ *       - Document Management
  *     parameters:
  *       - in: path
  *         name: clientId
  *         schema:
  *           type: integer
  *         required: true
- *         description: The ID of the client
+ *         description: "The client ID associated with the document"
  *     requestBody:
- *       description: Document data
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Document'
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: "The HTML file to upload"
+ *               documentName:
+ *                 type: string
+ *                 description: "The document name associated with the document"
+ *               folderId:
+ *                 type: integer
+ *                 description: "The folder ID associated with the document"
+ *               folderName:
+ *                 type: string
+ *                 description: "The folder name associated with the document (only required if folderId is not provided)"
  *     responses:
  *       201:
- *         description: Document created successfully
+ *         description: "Document created and uploaded successfully"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Document created successfully"
+ *                 document:
+ *                   type: object
+ *                   properties:
+ *                     docId:
+ *                       type: integer
+ *                       example: 123
+ *                     versionNumber:
+ *                       type: number
+ *                       example: 1.0
+ *                     docUrl:
+ *                       type: string
+ *                       example: "https://bucket-name.s3.region.amazonaws.com/file-name"
+ *                     clientId:
+ *                       type: integer
+ *                       example: 456
+ *                     documentName:
+ *                       type: string
+ *                       example: "Sample Document"
+ *                     folder:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                           example: 789
+ *                         folderName:
+ *                           type: string
+ *                           example: "Sample Folder"
+ *                     htmlContent:
+ *                       type: string
+ *                       example: "<html>Document content</html>"
  *       400:
- *         description: Invalid data
+ *         description: "Bad request - Missing file, clientId or folder information"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "No file uploaded or invalid folder information"
+ *       500:
+ *         description: "Internal server error"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
  */
-router.post('/:clientId/documents', async (req, res) => {
+router.post('/:clientId/documents', upload.single('file'), async (req, res) => {
   const clientId = parseInt(req.params.clientId);
-  const documentData = { ...req.body, client: { id: clientId } };
+  const file = req?.file;
+  let folderId = req.body?.folderId;
+  let folderName = req.body?.folderName;
+  let documentName = req?.body?.documentName;
+
+  if (!file) {
+    return res.status(400).json({ status: false, message: 'No file uploaded' });
+  }
 
   try {
-      const newDocument = await documentRepository.createDocument(documentData);
-      res.status(201).json(newDocument);
+    const documentData = { ...req.body, client: { id: clientId } };
+
+    // Step 1: Check if the client exists
+    const clientRepo = new ClientRepository();
+    const clientFound = await clientRepo.findClientById(clientId);
+    if (!clientFound || Object.values(clientFound) == null) {
+      return res.status(400).json({ status: false, message: 'Client not found' });
+    }
+
+    const filePath = path.join(file.destination, file.filename);
+    const fsPromise = fs.promises;
+    const htmlContent = await fsPromise.readFile(filePath,'utf-8');
+
+    // Step 2: Handle folder by ID or Name
+    const documentRepo = new DocumentRepository();
+    let folder: any;
+    if (folderId) {
+      folder = await documentRepo.getFolderById(folderId);
+      if (!folder) {
+        return res.status(400).json({ status: false, message: 'Folder not found' });
+      }
+    } else if (folderName) {
+      // If folder name is given, create or fetch the folder
+      const folderReq = {
+        folderName,
+        isTrained: false,
+        reTrainingRequired: false,
+        totalNumberOfDocs: 0,
+        client: clientId,
+      };
+      folder = await documentRepo.createFolder(folderReq);
+    }
+
+    // Step 3: Upload the file to S3
+    const clientName = clientFound.clientName;
+    const s3Url = await uploadToS3(file, clientName);
+
+    // Step 4: Update the document data with the S3 URL, folder, and file content
+    documentData.docContentUrl = s3Url;
+    documentData.versionNumber = 1.0;
+    documentData.isTrained = false;
+    documentData.reTrainingRequired = false;
+    documentData.updatedAt = new Date();
+
+    // Associate the folder if one exists
+    if (folder) {
+      documentData.folder = folder.id;
+    }
+
+    // Step 5: Create and save the document to the database
+    const newDocument = await documentRepository.createDocument(documentData);
+
+    // Step 6: Update the folder's document count if necessary
+    if (folder) {
+      folder = await documentRepo.updateFolder(folder.id, { totalNumberOfDocs: folder.totalNumberOfDocs + 1 });
+    }
+
+    // Step 7: Return the response including the S3 URL and document details
+    return res.status(201).json({
+      status: true,
+      message: 'Document created successfully',
+      document: {
+        docId: newDocument.id,
+        versionNumber: newDocument.versionNumber,
+        docUrl: s3Url,
+        clientId,
+        documentName: newDocument.documentName,
+        folder,  // Return folder information if available
+        htmlContent: htmlContent,  // Assuming the document contains this field
+      }
+    });
   } catch (error) {
-      res.status(400).json({ error: 'Could not create document' });
+    console.error('Error creating document:', error);
+    return res.status(500).json({ status: false, message: 'Server error' });
   }
 });
 
