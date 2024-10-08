@@ -1151,7 +1151,7 @@ router.get('/:clientId/bytes/:byteId/recommendations', verifyToken, async (req, 
 router.post('/:clientId/documents', upload.single('file'), async (req, res) => {
   const clientId = parseInt(req.params.clientId);
   const file = req?.file;
-  let folderId = req.body?.folderId;
+  let folderId = parseInt(req.body.folderId, 10);
   let folderName = req.body?.folderName;
   let documentName = req?.body?.documentName;
 
