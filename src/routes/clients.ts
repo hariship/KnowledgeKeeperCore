@@ -173,7 +173,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
   try {
     let clientId = req.body?.clientId;
     let clientName = req.body?.clientName;
-    let folderId = req.body?.folderId;
+    let folderId = parseInt(req.body.folderId, 10);
     let folderName = req.body?.folderName;
     let documentName = req?.body?.documentName;
 
