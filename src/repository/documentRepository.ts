@@ -87,7 +87,37 @@ export class DocumentRepository {
     }
 
     async deleteFolder(id: number): Promise<void> {
-        await this.folderRepo.delete(id);
+         // Begin a transaction to ensure all or nothing gets deleted
+        const queryRunner = this.folderRepo.manager.connection.createQueryRunner();
+        await queryRunner.startTransaction();
+
+        try {
+            // Step 1: Delete all documents associated with the folder
+            await queryRunner.manager
+                .createQueryBuilder()
+                .delete()
+                .from("document")
+                .where("folderId = :folderId", { folderId: id })
+                .execute();
+
+            // Step 2: Delete the folder itself
+            await queryRunner.manager
+                .createQueryBuilder()
+                .delete()
+                .from("folder")
+                .where("id = :id", { id })
+                .execute();
+
+            // Commit the transaction
+            await queryRunner.commitTransaction();
+        } catch (error:any) {
+            // Rollback the transaction in case of any error
+            await queryRunner.rollbackTransaction();
+            console.log(`Failed to delete folder and documents:`,error?.message)
+        } finally {
+            // Release the query runner
+            await queryRunner.release();
+        }
     }
 
 }
