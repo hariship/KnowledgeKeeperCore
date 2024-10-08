@@ -1155,8 +1155,8 @@ router.post('/:clientId/documents', upload.single('file'), async (req, res) => {
   let folderName = req.body?.folderName;
   let documentName = req?.body?.documentName;
 
-  if (!file) {
-    return res.status(400).json({ status: false, message: 'No file uploaded' });
+  if (!file && !documentName) {
+    return res.status(400).json({ status: false, message: 'No file uploaded or no documentName provided'});
   }
 
   try {
@@ -1168,10 +1168,17 @@ router.post('/:clientId/documents', upload.single('file'), async (req, res) => {
     if (!clientFound || Object.values(clientFound) == null) {
       return res.status(400).json({ status: false, message: 'Client not found' });
     }
+    let s3Url = '', htmlContent = '';
+    if(file){
+      const filePath = path.join(file.destination, file.filename);
+      const fsPromise = fs.promises;
+      const htmlContent = await fsPromise.readFile(filePath,'utf-8');  
+      const clientName = clientFound.clientName;
+      const s3Url = await uploadToS3(file, clientName);
 
-    const filePath = path.join(file.destination, file.filename);
-    const fsPromise = fs.promises;
-    const htmlContent = await fsPromise.readFile(filePath,'utf-8');
+      // Step 4: Update the document data with the S3 URL, folder, and file content
+      documentData.docContentUrl = s3Url;
+    }
 
     // Step 2: Handle folder by ID or Name
     const documentRepo = new DocumentRepository();
@@ -1193,12 +1200,6 @@ router.post('/:clientId/documents', upload.single('file'), async (req, res) => {
       folder = await documentRepo.createFolder(folderReq);
     }
 
-    // Step 3: Upload the file to S3
-    const clientName = clientFound.clientName;
-    const s3Url = await uploadToS3(file, clientName);
-
-    // Step 4: Update the document data with the S3 URL, folder, and file content
-    documentData.docContentUrl = s3Url;
     documentData.versionNumber = 1.0;
     documentData.isTrained = false;
     documentData.reTrainingRequired = false;
@@ -1310,15 +1311,37 @@ router.get('/:clientId/documents/:documentId', async (req, res) => {
 *       404:
 *         description: Document not found
 */
-router.put('/:clientId/documents/:documentId', async (req, res) => {
+router.put('/:clientId/documents/:documentId', upload.single('file'), async (req, res) => {
   const documentId = parseInt(req.params.documentId);
   const documentData = req.body;
 
+  const file = req?.file
+
+  let s3Url = '', htmlContent = '';
+  if(file){
+    let document = await documentRepository.findDocumentById(documentId);
+    if(!document){
+      res.status(400).json({message:'Error validating the document', status:'failed'})
+    }
+    const clientFound = document?.client 
+    const filePath = path.join(file.destination, file.filename);
+    const fsPromise = fs.promises;
+    const htmlContent = await fsPromise.readFile(filePath,'utf-8');  
+    const clientName = clientFound?.clientName;
+    if(clientName){
+      s3Url = await uploadToS3(file, clientName);
+    }
+
+    // Step 4: Update the document data with the S3 URL, folder, and file content
+    documentData.docContentUrl = s3Url;
+  }
+
   try {
-      const updatedDocument = await documentRepository.updateDocument(documentId, documentData);
+      const updatedDocument:any = await documentRepository.updateDocument(documentId, documentData);
       if (!updatedDocument) {
           return res.status(404).json({ error: 'Document not found' });
       }
+      updatedDocument.htmlContent = htmlContent
       res.status(200).json(updatedDocument);
   } catch (error) {
       res.status(400).json({ error: 'Could not update document' });

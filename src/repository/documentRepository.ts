@@ -37,7 +37,8 @@ export class DocumentRepository {
 
     // Find a document by its ID
     async findDocumentById(docId: number): Promise<Document | null> {
-        return await this.documentRepo.findOneBy({ id: docId });
+        return await this.documentRepo.findOne({
+           where: { id: docId },relations:['client']});
     }
 
     // Find a document by its Doc Url
