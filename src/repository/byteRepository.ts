@@ -71,14 +71,33 @@ export class ByteRepository {
             status: 'open',
             clientId
           });
-          return await this.byteRepo.save(newByte);
-    }
+          let byteSaved = await this.byteRepo.save(newByte);
+          let recommendations = await this.callExternalRecommendationService(byteSaved);
+          return byteSaved;
+    }   
 
     async deleteByte(byteId:any): Promise<Byte | null> {
         const byte = await this.byteRepo.findOne({ where: { id: byteId } });
         if (!byte) throw new Error('Byte not found');
         await this.byteRepo.remove(byte);
         return byte;
+    }
+
+    async callExternalRecommendationService(byte: Partial<Byte>){
+        let response = await axios.post(
+            `http://3.142.50.84:5000/v1/predict`,
+            { 
+              input_text: byte?.byteInfo,
+              data_id: "Door Dash Test 1"
+            },
+            {
+              headers: {
+                'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499',
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          return response;
     }
 
     async getRecommendations(byte: Partial<Byte>) {
