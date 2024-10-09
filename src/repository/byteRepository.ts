@@ -176,7 +176,7 @@ export class ByteRepository {
             }
           }
 
-          response.documents[0].recommendations.push(recommendations)
+          response.documents[0].recommendations.push(...recommendations)
 
           return response;
         } catch (error) {
