@@ -1006,24 +1006,17 @@ router.post('/:clientId/bytes/create', verifyToken, async (req, res) => {
  *                   type: string
  *                   example: "Server error"
  */
-router.get('/:clientId/bytes/:byteId/recommendations', verifyToken, async (req, res) => {
-  const byteId = parseInt(req.params.documentId);
-  const clientId = parseInt(req.params.clientId)
+router.get('/:clientId/bytes/:byteId/recommendations', verifyToken, async (req:any, res) => {
+  const byteId = parseInt(req.params.byteId);
+  const clientId = parseInt(req.params.clientId);
 
 
   try {
       const byteRepo = new ByteRepository();
       const byte =  await byteRepo.findByteById(byteId);
-      const docId = byte?.docId?.id
-      if(!docId){
-        return res.status(404).json({ 
-          status:'failed',
-          errorCode: 'DOCUMENT_NOT_FOUND',
-          message: 'Document not found'
-        });
-      }
+      const userId = req.user.userId; 
       if(byte){
-        const recommendations = await byteRepo.getRecommendations(docId,byte?.byteInfo);
+        const recommendations = await byteRepo.getRecommendations(byte);
         res.json({
             status: 'success',
             data: recommendations

@@ -3,11 +3,14 @@ import { Byte } from "../entities/byte";
 import { AppDataSource } from "../db/data_source";
 import { UserDetails } from "../entities/user_details";
 import axios from 'axios';  
+import { UserRepository } from "./userRepository";
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
+    private userRepo: Repository<UserDetails>;
 
     constructor() {
+        this.userRepo = AppDataSource.getRepository(UserDetails);
         this.byteRepo = AppDataSource.getRepository(Byte);  // Get the Document repository from the AppDataSource
     }
 
@@ -78,17 +81,45 @@ export class ByteRepository {
         return byte;
     }
 
-    async getRecommendations(docId:number | undefined, byteInfo: string) {
+    async getRecommendations(byte: Partial<Byte>) {
         try {
-          const response = await axios.get(`http://18.116.71.195:5000/v1/recommend-bytes`, { params: { 
-            input_text: byteInfo,
-            data_id: docId,
-            s3_db_path: '',
-            s3_sentenced_document_path: "",
-            s3_nli_model_path: "",
-            s3_summarizer_model_path: ""
-          }});
-          return response.data; // Assuming the response is the data we want
+          let response = await axios.post(
+            `http://3.142.50.84:5000/v1/predict`,
+            { 
+              input_text: byte?.byteInfo,
+              data_id: "Door Dash Test 1"
+            },
+            {
+              headers: {
+                'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499',
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          response = response.data
+          return {
+            request_id: byte.id,
+            request_text:
+              byte.byteInfo,
+            sender: byte?.requestedBy,
+            date_time: byte?.createdAt,
+            documents: [
+              {
+                doc_id: "Door Dash Test 1",
+                doc_content:
+                  '<html></html>',
+                recommendations: [
+                  {
+                    id: 1,
+                    change_request_type: response?.data[0]?.metadata.updation_type == 'new_section' ? 'Add' : 'Replace',
+                    change_request_text:
+                    response?.data[0]?.generated_text,
+                    previous_string: response?.data[0]?.section_content,
+                  }
+                ],
+              },
+            ],
+          };
         } catch (error) {
           console.error('Error fetching recommendations:', error);
           throw new Error('Failed to fetch recommendations');

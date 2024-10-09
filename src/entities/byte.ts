@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Timestamp } from 'typeorm';
 import { UserDetails } from './user_details';
 import { Document } from './document';
 import { Client } from './client';
@@ -31,4 +31,7 @@ export class Byte {
     @ManyToOne(() => Client)
     @JoinColumn({name: 'clientId'})
     clientId: Client;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', nullable: true })
+    createdAt: Date;
 }
