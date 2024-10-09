@@ -98,7 +98,7 @@ export class ByteRepository {
         await this.recommendationRepo.createQueryBuilder()
         .delete()
         .from(Recommendation)
-        .where("byte IN (:...byteId)", { byteId: byteId })
+        .where("byteId = :byteId", { byteId })
         .execute();
         await this.byteRepo.remove(byte);
         return byte;
