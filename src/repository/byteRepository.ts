@@ -83,6 +83,7 @@ export class ByteRepository {
           });
           await this.recommendationRepo.save(newRecommendation);
           byteSaved.noOfRecommendations = recommendationResponse?.data?.data.length
+          await this.byteRepo.save(byteSaved)
           return byteSaved;
     }   
 
