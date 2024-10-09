@@ -95,11 +95,11 @@ export class ByteRepository {
     async deleteByte(byteId:any): Promise<Byte | null> {
         const byte = await this.byteRepo.findOne({ where: { id: byteId } });
         if (!byte) throw new Error('Byte not found');
-        // await this.recommendationRepo.createQueryBuilder()
-        // .delete()
-        // .from(Recommendation)
-        // .where("byte IN (:...byteId)", { byteId: byteId })
-        // .execute();
+        await this.recommendationRepo.createQueryBuilder()
+        .delete()
+        .from(Recommendation)
+        .where("byte IN (:...byteId)", { byteId: byteId })
+        .execute();
         await this.byteRepo.remove(byte);
         return byte;
     }
