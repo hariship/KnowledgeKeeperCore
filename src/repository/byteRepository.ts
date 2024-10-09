@@ -4,13 +4,14 @@ import { AppDataSource } from "../db/data_source";
 import { UserDetails } from "../entities/user_details";
 import axios from 'axios';  
 import { UserRepository } from "./userRepository";
+import { Recommendation } from "../entities/recommendation";
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
-    private userRepo: Repository<UserDetails>;
+    private recommendationRepo: Repository<Recommendation>;
 
     constructor() {
-        this.userRepo = AppDataSource.getRepository(UserDetails);
+        this.recommendationRepo = AppDataSource.getRepository(Recommendation);
         this.byteRepo = AppDataSource.getRepository(Byte);  // Get the Document repository from the AppDataSource
     }
 
@@ -72,7 +73,16 @@ export class ByteRepository {
             clientId
           });
           let byteSaved = await this.byteRepo.save(newByte);
-          let recommendations = await this.callExternalRecommendationService(byteSaved);
+          let recommendationResponse = await this.callExternalRecommendationService(byteSaved);
+          // save recommendations
+          const newRecommendation = await this.recommendationRepo.create({
+            byte: byteSaved,
+            recommendation: recommendationResponse?.data?.data[0]?.generated_text,
+            // document: "Door Dash Test 1",
+            recommendationAction: recommendationResponse?.data?.data[0]?.metadata?.updation_type
+          });
+          await this.recommendationRepo.save(newRecommendation);
+          byteSaved.noOfRecommendations = recommendationResponse?.data?.data.length
           return byteSaved;
     }   
 

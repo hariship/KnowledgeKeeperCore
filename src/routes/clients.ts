@@ -826,9 +826,11 @@ router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
  */
 
 // Create a new byte (recommendation)
-router.post('/:clientId/bytes/create', verifyToken, async (req, res) => {
-  const { recommendation, userId } = req.body;
+router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
+  const { recommendation } = req.body;
   let { clientId }: any = req.params;
+
+  const userId = req.user.userId
 
   clientId = parseInt(clientId)
 

@@ -15,7 +15,7 @@ export class Recommendation {
     @JoinColumn({ name: "docId" })
     document: Document;
 
-    @Column("enum", { enum: ["ACCEPT", "REJECT"] })
+    @Column()
     recommendationAction: string;
 
     @Column("text")
