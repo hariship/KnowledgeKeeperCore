@@ -1677,41 +1677,31 @@ router.delete('/:clientId/folders/:folderId', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.get('/:clientId/documents/:docId/recommendations', verifyToken, async (req: Request, res: Response) => {
+router.get('/:clientId/documents/:docId/recommendations', verifyToken, async (req: any, res: Response) => {
   const clientId = parseInt(req.params.clientId);
   const docId = parseInt(req.params.docId);
 
-  if (!clientId || !docId) {
-      return res.status(400).json({ message: 'Invalid client ID or document ID' });
-  }
-
   try {
-      // Step 1: Fetch document details from the database by clientId and docId
-      const document = await documentRepository.findDocumentByClientAndId(clientId, docId);
-      if (!document) {
-          return res.status(404).json({ message: 'Document not found' });
-      }
-
-      // Step 2: Prepare the payload for the external recommendation API
-      const payload = {
-          input_text: document.docContentUrl,  // Assuming the document URL is used as input
-          data_id: docId.toString(),          // Converting docId to string as required
-          s3_bucket: process.env.S3_BUCKET_NAME,
-          s3_db_path: document.docContentUrl,  // Assuming you use the same path for recommendation
-          s3_sentenced_document_path: document.docContentUrl, // Example placeholder
-      };
-
-      // Step 3: Make a request to the external recommendation API
-      const recommendationResponse = await axios.post('http://18.116.71.195:5000/v1/recommend-bytes', payload);
-
-      // Step 4: Return the document details along with the recommendations
-      return res.status(200).json({
-          document,
-          recommendations: recommendationResponse.data
+      const byteRepo = new ByteRepository();
+      const document =  await documentRepository.findDocumentById(docId);
+      if(document){
+        const recommendations = await byteRepo.getRecommendationsBasedOnDocId(docId);
+        res.json({
+            status: 'success',
+            data: recommendations
+        });
+      }else{
+        res.status(400).json({
+          status: 'failed',
+          message: 'Document is incorrect or invalid'
       });
-  } catch (error: any) {
-      console.error('Error fetching recommendations:', error);
-      return res.status(500).json({ message: 'Server error', error: error.message });
+      }
+      
+  } catch (error) {
+      res.status(500).json({
+          status: 'failed',
+          message: 'Failed to retrieve recommendations'
+      });
   }
 });
 
