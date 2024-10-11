@@ -81,7 +81,7 @@ export class ByteRepository {
               const newRecommendation = await this.recommendationRepo.create({
                 byte: byteSaved,
                 recommendation: recommendationContent,
-                document: recommendationContent?.documentId,
+                document: recommendationContent?.document_id,
                 recommendationAction: recommendationContent?.metadata?.updation_type
               });
               await this.recommendationRepo.save(newRecommendation);
