@@ -81,7 +81,7 @@ export class ByteRepository {
               const newRecommendation = await this.recommendationRepo.create({
                 byte: byteSaved,
                 recommendation: recommendationContent,
-                document: recommendationResponse.data?.documentId,
+                document: recommendationContent?.documentId,
                 recommendationAction: recommendationContent?.metadata?.updation_type
               });
               await this.recommendationRepo.save(newRecommendation);
@@ -183,10 +183,9 @@ export class ByteRepository {
               byte: {
                 id: byte?.id
               }
-            }
+            },
+            relations: ['document']
           })
-
-          const docHTML = 'https://knowledgekeeper-docs.s3.us-east-2.amazonaws.com/Doordash/Doordash.html'
 
           const response:any = {
             request_id: byte.id,
@@ -197,7 +196,7 @@ export class ByteRepository {
             documents: [
               {
                 doc_id: byte.docId,
-                doc_content: docHTML
+                doc_content: byte.docId?.docContentUrl
                   ,
                 recommendations:[]
               }
