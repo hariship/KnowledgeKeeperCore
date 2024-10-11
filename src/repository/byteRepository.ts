@@ -6,6 +6,7 @@ import axios from 'axios';
 import { UserRepository } from "./userRepository";
 import { Recommendation } from "../entities/recommendation";
 import { Equal } from 'typeorm';
+import { DocumentRepository } from "./documentRepository";
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
@@ -123,58 +124,78 @@ export class ByteRepository {
 
     async getRecommendationsBasedOnDocId(documentId: number) {
       try {
-          // Fetch recommendations based on documentId
-          let recommendationsForDocument = await this.recommendationRepo.find({
-              where: {
-                  document: {
-                      id: documentId
-                  }
-              }
-          });
-  
-          // Replace the static document URL with dynamic content
-          const docHTML = `https://knowledgekeeper-docs.s3.us-east-2.amazonaws.com/${documentId}.html`;
-  
-          const response: any = {
-              request_id: documentId,
-              request_text: 'Request text based on the document',
-              sender: 'Sender Name', // You can replace this with actual sender data if available
-              date_time: new Date(), // This can be dynamically fetched from the document entity
-              documents: [
-                  {
-                      doc_id: documentId,
-                      doc_content: docHTML,
-                      recommendations: []
-                  }
-              ]
-          };
-  
-          const recommendations = [];
-  
-          if (recommendationsForDocument) {
-              for (let recommendation of recommendationsForDocument) {
-                  const recommendationJson = JSON.parse(recommendation?.recommendation);
-                  recommendations.push({
-                      id: recommendation.id,
-                      change_request_type:
-                          recommendation?.recommendationAction == 'new_section' ||
-                          recommendation?.recommendationAction == 'add'
-                              ? 'Add'
-                              : 'Replace',
-                      change_request_text: recommendationJson?.generated_text,
-                      previous_string: recommendationJson?.sectionContent
-                  });
-              }
-          }
-  
-          response.documents[0].recommendations.push(...recommendations);
-  
-          return response;
-      } catch (error) {
-          console.error('Error fetching recommendations:', error);
-          throw new Error('Failed to fetch recommendations');
-      }
-  }
+        // Fetch recommendations based on documentId
+        let recommendationsForDocument = await this.recommendationRepo.find({
+            where: {
+                document: {
+                    id: documentId
+                }
+            },
+            relations: ['byte'] // Ensure to load the related byte entity
+        });
+
+        // Fetch bytes associated with the document (assuming a relationship exists)
+        const bytes = await this.byteRepo.find({
+            where: {
+                docId: {
+                  id: documentId
+                }
+            }
+        });
+
+        // Replace the static document URL with dynamic content
+        const docHTML = `https://knowledgekeeper-docs.s3.us-east-2.amazonaws.com/${documentId}.html`;
+
+        // Initialize response
+        const response: any = {
+            document: {
+                doc_id: documentId,
+                doc_content: docHTML,
+                bytes: []
+            }
+        };
+
+        // Organize recommendations by bytes
+        const byteRecommendationsMap = new Map();
+
+        if (recommendationsForDocument) {
+            for (let recommendation of recommendationsForDocument) {
+                const byteId = recommendation.byte?.id; // Assuming each recommendation is associated with a byte
+                if (!byteRecommendationsMap.has(byteId)) {
+                    byteRecommendationsMap.set(byteId, []);
+                }
+                const recommendationJson = JSON.parse(recommendation?.recommendation);
+                byteRecommendationsMap.get(byteId).push({
+                    id: recommendation.id,
+                    change_request_type:
+                        recommendation?.recommendationAction == 'new_section' ||
+                        recommendation?.recommendationAction == 'add'
+                            ? 'Add'
+                            : 'Replace',
+                    change_request_text: recommendationJson?.generated_text,
+                    previous_string: recommendationJson?.sectionContent
+                });
+            }
+        }
+
+        // Add recommendations to each byte in the response
+        for (const byte of bytes) {
+            response.document.bytes.push({
+                request_id: byte.id, // Byte ID as request_id
+                request_text: byte.byteInfo, // Byte information as request_text
+                sender: byte?.requestedBy?.email || 'Unknown', // Sender, if applicable
+                date_time: byte?.createdAt || new Date(), // Date time from the byte
+                isProcessedByRecommendation: byte.isProcessedByRecommendation,
+                recommendations: byteRecommendationsMap.get(byte.id) || []
+            });
+        }
+
+        return response;
+    } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        throw new Error('Failed to fetch recommendations');
+    } 
+    }
 
     async getRecommendations(byte: Partial<Byte>) {
         try {
