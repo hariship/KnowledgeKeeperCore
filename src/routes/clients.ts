@@ -16,6 +16,7 @@ import { ChangeLogRepository } from '../repository/changeLogRespository';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() }); // Store in memory for easy access
@@ -274,6 +275,23 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       clientId,
       isTrained: false
     });
+
+    const regex = /https:\/\/[^\/]+\.com\/(.+)/;
+    const match = s3Url.match(regex);
+
+    if (match && match[1]) {
+      const s3Path = match[1];
+      console.log(s3Path);
+      const updateData = {
+        s3Path
+      }
+      await documentRepo.updateDocument(document.id, updateData)
+    }
+
+    // call split data into chunks
+    await documentRepo.callSplitDataIntoChunks();
+
+
 
     return res.json({
       status: true,

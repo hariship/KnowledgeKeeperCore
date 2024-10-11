@@ -6,9 +6,12 @@ import routes from './routes';
 import swaggerJsDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';  // Import cors
+import cron from 'node-cron';
+import { TaskRepository } from './repository/taskRepository';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const taskRepo = new TaskRepository();
 
 app.use(cors());  // Use the cors middleware
 
@@ -63,4 +66,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+});
+
+
+cron.schedule('* * * * *', async () => {
+  console.log('Running scheduled task polling...');
+  await taskRepo.pollTaskStatus();
 });

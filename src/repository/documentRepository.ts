@@ -2,6 +2,11 @@ import { Repository } from 'typeorm';
 import { AppDataSource } from '../db/data_source';  // Import your data source
 import { Document } from '../entities/document';  // Import your Document entity
 import { Folder } from '../entities/folder';
+import axios from 'axios';
+import { Task } from '../entities/task';
+import { TaskRepository } from './taskRepository';
+import { STATUS } from '../utils/constants';
+const { v4: uuidv4 } = require('uuid');
 
 export class DocumentRepository {
     private documentRepo: Repository<Document>;
@@ -10,6 +15,21 @@ export class DocumentRepository {
     constructor() {
         this.documentRepo = AppDataSource.getRepository(Document);  // Get the Document repository from the AppDataSource
         this.folderRepo = AppDataSource.getRepository(Folder);  // Get the Document repository from the AppDataSource
+    }
+
+    public async updateDocumentsWithParsedData(parsedDocument: string, dbPath: string): Promise<void> {
+        try {
+            const documents = await this.getAllDocuments();
+
+            for (const document of documents) {
+                document.s3SentencedDocumentPath = parsedDocument;
+                document.s3DBPath = dbPath;
+                await this.documentRepo.save(document); // Save each updated document
+            }
+        } catch (error) {
+            console.error('Error updating documents with parsed data:', error);
+            throw error;
+        }
     }
 
     async findFoldersByClientId(clientId: number): Promise<Folder[]> {
@@ -117,6 +137,62 @@ export class DocumentRepository {
         } finally {
             // Release the query runner
             await queryRunner.release();
+        }
+    }
+
+    public async getAllDocuments(): Promise<Document[]> {
+        try {
+            // Fetch all documents from the DB
+            const documents = await this.documentRepo.find();
+
+            // Return the documents from the database
+            return documents;
+        } catch (error) {
+            console.error('Error fetching documents:', error);
+            throw error;
+        }
+    }
+
+    public async callSplitDataIntoChunks() {
+        try {
+            const documents = await this.getAllDocuments();
+
+            if (documents.length > 0) {
+                const s3DocumentPaths = documents.map(doc => ({
+                    document_id: doc.id.toString(),
+                    s3_path: doc.s3Path
+                }));
+
+                const splitDataIntoChunksRequest = {
+                    data_id: uuidv4(),
+                    s3_document_path: s3DocumentPaths,
+                    s3_bucket: "knowledge-keeper-results",
+                    teamspace_name: "teamspace", //TODO: Update teamspace
+                    s3_db_path: "data/test/",
+                    teamspace_s3_path: "data/test/"
+                };
+
+                // Call the split_data_into_chunks API
+                const response = await axios.post('http://3.142.50.84:5000/v1/split_data_into_chunks', splitDataIntoChunksRequest, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
+                    }
+                });
+
+                // Assuming the API returns task_id
+                const { task_id } = response.data;
+                console.log(`Task created with ID: ${task_id}`);
+
+                // Update task table with the task_id and status (PENDING)
+                const taskRepo = new TaskRepository();
+                await taskRepo.createTask(task_id, STATUS.PENDING);
+            } else {
+                console.log('No new or modified documents found.');
+            }
+        } catch (error:any) {
+            console.log(error)
+            console.error('Error calling split_data_into_chunks:', error.message);
         }
     }
 

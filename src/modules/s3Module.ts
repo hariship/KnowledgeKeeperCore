@@ -14,8 +14,8 @@ const s3 = new S3Client({
 // Function to upload file to S3
 export const uploadToS3 = async (file: Express.Multer.File, clientName: string): Promise<string> => {
     const params = {
-      Bucket: process.env.S3_BUCKET_NAME,  // Your bucket name
-      Key: `${clientName}/${file.originalname}`,  // Unique file name
+      Bucket: 'knowledge-keeper-results',  // Your bucket name
+      Key: `data/test/${file.originalname}`,  // Unique file name
       Body: file.buffer,
       ContentType: file.mimetype,
     };

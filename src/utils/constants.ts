@@ -23,3 +23,13 @@ export const MESSAGES = {
 export const RABBIT_MQ = {
     DOCUMENT_UPLOADED: 'document-uploaded'
 }
+
+export const STATUS = {
+    PENDING: 'PENDING',
+    COMPLETED: 'COMPLETED'
+}
+
+export const TASK_NAMES = {
+    SPLIT_DATA_INTO_CHUNKS : 'split_data_into_chunks_task',
+    RECOMMEND_BYTES: 'recommend_bytes'
+}

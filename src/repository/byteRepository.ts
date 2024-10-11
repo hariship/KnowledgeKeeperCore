@@ -81,7 +81,7 @@ export class ByteRepository {
               const newRecommendation = await this.recommendationRepo.create({
                 byte: byteSaved,
                 recommendation: recommendationContent,
-                // document: "Door Dash Test 1",
+                document: recommendationResponse.data?.documentId,
                 recommendationAction: recommendationContent?.metadata?.updation_type
               });
               await this.recommendationRepo.save(newRecommendation);
@@ -130,23 +130,8 @@ export class ByteRepository {
               }
             }
           })
-          
-          console.log('recommendationsForByte',recommendationsForByte)
+
           const docHTML = 'https://knowledgekeeper-docs.s3.us-east-2.amazonaws.com/Doordash/Doordash.html'
-          // let response = await axios.post(
-          //   `http://3.142.50.84:5000/v1/predict`,
-          //   { 
-          //     input_text: byte?.byteInfo,
-          //     data_id: "Door Dash Test 1"
-          //   },
-          //   {
-          //     headers: {
-          //       'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499',
-          //       'Content-Type': 'application/json'
-          //     }
-          //   }
-          // );
-          // response = response.data
 
           const response:any = {
             request_id: byte.id,

@@ -8,6 +8,7 @@ import { ChangeLog } from '../entities/change_logs';
 import { Folder } from '../entities/folder';
 import { Recommendation } from '../entities/recommendation';
 import { Document } from '../entities/document';
+import { Task } from '../entities/task';
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -18,7 +19,7 @@ export const AppDataSource = new DataSource({
     database: "knowledgekeeper",
     synchronize: false,
     logging: true,
-    entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document],
+    entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document, Task],
     migrations: [path.join(__dirname, "migration/*.ts")]
 });
 

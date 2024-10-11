@@ -41,4 +41,13 @@ export class Document {
 
     @Column()
     reTrainingRequired: boolean;
+
+    @Column({ nullable: true })
+    s3Path: string;
+
+    @Column({ nullable: true })
+    s3DBPath: string;
+
+    @Column({ nullable: true })
+    s3SentencedDocumentPath: string;
 }
