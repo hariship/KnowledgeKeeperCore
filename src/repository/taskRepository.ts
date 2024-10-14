@@ -4,6 +4,7 @@ import { AppDataSource } from "../db/data_source";
 import axios from 'axios';
 import { STATUS, TASK_NAMES } from "../utils/constants";
 import { DocumentRepository } from "./documentRepository";
+import { ByteRepository } from "./byteRepository";
 
 export class TaskRepository {
     private taskRepo: Repository<Task>;
@@ -12,16 +13,23 @@ export class TaskRepository {
         this.taskRepo = AppDataSource.getRepository(Task);
     }
 
-    public async createTask(taskId: string, taskStatus: string){
-        const task = await this.taskRepo.create({taskId,taskStatus})
+    public async createTask(taskId: string, taskStatus: string, taskName: string, dataId?: string){
+        const taskRequest: Partial<Task> = {taskId,taskStatus,taskName}
+        if(dataId){
+            taskRequest.dataId = dataId
+        }
+        const task = await this.taskRepo.create(taskRequest)
         return this.taskRepo.save(task)
     }
 
-    public async updateTaskStatus(taskId: string, status: string): Promise<void> {
+    public async updateTaskStatus(taskId: string, status: string, dataId?: string): Promise<void> {
         try {
             const task = await this.taskRepo.findOneBy({ taskId });
             if (task) {
                 task.taskStatus = status;
+                if(dataId){
+                    task.dataId = dataId
+                }
                 await this.taskRepo.save(task);
                 console.log(`Task ID: ${taskId} updated with status: ${status}`);
             } else {
@@ -79,6 +87,18 @@ export class TaskRepository {
                     // Update documents with parsed_document and db_path
                     const documentRepo = new DocumentRepository();
                     await documentRepo.updateDocumentsWithParsedData(parsed_document, db_path);
+    
+                    console.log(`Documents updated with parsed data for task: ${task.taskId}`);
+                }else if(task.taskStatus == STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.RECOMMEND_BYTES) {
+                    // Update task status in the DB
+                    await this.updateTaskStatus(task.taskId, reponseTaskStatus);
+
+                    // Once the task is completed, update the documents
+                    const { parsed_document, db_path } = result;
+    
+                    // Update documents with parsed_document and db_path
+                    const byteRepo = new ByteRepository();
+                    await byteRepo.saveRecommendations(result, task.byteId);
     
                     console.log(`Documents updated with parsed data for task: ${task.taskId}`);
                 }

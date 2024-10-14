@@ -5,7 +5,7 @@ import { Folder } from '../entities/folder';
 import axios from 'axios';
 import { Task } from '../entities/task';
 import { TaskRepository } from './taskRepository';
-import { STATUS } from '../utils/constants';
+import { STATUS, TASK_NAMES } from '../utils/constants';
 const { v4: uuidv4 } = require('uuid');
 
 export class DocumentRepository {
@@ -186,7 +186,9 @@ export class DocumentRepository {
 
                 // Update task table with the task_id and status (PENDING)
                 const taskRepo = new TaskRepository();
-                await taskRepo.createTask(task_id, STATUS.PENDING);
+                const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
+                const dataId = uuidv4();
+                await taskRepo.createTask(task_id, STATUS.PENDING, taskName, dataId);
             } else {
                 console.log('No new or modified documents found.');
             }

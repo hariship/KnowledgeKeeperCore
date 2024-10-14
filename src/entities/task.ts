@@ -10,4 +10,10 @@ export class Task {
 
     @Column({ length: 50 })
     taskStatus: string;
+
+    @Column({ type: 'uuid', nullable: true })
+    dataId: string
+
+    @Column({ type: 'uuid', nullable: true })
+    byteId: string
 }

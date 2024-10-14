@@ -7,6 +7,9 @@ import { UserRepository } from "./userRepository";
 import { Recommendation } from "../entities/recommendation";
 import { Equal } from 'typeorm';
 import { DocumentRepository } from "./documentRepository";
+import { TaskRepository } from "./taskRepository";
+import { STATUS, TASK_NAMES } from "../utils/constants";
+const {v4: uuidv4 } = require('uuid');
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
@@ -64,6 +67,37 @@ export class ByteRepository {
         });
       }
 
+      async callExternalRecommendationByteService(byteInfo:string){
+        const dataId = uuidv4();
+        // Define the request data
+        const requestData = {
+          data_id: dataId,
+          input_text: byteInfo,
+          s3_bucket: 'knowledge-keeper-results',
+          s3_db_path: 'data/test/demo-team_db.ann',
+          s3_sentenced_document_path: 'data/test/demo-team_parsed.csv'
+        };
+
+
+          try {
+            // Await the Axios POST request
+            const response = await axios.post('http://3.142.50.84:5000/v1/recommend-bytes', requestData, {
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499'
+              }
+            });
+            
+            // Handle the successful response
+            console.log('Response Data:', response.data);
+            
+            return response.data;
+          } catch (error:any) {
+            // Handle any errors that occurred during the request
+            console.error('Error:', error.response ? error.response.data : error.message);
+          }
+      }
+
     // Find a byte by its ID
     async createByte(byteInfo: any, user: UserDetails, clientId:any): Promise<Byte | null> {
         const newByte = await this.byteRepo.create({
@@ -75,21 +109,14 @@ export class ByteRepository {
             clientId
           });
           let byteSaved = await this.byteRepo.save(newByte);
-          let recommendationResponse = await this.callExternalRecommendationService(byteSaved);
-          if (recommendationResponse.data){
-            let recommendationData = recommendationResponse.data?.data
-            for(let recommendationContent of recommendationData){
-              const newRecommendation = await this.recommendationRepo.create({
-                byte: byteSaved,
-                recommendation: recommendationContent,
-                document: recommendationContent?.document_id,
-                recommendationAction: recommendationContent?.metadata?.updation_type
-              });
-              await this.recommendationRepo.save(newRecommendation);
-            }
+          let dataId = uuidv4();
+          let taskId = uuidv4();
+          let response = await this.callExternalRecommendationByteService(byteInfo)
+          if(response){
+            const taskRepo = new TaskRepository();
+            const taskName = TASK_NAMES.RECOMMEND_BYTES;
+            await taskRepo.createTask(taskId, STATUS.PENDING, taskName, dataId)
           }
-          byteSaved.noOfRecommendations = recommendationResponse?.data?.data.length
-          await this.byteRepo.save(byteSaved)
           return byteSaved;
     }   
 
@@ -119,7 +146,30 @@ export class ByteRepository {
               }
             }
           );
+          console.log(response)
           return response;
+    }
+
+    async saveRecommendations(result:any, byteId:any){
+      let byteSaved = await this.byteRepo.findOne({
+        where:{
+          id:byteId
+        }
+      })
+        if (result && byteSaved){
+          let recommendationData = result?.data
+          for(let recommendationContent of recommendationData){
+            const newRecommendation = await this.recommendationRepo.create({
+              byte: byteSaved,
+              recommendation: recommendationContent,
+              document: recommendationContent?.document_id,
+              recommendationAction: recommendationContent?.metadata?.updation_type
+            });
+            await this.recommendationRepo.save(newRecommendation);
+          }
+          byteSaved.noOfRecommendations = result?.data.length
+          await this.byteRepo.save(byteSaved)
+        }
     }
 
     async getRecommendationsBasedOnDocId(documentId: number) {
