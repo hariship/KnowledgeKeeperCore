@@ -54,7 +54,7 @@ export class ByteRepository {
     async findByteById(byteId: number): Promise<Byte | null> {
         return await this.byteRepo.findOne({
             where: { id: byteId },
-            relations: ['docId']
+            relations: ['docId','requestedBy']
         });
     }
 
@@ -249,7 +249,7 @@ export class ByteRepository {
                 id: byte?.id
               }
             },
-            relations: ['document','requestedBy']
+            relations: ['document']
           })
 
           const response:any = {
