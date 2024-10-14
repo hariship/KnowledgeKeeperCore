@@ -239,7 +239,8 @@ export class ByteRepository {
               const recommendationJson = JSON.parse(recommendation?.recommendation || '{}');
       
               // Add the recommendation under the byte (or null byteId)
-              byteEntry.recommendations.push({
+              if(recommendation){
+                byteEntry.recommendations.push({
                   id: recommendation.id,
                   change_request_type:
                       recommendation?.recommendationAction === 'new_section' ||
@@ -249,6 +250,8 @@ export class ByteRepository {
                   change_request_text: recommendationJson?.generated_text,
                   previous_string: recommendationJson?.sectionContent
               });
+              }
+              
           }
       
           // Add all bytes and their recommendations to the response
