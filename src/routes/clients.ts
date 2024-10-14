@@ -406,6 +406,10 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
  *                 type: boolean
  *                 description: "Indicates if the changes have been trained"
  *                 example: false
+*               recommendationAction:
+ *                 type: string
+ *                 description: "The type of recommendaiton whether accepted or not logged"
+ *                 example: ACCEPTED  
  *     responses:
  *       200:
  *         description: "Modification successful and logged"
@@ -451,7 +455,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
  *                   example: "Error creating change log"
  */
 router.post('/modify', async (req: Request, res: Response) => {
-  let { userId, docId, byteId,byteInfo, changeRequestType, changes, changeSummary, isTrained, clientId } = req.body;
+  let { userId, docId, byteId,byteInfo, changeRequestType, changes, changeSummary, isTrained, clientId, recommendationAction } = req.body;
 
   if (!userId || !docId || !changeRequestType || !changes || !changeSummary || isTrained === undefined || clientId) {
     return res.status(400).json({
@@ -505,6 +509,7 @@ router.post('/modify', async (req: Request, res: Response) => {
     changes,
     changeSummary,
     isTrained,
+    recommendationAction
   );
 
   return res.json(result);

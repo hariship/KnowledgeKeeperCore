@@ -115,7 +115,7 @@ export class ByteRepository {
           if(response){
             const taskRepo = new TaskRepository();
             const taskName = TASK_NAMES.RECOMMEND_BYTES;
-            await taskRepo.createTask(taskId, STATUS.PENDING, taskName, dataId)
+            await taskRepo.createTask(taskId, STATUS.PENDING, taskName, dataId, byteSaved.id)
           }
           return byteSaved;
     }   
@@ -174,73 +174,67 @@ export class ByteRepository {
 
     async getRecommendationsBasedOnDocId(documentId: number) {
       try {
-        // Fetch recommendations based on documentId
         let recommendationsForDocument = await this.recommendationRepo.find({
-            where: {
-                document: {
-                    id: documentId
-                }
-            },
-            relations: ['byte'] // Ensure to load the related byte entity
-        });
-
-        // Fetch bytes associated with the document (assuming a relationship exists)
-        const bytes = await this.byteRepo.find({
-            where: {
-                docId: {
+          where: {
+              document: {
                   id: documentId
-                }
-            }
-        });
-
-        // Replace the static document URL with dynamic content
-        const docHTML = `https://knowledgekeeper-docs.s3.us-east-2.amazonaws.com/${documentId}.html`;
-
-        // Initialize response
-        const response: any = {
-            document: {
-                doc_id: documentId,
-                doc_content: docHTML,
-                bytes: []
-            }
-        };
-
-        // Organize recommendations by bytes
-        const byteRecommendationsMap = new Map();
-
-        if (recommendationsForDocument) {
-            for (let recommendation of recommendationsForDocument) {
-                const byteId = recommendation.byte?.id; // Assuming each recommendation is associated with a byte
-                if (!byteRecommendationsMap.has(byteId)) {
-                    byteRecommendationsMap.set(byteId, []);
-                }
-                const recommendationJson = JSON.parse(recommendation?.recommendation);
-                byteRecommendationsMap.get(byteId).push({
-                    id: recommendation.id,
-                    change_request_type:
-                        recommendation?.recommendationAction == 'new_section' ||
-                        recommendation?.recommendationAction == 'add'
-                            ? 'Add'
-                            : 'Replace',
-                    change_request_text: recommendationJson?.generated_text,
-                    previous_string: recommendationJson?.sectionContent
-                });
-            }
-        }
-
-        // Add recommendations to each byte in the response
-        for (const byte of bytes) {
-            response.document.bytes.push({
-                request_id: byte.id, // Byte ID as request_id
-                request_text: byte.byteInfo, // Byte information as request_text
-                sender: byte?.requestedBy?.email || 'Unknown', // Sender, if applicable
-                date_time: byte?.createdAt || new Date(), // Date time from the byte
-                isProcessedByRecommendation: byte.isProcessedByRecommendation,
-                recommendations: byteRecommendationsMap.get(byte.id) || []
-            });
-        }
-
-        return response;
+              }
+          },
+          relations: ['byte', 'document'] // Ensure to load the related byte entity
+      });
+      
+      // Initialize the response
+      const document = recommendationsForDocument[0]?.document;
+      
+      const response: any = {
+          document: {
+              doc_id: document.id,
+              doc_content: document.docContentUrl,
+              bytes: [] // This will hold bytes and their recommendations
+          }
+      };
+      
+      // Organize recommendations by byte
+      const byteRecommendationsMap = new Map<any, { byteId: any, recommendations: any[] }>();
+      
+      if (recommendationsForDocument && recommendationsForDocument.length > 0) {
+          for (let recommendation of recommendationsForDocument) {
+              const byte = recommendation.byte; // Assuming each recommendation is associated with a byte
+              const byteId = byte ? byte.id : null; // Set byteId to null if no byte is associated
+      
+              // Initialize byte recommendation structure with byteId (or null) if not already present
+              if (!byteRecommendationsMap.has(byteId)) {
+                  byteRecommendationsMap.set(byteId, {
+                      byteId: byteId, // Will be null if no byte exists
+                      recommendations: [] // Recommendations will be grouped here
+                  });
+              }
+      
+              // Safely get the byte object from the map (since we ensured it exists above)
+              const byteEntry = byteRecommendationsMap.get(byteId)!; // Using non-null assertion here
+      
+              // Parse the recommendation JSON if it exists
+              const recommendationJson = JSON.parse(recommendation?.recommendation || '{}');
+      
+              // Add the recommendation under the byte (or null byteId)
+              byteEntry.recommendations.push({
+                  id: recommendation.id,
+                  change_request_type:
+                      recommendation?.recommendationAction === 'new_section' ||
+                      recommendation?.recommendationAction === 'add'
+                          ? 'Add'
+                          : 'Replace',
+                  change_request_text: recommendationJson?.generated_text,
+                  previous_string: recommendationJson?.sectionContent
+              });
+          }
+      
+          // Add all bytes and their recommendations to the response
+          response.document.bytes = Array.from(byteRecommendationsMap.values());
+      }
+      
+      // Now the response is ready and properly organized by byte (or null byteId)
+      return response;
     } catch (error) {
         console.error('Error fetching recommendations:', error);
         throw new Error('Failed to fetch recommendations');

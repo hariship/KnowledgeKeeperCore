@@ -46,4 +46,7 @@ export class ChangeLog {
 
     @Column()
     isTrained: boolean;
+
+    @Column({nullable: true})
+    aiRecommendationStatus: string;
 }

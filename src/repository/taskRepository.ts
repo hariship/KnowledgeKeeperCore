@@ -13,10 +13,13 @@ export class TaskRepository {
         this.taskRepo = AppDataSource.getRepository(Task);
     }
 
-    public async createTask(taskId: string, taskStatus: string, taskName: string, dataId?: string){
+    public async createTask(taskId: string, taskStatus: string, taskName: string, dataId?: string, byteId?: number){
         const taskRequest: Partial<Task> = {taskId,taskStatus,taskName}
         if(dataId){
             taskRequest.dataId = dataId
+        }
+        if(byteId){
+            taskRequest.byteId = byteId
         }
         const task = await this.taskRepo.create(taskRequest)
         return this.taskRepo.save(task)

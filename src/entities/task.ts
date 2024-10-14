@@ -14,6 +14,6 @@ export class Task {
     @Column({ type: 'uuid', nullable: true })
     dataId: string
 
-    @Column({ type: 'uuid', nullable: true })
-    byteId: string
+    @Column({nullable: true })
+    byteId: number
 }

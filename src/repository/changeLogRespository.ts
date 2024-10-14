@@ -25,8 +25,10 @@ export class ChangeLogRepository{
       sectionContent: string;
     }>,
     changeSummary: string,
-    isTrained: boolean
+    isTrained: boolean,
+    aiRecommendationStatus: string
   ): Promise<ChangeLog> {
+    console.log('aiRecommendationStatus',aiRecommendationStatus)
     const changeLog = this.changeLogRepo.create({
       document: { id: docId }, // Assuming Document entity is related via ManyToOne
       byte: { id: byteId }, // Assuming Byte entity is related via ManyToOne
@@ -38,6 +40,7 @@ export class ChangeLogRepository{
       sectionContent: changes[0].sectionContent,
       externalAttributeId: changes[0].externalAttributeId,
       isTrained,
+      aiRecommendationStatus
     });
     return await this.changeLogRepo.save(changeLog);
   }
@@ -54,7 +57,8 @@ export class ChangeLogRepository{
       sectionContent: string;
     }>,
     changeSummary: string,
-    isTrained: boolean
+    isTrained: boolean,
+    aiRecommendationStatus: string
   ): Promise<any> {
     try {
       await this.create(
@@ -65,6 +69,7 @@ export class ChangeLogRepository{
         changes,
         changeSummary,
         isTrained,
+        aiRecommendationStatus
       );
       return {
         status: 'success',
