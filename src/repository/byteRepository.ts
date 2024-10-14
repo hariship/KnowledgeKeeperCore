@@ -20,6 +20,16 @@ export class ByteRepository {
         this.byteRepo = AppDataSource.getRepository(Byte);  // Get the Document repository from the AppDataSource
     }
 
+    async findDeletedBytes(clientId: number) {
+      return await this.byteRepo.find({
+        where: {
+          clientId: { id: clientId },  // Correctly reference the client relationship
+          isDeleted: true,
+        },
+        relations: ['clientId']  // Ensure the client relation is loaded
+      });
+    }
+
     async findAllOpenWithHighRecommendations(clientId:any) {
         // This method should fetch all bytes marked as 'open' with a high recommendationCount.
         // Implement the query based on your database schema.
@@ -122,7 +132,15 @@ export class ByteRepository {
             await taskRepo.createTask(taskId, STATUS.PENDING, taskName, dataId, byteSaved.id)
           }
           return byteSaved;
-    }   
+    }  
+    
+    async updateByte(byteId: any, updatedData: any): Promise<Byte | null> {
+      const byte = await this.byteRepo.findOne({ where: { id: byteId } });
+      if (!byte) throw new Error('Byte not found');    
+      const updatedByte = Object.assign(byte, updatedData);
+      await this.byteRepo.save(updatedByte);
+      return updatedByte;
+    }
 
     async deleteByte(byteId:any): Promise<Byte | null> {
         const byte = await this.byteRepo.findOne({ where: { id: byteId } });

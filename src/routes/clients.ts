@@ -768,8 +768,8 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
  *   post:
  *     tags:
  *       - Bytes
- *     summary: "Delete a byte (recommendation)"
- *     description: "This API allows users to delete an existing byte. Note that this action cannot be undone."
+ *     summary: "Mark a byte (recommendation) as deleted"
+ *     description: "This API marks an existing byte as deleted instead of actually deleting it. The byte will still exist in the system, but will be considered 'deleted'."
  *     parameters:
  *       - in: path
  *         name: clientId
@@ -786,11 +786,11 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
  *             properties:
  *               byteId:
  *                 type: integer
- *                 description: "The ID of the byte to be deleted"
+ *                 description: "The ID of the byte to be marked as deleted"
  *                 example: 456
  *     responses:
  *       200:
- *         description: "Byte deleted successfully."
+ *         description: "Byte marked as deleted successfully."
  *         content:
  *           application/json:
  *             schema:
@@ -801,7 +801,7 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
  *                   example: "success"
  *                 message:
  *                   type: string
- *                   example: "Byte deleted successfully"
+ *                   example: "Byte marked as deleted"
  *       400:
  *         description: "Bad request - Byte ID is missing or invalid"
  *         content:
@@ -840,10 +840,10 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
  *                   example: "failed"
  *                 message:
  *                   type: string
- *                   example: "Error deleting byte"
+ *                   example: "Error marking byte as deleted"
  */
 
-// Delete a byte (recommendation)
+// Mark byte as deleted (isDeleted: true)
 router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
   const { byteId } = req.body;
   
@@ -854,23 +854,91 @@ router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
   try {
     const byteRepo = new ByteRepository();
     
-    // Check if the byte exists before attempting to delete
+    // Check if the byte exists before attempting to update
     const byteExists = await byteRepo.findByteById(byteId);
     
     if (!byteExists) {
       return res.status(404).json({ status: 'error', message: 'Byte not found' });
     }
 
-    // Delete the byte
-    await byteRepo.deleteByte(byteId);
+    // Mark the byte as deleted (isDeleted: true)
+    await byteRepo.updateByte(byteId, { isDeleted: true });
 
     res.json({
       status: 'success',
-      message: 'Byte deleted successfully',
+      message: 'Byte marked as deleted',
     });
   } catch (error) {
-    console.error('Error deleting byte:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to delete byte' });
+    console.error('Error marking byte as deleted:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to mark byte as deleted' });
+  }
+});
+
+/**
+ * @swagger
+ * /clients/{clientId}/bytes/trash:
+ *   get:
+ *     tags:
+ *       - Bytes
+ *     summary: "List all deleted bytes"
+ *     description: "This API lists all the bytes that have been marked as deleted (isDeleted: true)."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         description: "The ID of the client"
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: "List of deleted bytes retrieved successfully."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   byteId:
+ *                     type: integer
+ *                     description: "The ID of the deleted byte"
+ *                     example: 456
+ *                   recommendation:
+ *                     type: string
+ *                     description: "The content of the byte"
+ *                     example: "This is a deleted recommendation"
+ *                   deletedAt:
+ *                     type: string
+ *                     format: date-time
+ *                     description: "The timestamp when the byte was marked as deleted"
+ *                     example: "2024-10-14T10:00:00Z"
+ *       500:
+ *         description: "Internal server error"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "failed"
+ *                 message:
+ *                   type: string
+ *                   example: "Error retrieving deleted bytes"
+ */
+
+// List all deleted bytes
+router.get('/:clientId/bytes/trash', verifyToken, async (req, res) => {
+  try {
+    const byteRepo = new ByteRepository();
+    
+    // Retrieve all bytes marked as deleted
+    const deletedBytes = await byteRepo.findDeletedBytes(parseInt(req.params.clientId));
+    
+    res.json(deletedBytes);
+  } catch (error) {
+    console.error('Error retrieving deleted bytes:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to retrieve deleted bytes' });
   }
 });
 

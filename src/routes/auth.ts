@@ -12,6 +12,42 @@ const router = Router();
 const userRepository = new UserRepository(); // Initialize the repository
 
 
+router.get('/slack/callback', async (req, res) => {
+  const code = req.query.code;
+  
+  const slackClientId = '7270388447441.7774073893426';
+  const slackClientSecret = '99bcc2858d7d9f40792e21faf6b7f90b';
+  const redirectUri = 'https://api-core.knowledgekeeper.ai/api/v1/auth/slack/callback'; // Your redirect URL
+
+  try {
+    // Exchange the authorization code for an access token
+    const response = await axios.post('https://slack.com/api/oauth.v2.access', null, {
+      params: {
+        client_id: slackClientId,
+        client_secret: slackClientSecret,
+        code: code,
+        redirect_uri: redirectUri
+      }
+    });
+    
+    const { access_token, team } = response.data;
+    
+    if (response.data.ok) {
+      // Store the access token and team details in your database
+      console.log(`Access token: ${access_token}`);
+      console.log(`Team info:`, team);
+
+      // Redirect or show a success message to the user
+      res.send("Slack app installed successfully!");
+    } else {
+      res.status(500).send("Slack OAuth failed");
+    }
+  } catch (error) {
+    console.error("Error in Slack OAuth callback:", error);
+    res.status(500).send("Error during Slack OAuth");
+  }
+});
+
 /**
  * @swagger
  * /auth/login:

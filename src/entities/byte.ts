@@ -34,4 +34,7 @@ export class Byte {
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', nullable: true })
     createdAt: Date;
+
+    @Column({nullable:true})
+    isDeleted: boolean;
 }
