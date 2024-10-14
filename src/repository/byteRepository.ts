@@ -204,17 +204,22 @@ export class ByteRepository {
           },
           relations: ['byte', 'document'] // Ensure to load the related byte entity
       });
-      
+      const docRepo = new DocumentRepository();
+      const requestDocument = await docRepo.findDocumentById(documentId)
+
+      if(!requestDocument){
+        return false;
+      }
       // Initialize the response
       const document = recommendationsForDocument[0]?.document;
       
-      const response: any = {
+        const response: any = {
           document: {
-              doc_id: document.id,
-              doc_content: document.docContentUrl,
+              doc_id: requestDocument.id,
+              doc_content: requestDocument.docContentUrl,
               bytes: [] // This will hold bytes and their recommendations
           }
-      };
+        }
       
       // Organize recommendations by byte
       const byteRecommendationsMap = new Map<any, { byteId: any, recommendations: any[] }>();
@@ -256,6 +261,7 @@ export class ByteRepository {
               }
               
           }
+      
       
           // Add all bytes and their recommendations to the response
           response.document.bytes = Array.from(byteRecommendationsMap.values());
