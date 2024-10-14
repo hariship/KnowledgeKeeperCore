@@ -176,6 +176,8 @@ export class DocumentRepository {
                     s3_path: doc.s3Path
                 }));
 
+                console.log('s3DocumentPaths',s3DocumentPaths)
+
                 const splitDataIntoChunksRequest = {
                     data_id: uuidv4(),
                     s3_document_path: s3DocumentPaths,
