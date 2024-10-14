@@ -1,15 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Client } from './client';
 import {Document} from './document';
-import { Teamspace } from './teamspace';
 
 @Entity()
-export class Folder {
+export class Teamspace {
     @PrimaryGeneratedColumn({ type: 'int', name: 'id', unsigned: true })
     id: number;
 
     @Column()
-    folderName: string;
+    teamspaceName: string;
 
     @Column({ nullable: true })
     totalNumberOfDocs: number;
@@ -25,9 +24,5 @@ export class Folder {
     client: Client
     
     @OneToMany(() => Document, (document: { folder: any; }) => document.folder)
-    documents: Document[];
-
-    @ManyToOne(() => Teamspace, { nullable: true })
-    @JoinColumn({ name: "teamspaceId" })
-    teamspace: Teamspace;
+    document: Document[];
 }

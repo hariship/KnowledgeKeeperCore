@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 't
 import { Client } from './client';
 import { UserDetails } from './user_details';
 import { Folder } from './folder';
+import { Teamspace } from './teamspace';
 
 @Entity()
 export class Document {
@@ -15,6 +16,10 @@ export class Document {
     @ManyToOne(() => Folder, { nullable: true })
     @JoinColumn({ name: "folderId" })
     folder: Folder;
+
+    @ManyToOne(() => Teamspace, { nullable: true })
+    @JoinColumn({ name: "teamspaceId" })
+    teamspace: Teamspace;
 
     @Column()
     documentName: string;

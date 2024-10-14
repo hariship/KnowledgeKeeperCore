@@ -16,6 +16,7 @@ import { ChangeLogRepository } from '../repository/changeLogRespository';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import { TeamspaceRepository } from '../repository/teamspaceRepository';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -1950,4 +1951,256 @@ router.get('/:clientId/bytes/:byteId', verifyToken, async (req: Request, res: Re
   }
 });
   
+
+// Create a new teamspace for a client
+/**
+ * @swagger
+ * /clients/{clientId}/teamspaces:
+ *   post:
+ *     summary: Create a new teamspace for a client
+ *     tags: [Teamspaces]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *     requestBody:
+ *       description: Teamspace data
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               teamspaceName:
+ *                 type: string
+ *                 description: The name of the teamspace
+ *                 example: "Development Team"
+ *     responses:
+ *       201:
+ *         description: Teamspace created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Teamspace'
+ *       400:
+ *         description: Invalid data
+ */
+router.post('/:clientId/teamspaces', async (req, res) => {
+  const clientId = parseInt(req.params.clientId);
+  const { teamspaceName } = req.body;
+  const teamspaceRepository = new TeamspaceRepository();
+  const clientRepository = new ClientRepository();
+
+  if (!teamspaceName) {
+    return res.status(400).json({ error: 'Teamspace name is required' });
+  }
+
+  const client = await clientRepository.findClientById(clientId); // Load the full client entity
+  try {
+    if(!client){
+      res.status(400).json({ error: 'Invalid client' });
+    }else{
+      const teamspaceData = {
+        teamspaceName,
+        client,
+        isTrained: false,
+        reTrainingRequired: false,
+        totalNumberOfDocs: 0
+      };
+  
+      const newTeamspace = await teamspaceRepository.createTeamspace(teamspaceData);
+      res.status(200).json(newTeamspace);
+    }
+  } catch (error) {
+    res.status(400).json({ error: 'Could not create teamspace' });
+  }
+});
+
+// Get all teamspaces for a specific client
+/**
+ * @swagger
+ * /clients/{clientId}/teamspaces:
+ *   get:
+ *     summary: Get all teamspaces for a specific client
+ *     tags: [Teamspaces]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved all teamspaces for the client
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Teamspace'
+ *       404:
+ *         description: No teamspaces found for the client
+ *       400:
+ *         description: Invalid client ID
+ */
+router.get('/:clientId/teamspaces', async (req, res) => {
+  const clientId = parseInt(req.params.clientId);
+  const teamspaceRepository = new TeamspaceRepository();
+
+  if (isNaN(clientId)) {
+    return res.status(400).json({ error: 'Invalid client ID' });
+  }
+
+  try {
+    // Fetch all teamspaces for the specific client
+    const teamspaces = await teamspaceRepository.findTeamspacesByClientId(clientId);
+
+    if (teamspaces.length === 0) {
+      return res.status(404).json({ message: 'No teamspaces found for this client' });
+    }
+
+    res.status(200).json(teamspaces);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching teamspaces' });
+  }
+});
+
+// Get a teamspace by ID
+/**
+ * @swagger
+ * /clients/{clientId}/teamspaces/{teamspaceId}:
+ *   get:
+ *     summary: Get a teamspace by ID
+ *     tags: [Teamspaces]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *       - in: path
+ *         name: teamspaceId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the teamspace
+ *     responses:
+ *       200:
+ *         description: Teamspace retrieved successfully
+ *       404:
+ *         description: Teamspace not found
+ */
+router.get('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
+  const teamspaceId = parseInt(req.params.teamspaceId);
+  const teamspaceRepository = new TeamspaceRepository();
+
+  try {
+    const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId);
+    if (!teamspace) {
+      return res.status(404).json({ error: 'Teamspace not found' });
+    }
+    res.status(200).json(teamspace);
+  } catch (error) {
+    res.status(500).json({ error: 'Could not retrieve teamspace' });
+  }
+});
+
+// Update a teamspace by ID
+/**
+ * @swagger
+ * /clients/{clientId}/teamspaces/{teamspaceId}:
+ *   put:
+ *     summary: Update a teamspace by ID
+ *     tags: [Teamspaces]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *       - in: path
+ *         name: teamspaceId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the teamspace
+ *     requestBody:
+ *       description: Teamspace data
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Teamspace'
+ *     responses:
+ *       200:
+ *         description: Teamspace updated successfully
+ *       400:
+ *         description: Invalid data
+ *       404:
+ *         description: Teamspace not found
+ */
+router.put('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
+  const teamspaceId = parseInt(req.params.teamspaceId);
+  const teamspaceData = req.body;
+  const teamspaceRepository = new TeamspaceRepository();
+
+  try {
+    const updatedTeamspace = await teamspaceRepository.updateTeamspace(teamspaceId, teamspaceData);
+    if (!updatedTeamspace) {
+      return res.status(404).json({ error: 'Teamspace not found' });
+    }
+    res.status(200).json(updatedTeamspace);
+  } catch (error) {
+    res.status(400).json({ error: 'Could not update teamspace' });
+  }
+});
+
+// Delete a teamspace by ID
+/**
+ * @swagger
+ * /clients/{clientId}/teamspaces/{teamspaceId}:
+ *   delete:
+ *     summary: Delete a teamspace by ID
+ *     tags: [Teamspaces]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *       - in: path
+ *         name: teamspaceId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the teamspace
+ *     responses:
+ *       200:
+ *         description: Teamspace deleted successfully
+ *       404:
+ *         description: Teamspace not found
+ */
+router.delete('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
+  const teamspaceId = parseInt(req.params.teamspaceId);
+
+  try {
+    const teamspaceRepository = new TeamspaceRepository();
+    const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId);
+    if (!teamspace) {
+      return res.status(404).json({ error: 'Teamspace not found' });
+    }
+
+    await teamspaceRepository.deleteTeamspace(teamspaceId);
+    res.status(200).json({ message: 'Teamspace deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Could not delete teamspace' });
+  }
+});
 export default router;
