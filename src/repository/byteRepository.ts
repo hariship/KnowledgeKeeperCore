@@ -221,7 +221,7 @@ export class ByteRepository {
       
       if (recommendationsForDocument && recommendationsForDocument.length > 0) {
           for (let recommendation of recommendationsForDocument) {
-            if (recommendation){
+            if (recommendation && recommendation.byte){
               const byte = recommendation.byte; // Assuming each recommendation is associated with a byte
               const byteId = byte ? byte.id : null; // Set byteId to null if no byte is associated
       
