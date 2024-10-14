@@ -249,14 +249,14 @@ export class ByteRepository {
                 id: byte?.id
               }
             },
-            relations: ['document']
+            relations: ['document','requestedBy']
           })
 
           const response:any = {
             request_id: byte.id,
             request_text:
               byte.byteInfo,
-            sender: byte?.requestedBy,
+            sender: byte?.requestedBy?.email,
             date_time: byte?.createdAt,
             documents: [
               {
