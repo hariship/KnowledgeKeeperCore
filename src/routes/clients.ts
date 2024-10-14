@@ -953,7 +953,7 @@ router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
  */
 
 // Create a new byte (recommendation)
-router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
+router.post('/:clientId/bytes/create', async (req:any, res) => {
   const { recommendation } = req.body;
   let { clientId }: any = req.params;
 
