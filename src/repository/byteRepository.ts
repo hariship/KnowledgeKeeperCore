@@ -39,6 +39,10 @@ export class ByteRepository {
         });
     }
 
+    async saveByte(byte: Partial<Byte>): Promise<Byte | null> {
+      return await this.byteRepo.save(byte)
+   }
+
         // Fetch all bytes with 'closed' status and high resolved recommendation count
     async findAllClosedWithHighResolvedRecommendations(clientId:any) {
         return this.byteRepo.find({

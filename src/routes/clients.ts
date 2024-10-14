@@ -572,6 +572,109 @@ router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
 
 /**
  * @swagger
+ * /clients/{clientId}/bytes/{byteId}/resolve-or-closed:
+ *   post:
+ *     tags:
+ *       - Bytes
+ *     summary: "Mark a byte as resolved or closed"
+ *     description: "Marks a specific byte as 'resolved' for a given client."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the client to which the byte belongs.
+ *       - in: path
+ *         name: byteId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the byte that needs to be marked as resolved.
+ *     requestBody:
+ *       description: Information to mark the byte as resolved.
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               resolutionDetails:
+ *                 type: string
+ *                 description: "Details about the resolution."
+ *                 example: "The issue was resolved by updating the signal strength."
+ *     responses:
+ *       200:
+ *         description: "Successfully marked the byte as resolved."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Byte has been marked as resolved."
+ *       400:
+ *         description: "Bad Request - Invalid parameters."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid byteId or clientId."
+ *       500:
+ *         description: "Internal server error."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
+
+// POST: Mark a byte as resolved
+router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (req, res) => {
+  try {
+    const { byteId } = req.params;
+    const {resolutionDetails} = req.body;
+
+    const byteRepo = new ByteRepository();
+
+    // Validate if the byte exists and belongs to the client
+    const byte = await byteRepo.findByteById(parseInt(byteId));
+
+    if (!byte) {
+      return res.status(400).json({ status: 'error', message: 'Invalid byteId or clientId' });
+    }
+
+    // Mark byte as resolved and add resolution details
+    byte.status = resolutionDetails;
+    await byteRepo.saveByte(byte); // Assuming save will update the byte in the database
+
+    res.json({
+      status: 'success',
+      message: 'Byte has been marked as resolved.'
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Failed to mark byte as resolved' });
+  }
+});
+
+/**
+ * @swagger
  * /clients/{clientId}/bytes/closed:
  *   get:
  *     tags:
