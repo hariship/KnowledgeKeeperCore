@@ -17,6 +17,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { TeamspaceRepository } from '../repository/teamspaceRepository';
+import { Folder } from '../entities/folder';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -938,7 +939,131 @@ router.get('/:clientId/bytes/trash', verifyToken, async (req, res) => {
     res.json(deletedBytes);
   } catch (error) {
     console.error('Error retrieving deleted bytes:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to retrieve deleted bytes' });
+    res.status(500).json({ status: 'failed', message: 'Failed to retrieve deleted bytes' });
+  }
+});
+
+/**
+ * @swagger
+ * /folders/{folderId}/documents/unique:
+ *   post:
+ *     tags:
+ *       - Documents
+ *     summary: "Check if a document name is unique within a folder"
+ *     description: "This API checks if a document name is unique within a specified folder."
+ *     parameters:
+ *       - in: path
+ *         name: folderId
+ *         required: true
+ *         description: "The ID of the folder"
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               documentName:
+ *                 type: string
+ *                 description: "The name of the document"
+ *     responses:
+ *       200:
+ *         description: "Document name uniqueness check result."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isUnique:
+ *                   type: boolean
+ *                   description: "Whether the document name is unique within the folder."
+ */
+
+router.post('/folders/:folderId/documents/unique', verifyToken, async (req, res) => {
+  const { folderId } = req.params;
+  const { documentName } = req.body;
+
+  if (!documentName) {
+    return res.status(400).json({ status: 'failed', message: 'Document name is required' });
+  }
+  try {
+    const documentExists = await documentRepository.isUniqueDocumentNameByFolder(parseInt(
+                folderId),
+              documentName)
+
+    const isUnique = !documentExists;
+
+    res.json({ status:'success',isUnique });
+  } catch (error) {
+    console.error('Error checking document name uniqueness:', error);
+    res.status(500).json({ status: 'failed', message: 'Error checking document name' });
+  }
+});
+
+/**
+ * @swagger
+ * /teamspaces/{teamspaceId}/folders/unique:
+ *   post:
+ *     tags:
+ *       - Folders
+ *     summary: "Check if a folder name is unique within a teamspace"
+ *     description: "This API checks if a folder name is unique within a specified teamspace."
+ *     parameters:
+ *       - in: path
+ *         name: teamspaceId
+ *         required: true
+ *         description: "The ID of the teamspace"
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               folderName:
+ *                 type: string
+ *                 description: "The name of the folder"
+ *     responses:
+ *       200:
+ *         description: "Folder name uniqueness check result."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isUnique:
+ *                   type: boolean
+ *                   description: "Whether the folder name is unique within the teamspace."
+ */
+
+router.post('/teamspaces/:teamspaceId/folders/unique', async (req, res) => {
+  const { teamspaceId } = req.params;
+  const { folderName } = req.body;
+
+  if (!folderName) {
+    return res.status(400).json({ status: 'error', message: 'Folder name is required' });
+  }
+
+  const folderRepository = AppDataSource.getRepository(Folder)
+
+  try {
+    const folderExists = await folderRepository.findOne({
+      where: {
+        teamspace: { id: parseInt(teamspaceId) },
+        folderName: folderName
+      }
+    });
+
+    const isUnique = !folderExists;
+
+    res.json({ status:'success',isUnique });
+  } catch (error) {
+    console.error('Error checking folder name uniqueness:', error);
+    res.status(500).json({ status: 'error', message: 'Error checking folder name' });
   }
 });
 

@@ -17,6 +17,19 @@ export class DocumentRepository {
         this.folderRepo = AppDataSource.getRepository(Folder);  // Get the Document repository from the AppDataSource
     }
 
+    public async isUniqueDocumentNameByFolder(folderId:number,documentName: string){
+       const documentExists = await this.documentRepo.findOne({
+            where: {
+              folder: { id: folderId },
+              documentName: documentName
+            }
+          });
+
+        const isUnique = !documentExists;
+
+        return isUnique;
+    }
+
     public async updateDocumentsWithParsedData(parsedDocument: string, dbPath: string): Promise<void> {
         try {
             const documents = await this.getAllDocuments();
