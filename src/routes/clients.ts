@@ -2477,7 +2477,7 @@ router.get('/:clientId/byte/:byteId/is-pending', async (req, res) => {
  *       500:
  *         description: Could not add feedback
  */
-router.post(':clientId/byte/:byteId/feedback', async (req, res) => {
+router.post('/:clientId/byte/:byteId/feedback', async (req, res) => {
   const { byteId } = req.params;
 
   const { feedback } = req.body;
