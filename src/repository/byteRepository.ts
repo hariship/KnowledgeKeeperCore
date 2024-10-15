@@ -10,6 +10,7 @@ import { DocumentRepository } from "./documentRepository";
 import { TaskRepository } from "./taskRepository";
 import { STATUS, TASK_NAMES } from "../utils/constants";
 const {v4: uuidv4 } = require('uuid');
+import { Not } from 'typeorm';
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
@@ -57,7 +58,7 @@ export class ByteRepository {
     async findAllClosedWithHighResolvedRecommendations(clientId:any) {
         return this.byteRepo.find({
             where: {
-                status: 'closed',
+                status: Not('open'),
                 clientId
             },
             relations: ['docId']
