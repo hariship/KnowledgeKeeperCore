@@ -2506,13 +2506,15 @@ router.post('/:clientId/byte/:byteId/feedback', async (req, res) => {
 
 /**
  * @swagger
- * /teamspaces/{teamspaceId}/invite:
+ * /clients/{clientId}/teamspaces/{teamspaceId}/invite:
  *   post:
  *     summary: Invite a user to a teamspace
  *     tags: [Teamspaces]
  *     parameters:
  *       - in: path
  *         name: teamspaceId
+*       - in: path
+ *         name: clientId
  *         schema:
  *           type: integer
  *         required: true
