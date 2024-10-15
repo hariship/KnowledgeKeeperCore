@@ -276,50 +276,59 @@ export class ByteRepository {
     }
 
     async getRecommendations(byte: Partial<Byte>) {
-        try {
-          let recommendationsForByte = await this.recommendationRepo.find({
-            where:{
-              byte: {
-                id: byte?.id
-              }
+      try {
+        let recommendationsForByte = await this.recommendationRepo.find({
+            where: {
+                byte: {
+                    id: byte?.id
+                }
             },
-            relations: ['document']
-          })
+            relations: ['document'] // assuming that each recommendation has a document relation
+        });
 
-          const response:any = {
+        console.log(byte);
+
+        const response: any = {
             request_id: byte.id,
-            request_text:
-              byte.byteInfo,
+            request_text: byte.byteInfo,
             sender: byte?.requestedBy?.email,
             date_time: byte?.createdAt,
-            documents: [
-              {
-                doc_id: byte.docId,
-                doc_content: byte.docId?.docContentUrl
-                  ,
-                recommendations:[]
-              }
-            ]
-          }
-          const recommendations = []
-          if(recommendationsForByte){
-            for(let recommendationByte of recommendationsForByte){
-              const recommendationJson = JSON.parse(recommendationByte?.recommendation)
-              recommendations.push({
-                id: recommendationByte.id,
-                change_request_type: (recommendationByte?.recommendationAction == 'new_section' || recommendationByte?.recommendationAction == 'add')  ? 'Add' : 'Replace',
-                change_request_text: recommendationJson?.generated_text,
-                previous_string: recommendationJson?.sectionContent,
-              })
+            documents: []
+        };
+
+        const documentMap = new Map(); // Map to group recommendations by document
+
+        if (recommendationsForByte) {
+            for (let recommendationByte of recommendationsForByte) {
+                const recommendationJson = JSON.parse(recommendationByte?.recommendation);
+
+                // Check if the document already exists in the response
+                if (!documentMap.has(recommendationByte.document.id)) {
+                    // Add a new document entry if it doesn't exist
+                    documentMap.set(recommendationByte.document.id, {
+                        doc_id: recommendationByte.document.id,
+                        doc_content: recommendationByte.document.docContentUrl,
+                        recommendations: []
+                    });
+                }
+
+                // Add the recommendation to the corresponding document
+                documentMap.get(recommendationByte.document.id).recommendations.push({
+                    id: recommendationByte.id,
+                    change_request_type: (recommendationByte?.recommendationAction == 'new_section' || recommendationByte?.recommendationAction == 'add') ? 'Add' : 'Replace',
+                    change_request_text: recommendationJson?.generated_text,
+                    previous_string: recommendationJson?.sectionContent,
+                });
             }
-          }
-
-          response.documents[0].recommendations.push(...recommendations)
-
-          return response;
-        } catch (error) {
-          console.error('Error fetching recommendations:', error);
-          throw new Error('Failed to fetch recommendations');
         }
-      }
+
+        // Convert the map to an array of documents
+        response.documents = Array.from(documentMap.values());
+
+        return response;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+  }
 }
