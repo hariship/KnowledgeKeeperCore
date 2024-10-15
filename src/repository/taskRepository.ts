@@ -13,6 +13,15 @@ export class TaskRepository {
         this.taskRepo = AppDataSource.getRepository(Task);
     }
 
+    public async isPendingTaskForByte(byteId:number){
+        return this.taskRepo.findOne({
+            where: {
+              byteId,
+              taskStatus: 'PENDING'
+            }
+          });
+    }
+
     public async createTask(taskId: string, taskStatus: string, taskName: string, dataId?: string, byteId?: number){
         const taskRequest: Partial<Task> = {taskId,taskStatus,taskName}
         if(dataId){

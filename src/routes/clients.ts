@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { TeamspaceRepository } from '../repository/teamspaceRepository';
 import { Folder } from '../entities/folder';
+import { TaskRepository } from '../repository/taskRepository';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -2394,4 +2395,46 @@ router.delete('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
     res.status(500).json({ error: 'Could not delete teamspace' });
   }
 });
+
+/**
+ * @swagger
+ * /tasks/byte/{byteId}/pending:
+ *   get:
+ *     summary: Check if there is any pending task with the given byteId
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: byteId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the byte
+ *     responses:
+ *       200:
+ *         description: Returns true if there is a pending task, otherwise false
+ *       404:
+ *         description: No tasks found with the given byteId
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/tasks/byte/:byteId/is-pending', async (req, res) => {
+  const byteId = parseInt(req.params.byteId);
+
+  try {
+    const taskRepository = new TaskRepository();
+    
+    // Check for any pending task with the given byteId
+    const task = await taskRepository.isPendingTaskForByte(byteId);
+
+    if (!task) {
+      return res.status(200).json({ status:'success',pending: false });
+    }
+
+    return res.status(200).json({ status:'success',pending: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status:'failed',error: 'Could not check for pending tasks' });
+  }
+});
+
 export default router;
