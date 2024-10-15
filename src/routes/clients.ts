@@ -21,6 +21,7 @@ import { Folder } from '../entities/folder';
 import { TaskRepository } from '../repository/taskRepository';
 import { UserTeamspaceRepository } from '../repository/userTeamspaceRepository';
 import { UserTeamspace } from '../entities/user_teamspace';
+import { verify } from 'crypto';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -2419,7 +2420,7 @@ router.delete('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/:clientId/byte/:byteId/is-pending', async (req, res) => {
+router.get('/:clientId/byte/:byteId/is-pending',verifyToken, async (req, res) => {
   const byteId = parseInt(req.params.byteId);
 
   try {
