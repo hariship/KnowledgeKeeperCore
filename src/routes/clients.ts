@@ -2446,7 +2446,7 @@ router.get('/:clientId/byte/:byteId/is-pending', async (req, res) => {
  *     summary: Add feedback to a byte
  *     tags: [Bytes]
  *      parameters:
-*       - in: path
+ *       - in: path
  *         name: clientId
  *         schema:
  *           type: integer
