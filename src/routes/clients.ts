@@ -19,6 +19,8 @@ import path from 'path';
 import { TeamspaceRepository } from '../repository/teamspaceRepository';
 import { Folder } from '../entities/folder';
 import { TaskRepository } from '../repository/taskRepository';
+import { UserTeamspaceRepository } from '../repository/userTeamspaceRepository';
+import { UserTeamspace } from '../entities/user_teamspace';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -2484,6 +2486,73 @@ router.post(':clientId/byte/:byteId/feedback', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ status:'failed',error: 'Could not add feedback' });
+  }
+});
+
+/**
+ * @swagger
+ * /teamspaces/{teamspaceId}/invite:
+ *   post:
+ *     summary: Invite a user to a teamspace
+ *     tags: [Teamspaces]
+ *     parameters:
+ *       - in: path
+ *         name: teamspaceId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the teamspace
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 example: 1
+ *               role:
+ *                 type: string
+ *                 example: "MEMBER"
+ *     responses:
+ *       200:
+ *         description: User invited successfully
+ *       404:
+ *         description: Teamspace or User not found
+ *       500:
+ *         description: Could not invite user
+ */
+router.post('/teamspaces/:teamspaceId/invite', async (req, res) => {
+  const { userId, role } = req.body;
+  const teamspaceId = parseInt(req.params.teamspaceId);
+
+  try {
+      const userRepository = new UserRepository(); // Assuming you have a user repository
+      const teamspaceRepository = new TeamspaceRepository();
+      const userTeamspaceRepository = new UserTeamspaceRepository(); // Assuming a repository for the relationship
+
+      // Find the user and teamspace
+      const user = await userRepository.findUserById(userId)
+      const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId)
+
+      if (!user || !teamspace) {
+          return res.status(404).json({ error: 'User or Teamspace not found' });
+      }
+
+      // Create a new UserTeamspace entry (invite the user)
+      const userTeamspace = new UserTeamspace();
+      userTeamspace.user = user;
+      userTeamspace.teamspace = teamspace;
+      userTeamspace.status = 'INVITED';
+      userTeamspace.role = role || 'MEMBER'; // Default to MEMBER role
+
+      await userTeamspaceRepository.saveTeamspace(userTeamspace);
+
+      return res.status(200).json({ message: 'User invited successfully' });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Could not invite user' });
   }
 });
 
