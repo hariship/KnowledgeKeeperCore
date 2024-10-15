@@ -128,7 +128,7 @@ export class ByteRepository {
           if(response){
             const taskRepo = new TaskRepository();
             const taskName = TASK_NAMES.RECOMMEND_BYTES;
-            await taskRepo.createTask(response.taskId, STATUS.PENDING, taskName, dataId, byteSaved.id)
+            await taskRepo.createTask(response.task_id, STATUS.PENDING, taskName, dataId, byteSaved.id)
           }
           return byteSaved;
     }  
