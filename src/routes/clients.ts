@@ -2398,7 +2398,7 @@ router.delete('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
 
 /**
  * @swagger
- * /tasks/byte/{byteId}/pending:
+ * /clients/{clientId}/byte/{byteId}/is-pending:
  *   get:
  *     summary: Check if there is any pending task with the given byteId
  *     tags: [Tasks]
@@ -2417,7 +2417,7 @@ router.delete('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/tasks/byte/:byteId/is-pending', async (req, res) => {
+router.get('/:clientId/byte/:byteId/is-pending', async (req, res) => {
   const byteId = parseInt(req.params.byteId);
 
   try {
