@@ -2538,7 +2538,7 @@ router.post('/:clientId/byte/:byteId/feedback', async (req, res) => {
  *       500:
  *         description: Could not invite user
  */
-router.post('/teamspaces/:teamspaceId/invite', async (req, res) => {
+router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
   const { userId, role } = req.body;
   const teamspaceId = parseInt(req.params.teamspaceId);
 
