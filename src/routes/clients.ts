@@ -2437,4 +2437,54 @@ router.get('/:clientId/byte/:byteId/is-pending', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /clients/{clientId}/bytes/{byteId}/feedback:
+ *   post:
+ *     summary: Add feedback to a byte
+ *     tags: [Bytes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               feedback:
+ *                 type: string
+ *                 example: "AI is wrong"
+ *     responses:
+ *       200:
+ *         description: Feedback added successfully
+ *       404:
+ *         description: Byte not found
+ *       500:
+ *         description: Could not add feedback
+ */
+router.post(':clientId/bytes/:byteId/feedback', async (req, res) => {
+  const { byteId } = req.params;
+
+  const { feedback } = req.body;
+
+  try {
+    const byteRepository = new ByteRepository();
+
+    // Find the byte by ID
+    const byte = await byteRepository.findByteById(parseInt(byteId))
+
+    if (!byte) {
+      return res.status(404).json({ error: 'Byte not found' });
+    }
+
+    // Update the userFeedback field
+    byte.userFeedback = feedback;
+    await byteRepository.saveByte(byte);
+
+    return res.status(200).json({ message: 'Feedback added successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Could not add feedback' });
+  }
+});
+
 export default router;
