@@ -22,7 +22,8 @@ export class DocumentRepository {
             where: {
               folder: { id: folderId },
               documentName: documentName
-            }
+            },
+            relations:['folder']
           });
 
         const isUnique = !documentExists;
