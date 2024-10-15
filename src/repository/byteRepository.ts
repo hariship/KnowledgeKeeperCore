@@ -61,7 +61,7 @@ export class ByteRepository {
                 status: Not('open'),
                 clientId
             },
-            relations: ['docId']
+            relations: ['docId','clientId']
         });
     }
 
