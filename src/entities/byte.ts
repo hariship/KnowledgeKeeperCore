@@ -37,4 +37,7 @@ export class Byte {
 
     @Column({nullable:true})
     isDeleted: boolean;
+
+    @Column({nullable:true})
+    userFeedback: string;
 }
