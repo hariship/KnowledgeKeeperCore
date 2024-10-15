@@ -485,15 +485,13 @@ router.post('/modify', async (req: Request, res: Response) => {
     return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.DOCUMENT_NOT_FOUND));
   }
 
-  // If no byteId - create one
-
   if(!byteId){
-    const byteRepo = new ByteRepository();
-    byteDetails = await byteRepo.createByte(byteInfo, userDetails,clientId)
-  }else{
-    const byteRepo = new ByteRepository();
-    byteDetails = await byteRepo.findByteById(byteId)
+    return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.BYTE_NOT_FOUND));
   }
+
+
+  const byteRepo = new ByteRepository();
+  byteDetails = await byteRepo.findByteById(byteId)
 
   if(!byteDetails){
     return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.BYTE_NOT_FOUND));

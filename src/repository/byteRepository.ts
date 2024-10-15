@@ -124,12 +124,11 @@ export class ByteRepository {
           });
           let byteSaved = await this.byteRepo.save(newByte);
           let dataId = uuidv4();
-          let taskId = uuidv4();
           let response = await this.callExternalRecommendationByteService(byteInfo)
           if(response){
             const taskRepo = new TaskRepository();
             const taskName = TASK_NAMES.RECOMMEND_BYTES;
-            await taskRepo.createTask(taskId, STATUS.PENDING, taskName, dataId, byteSaved.id)
+            await taskRepo.createTask(response.taskId, STATUS.PENDING, taskName, dataId, byteSaved.id)
           }
           return byteSaved;
     }  
@@ -309,7 +308,7 @@ export class ByteRepository {
                 id: recommendationByte.id,
                 change_request_type: (recommendationByte?.recommendationAction == 'new_section' || recommendationByte?.recommendationAction == 'add')  ? 'Add' : 'Replace',
                 change_request_text: recommendationJson?.generated_text,
-                    previous_string: recommendationJson?.sectionContent,
+                previous_string: recommendationJson?.sectionContent,
               })
             }
           }
