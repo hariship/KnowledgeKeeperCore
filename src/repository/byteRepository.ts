@@ -254,7 +254,7 @@ export class ByteRepository {
                           ? 'Add'
                           : 'Replace',
                   change_request_text: recommendationJson?.generated_text,
-                  previous_string: recommendationJson?.sectionContent
+                  previous_string: recommendationJson?.section_content
               });
             }
              
@@ -317,7 +317,7 @@ export class ByteRepository {
                     id: recommendationByte.id,
                     change_request_type: (recommendationByte?.recommendationAction == 'new_section' || recommendationByte?.recommendationAction == 'add') ? 'Add' : 'Replace',
                     change_request_text: recommendationJson?.generated_text,
-                    previous_string: recommendationJson?.sectionContent,
+                    previous_string: recommendationJson?.section_content,
                 });
             }
         }
