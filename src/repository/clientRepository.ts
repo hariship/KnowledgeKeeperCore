@@ -13,7 +13,7 @@ export class ClientRepository {
     async findClientById(clientId: number): Promise<Client | null> {
       return await this.clientRepo.findOne({
           where: { id: clientId },
-          relations: ['folders','folders.documents'] // Include related entities
+          relations: ['folders','folders.documents', 'teamspaces'] // Include related entities
       });
   }
 

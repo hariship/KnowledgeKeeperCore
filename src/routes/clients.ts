@@ -183,6 +183,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let folderId = parseInt(req.body.folderId, 10);
     let folderName = req.body?.folderName;
     let documentName = req?.body?.documentName;
+    let teamspaceName = req?.body?.teamspaceName;
+    let teamspaceId = req?.body?.teamspaceId;
 
     console.log('folderName',folderName)
     let client: Partial<Client> = {};
@@ -214,6 +216,27 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
          
     clientId = client?.id
     clientName = client.clientName
+    let teamspace: any;
+    const teamspaceRepo = new TeamspaceRepository();
+    if(teamspaceId){
+      const teamspace = await teamspaceRepo.getTeamspaceById(teamspaceId);
+      if(!teamspace){
+        return res.json({
+          status: false,
+          message: 'No teamspace found with the id'
+        });
+      }
+    }else if(teamspaceName){
+      const teamspaceReq = {
+        teamspaceName,
+        isTrained:false,
+        reTrainingRequired: false,
+        totalNumberOfDocs: 0,
+        client: clientId
+      }
+      teamspace = await teamspaceRepo.createTeamspace(teamspaceReq)
+      console.log(teamspace)
+    }
 
     let folder:any;
     if(folderId){
@@ -245,7 +268,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     folderId = folder?.id ? folder.id : null
     let createdocumentRequest = {}
     if(!document || Object.values(document) == null){
-      if(folder){
+      if(folder && teamspace){
         createdocumentRequest = {
           docContentUrl: s3Url,
           documentName,
@@ -254,7 +277,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           reTrainingRequired: false,
           updatedAt: new Date(),
           client: clientId,
-          folder: folderId
+          folder: folderId,
+          teamspace: teamspaceId
         }
       }else{
         createdocumentRequest = {

@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Client } from './client';
 import {Document} from './document';
+import { Folder } from './folder';
 
 @Entity()
 export class Teamspace {
@@ -22,6 +23,9 @@ export class Teamspace {
     @ManyToOne(() => Client)
     @JoinColumn({ name: "clientId" })
     client: Client
+
+    @OneToMany(() => Folder, (folder: { document: any; }) => folder.document)
+    folder: Folder[];
     
     @OneToMany(() => Document, (document: { folder: any; }) => document.folder)
     document: Document[];

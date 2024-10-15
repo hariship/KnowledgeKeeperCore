@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Folder } from './folder';
 import { Document } from './document';
+import { Teamspace } from './teamspace';
 
 @Entity()
 export class Client {
@@ -24,4 +25,7 @@ export class Client {
 
     @OneToMany(() => Folder, (folder: { client: any; }) => folder.client)
     folders: Folder[];
+
+    @OneToMany(() => Teamspace, (teamspace: { client: any; }) => teamspace.client)
+    teamspaces: Teamspace[];
 }
