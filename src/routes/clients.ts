@@ -947,7 +947,7 @@ router.get('/:clientId/bytes/trash', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /folders/{folderId}/documents/unique:
+ * /clients/{clientId}/folders/{folderId}/documents/unique:
  *   post:
  *     tags:
  *       - Documents
@@ -958,6 +958,12 @@ router.get('/:clientId/bytes/trash', verifyToken, async (req, res) => {
  *         name: folderId
  *         required: true
  *         description: "The ID of the folder"
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         description: "The ID of the client"
  *         schema:
  *           type: integer
  *     requestBody:
@@ -983,7 +989,7 @@ router.get('/:clientId/bytes/trash', verifyToken, async (req, res) => {
  *                   description: "Whether the document name is unique within the folder."
  */
 
-router.post('/folders/:folderId/documents/unique', verifyToken, async (req, res) => {
+router.post('/:clientId/folders/:folderId/documents/unique', verifyToken, async (req, res) => {
   const { folderId } = req.params;
   const { documentName } = req.body;
 
@@ -1006,7 +1012,7 @@ router.post('/folders/:folderId/documents/unique', verifyToken, async (req, res)
 
 /**
  * @swagger
- * /teamspaces/{teamspaceId}/folders/unique:
+ * /clients/{clientId}/teamspaces/{teamspaceId}/folders/unique:
  *   post:
  *     tags:
  *       - Folders
@@ -1015,6 +1021,12 @@ router.post('/folders/:folderId/documents/unique', verifyToken, async (req, res)
  *     parameters:
  *       - in: path
  *         name: teamspaceId
+ *         required: true
+ *         description: "The ID of the teamspace"
+ *         schema:
+ *           type: integer
+*       - in: path
+ *         name: clientId
  *         required: true
  *         description: "The ID of the teamspace"
  *         schema:
@@ -1042,7 +1054,7 @@ router.post('/folders/:folderId/documents/unique', verifyToken, async (req, res)
  *                   description: "Whether the folder name is unique within the teamspace."
  */
 
-router.post('/teamspaces/:teamspaceId/folders/unique', async (req, res) => {
+router.post('/:clientId/teamspaces/:teamspaceId/folders/unique', async (req, res) => {
   const { teamspaceId } = req.params;
   const { folderName } = req.body;
 
