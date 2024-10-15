@@ -2473,17 +2473,17 @@ router.post(':clientId/bytes/:byteId/feedback', async (req, res) => {
     const byte = await byteRepository.findByteById(parseInt(byteId))
 
     if (!byte) {
-      return res.status(404).json({ error: 'Byte not found' });
+      return res.status(404).json({ status:'failed',error: 'Byte not found' });
     }
 
     // Update the userFeedback field
     byte.userFeedback = feedback;
     await byteRepository.saveByte(byte);
 
-    return res.status(200).json({ message: 'Feedback added successfully' });
+    return res.status(200).json({ status:'success',message: 'Feedback added successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Could not add feedback' });
+    res.status(500).json({ status:'failed',error: 'Could not add feedback' });
   }
 });
 
