@@ -1634,6 +1634,7 @@ router.post('/:clientId/documents', upload.single('file'), async (req, res) => {
     documentData.isTrained = false;
     documentData.reTrainingRequired = false;
     documentData.updatedAt = new Date();
+    documentData.teamspace = folder.teamspace
 
     // Associate the folder if one exists
     if (folder) {
@@ -1659,7 +1660,8 @@ router.post('/:clientId/documents', upload.single('file'), async (req, res) => {
         clientId,
         documentName: newDocument.documentName,
         folder,  // Return folder information if available
-        htmlContent: htmlContent,  // Assuming the document contains this field
+        htmlContent: htmlContent,  // Assuming the document contains this field,
+        teamspace: folder.teamspace
       }
     });
   } catch (error) {
