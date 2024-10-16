@@ -260,7 +260,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
         isTrained:false,
         reTrainingRequired: false,
         totalNumberOfDocs: 0,
-        client: clientId
+        client: clientId,
+        teamspaceId
       }
       folder = await documentRepo.createFolder(folderReq)
       console.log(folder)
@@ -283,9 +284,9 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           isTrained: false,
           reTrainingRequired: false,
           updatedAt: new Date(),
-          client: clientId,
-          folder: folderId,
-          teamspace: teamspaceId
+          client: client,
+          folder: folder,
+          teamspace: teamspace
         }
       }else{
         createdocumentRequest = {
@@ -295,6 +296,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           reTrainingRequired: false,
           updatedAt: new Date(),
           client: clientId,
+          folder: folderId,
+          teamspace: teamspaceId
         }
       }
       document = await documentRepo.createDocument(createdocumentRequest);
@@ -1368,6 +1371,7 @@ router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
             client: client
         });
     } catch (error) {
+      console.log(error)
         res.status(500).json({ status: 'error', message: 'Server error' });
     }
 });

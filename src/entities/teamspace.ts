@@ -24,7 +24,7 @@ export class Teamspace {
     @JoinColumn({ name: "clientId" })
     client: Client
 
-    @OneToMany(() => Folder, (folder: { document: any; }) => folder.document)
+    @OneToMany(() => Folder, (folder: { teamspace: any; }) => folder.teamspace)
     folder: Folder[];
     
     @OneToMany(() => Document, (document: { folder: any; }) => document.folder)
