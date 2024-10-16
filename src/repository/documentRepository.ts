@@ -46,11 +46,15 @@ export class DocumentRepository {
         }
     }
 
-    async findFoldersByClientId(clientId: number): Promise<Folder[]> {
-        return await this.folderRepo.find({
-          where: {
+    async findFoldersByClientId(clientId: number,teamspaceId?: number): Promise<Folder[]> {
+        let requestBody:any = {
             client: { id: clientId },
-          },
+        }
+        if(teamspaceId){
+            requestBody.teamspaceId = teamspaceId
+        }
+        return await this.folderRepo.find({
+          where: requestBody,
           relations: ['client'], // Fetch related client information
         });
       }
@@ -110,8 +114,14 @@ export class DocumentRepository {
         return this.folderRepo.save(folder);
     }
 
-    async getFolderById(id: number): Promise<Folder | null> {
-        return this.folderRepo.findOne({ where: { id }, relations: ['client'] });
+    async getFolderById(id: number,teamspaceId?:number): Promise<Folder | null> {
+        let requestBody:any = {
+            id
+        }
+        if(teamspaceId){
+            requestBody.teamspaceId = teamspaceId
+        }
+        return this.folderRepo.findOne({ where: requestBody, relations: ['client','teamspace'] });
     }
 
     async updateFolder(id: number, folderData: Partial<Folder>): Promise<Folder | null> {

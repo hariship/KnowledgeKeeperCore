@@ -114,6 +114,9 @@ router.post('/users/exists', authenticate, async (req: Request, res: Response) =
  *               folderName:
  *                 type: string
  *                 description: "The folder name associated with the document"
+ *               teamspaceId:
+ *                 type: integer
+ *                 description: "The teamspaceId associated with the document"
  *     responses:
  *       200:
  *         description: "Document uploaded successfully"
@@ -1767,6 +1770,10 @@ router.delete('/:clientId/documents/:documentId', async (req, res) => {
  *                 type: string
  *                 description: The name of the folder
  *                 example: "New Project Folder"
+ *               teamspaceId:
+ *                 type: string
+ *                 description: The ID of the teamspace
+ *                 example: "TeamspaceId for the folder"
  *     responses:
  *       201:
  *         description: Folder created successfully
@@ -1779,10 +1786,21 @@ router.delete('/:clientId/documents/:documentId', async (req, res) => {
  */
 router.post('/:clientId/folders', async (req, res) => {
   const clientId = parseInt(req.params.clientId);
-  const { folderName } = req.body;
+  const { folderName, teamspaceId } = req.body;
 
   if (!folderName) {
     return res.status(400).json({ error: 'Folder name is required' });
+  }
+
+  if(!teamspaceId){
+    return res.status(400).json({ status:'failed', error: 'Teamspace Id is required' });
+  }
+
+  const teamspaceRepo = new TeamspaceRepository();
+  const teamspace = await teamspaceRepo.getTeamspaceById(teamspaceId)
+
+  if(!teamspace){
+    return res.status(400).json({ status:'failed', error: 'Teamspace Id is not found' });
   }
 
   try {
@@ -1791,9 +1809,9 @@ router.post('/:clientId/folders', async (req, res) => {
       client: { id: clientId }, // Link to client
       isTrained: false,
       reTrainingRequired: false,
-      totalNumberOfDocs: 0, // Initialize with 0 documents
+      totalNumberOfDocs: 0, // Initialize with 0 documents,
+      teamspace
     };
-
     const newFolder = await documentRepository.createFolder(folderData);
     res.status(201).json(newFolder);
   } catch (error) {
@@ -1814,6 +1832,18 @@ router.post('/:clientId/folders', async (req, res) => {
  *           type: integer
  *         required: true
  *         description: The ID of the client
+ *     requestBody:
+ *       description: Teamspace Id
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               teamspaceId:
+ *                 type: string
+ *                 description: The name of the teamspace
+ *                 example: "New Project Teamspace"
  *     responses:
  *       200:
  *         description: Successfully retrieved all folders for the client
@@ -1830,6 +1860,7 @@ router.post('/:clientId/folders', async (req, res) => {
  */
 router.get('/:clientId/folders', async (req, res) => {
   const clientId = parseInt(req.params.clientId);
+  const teamspaceId = parseInt(req.body.teamspaceId);
 
   if (isNaN(clientId)) {
     return res.status(400).json({ error: 'Invalid client ID' });
@@ -1837,7 +1868,7 @@ router.get('/:clientId/folders', async (req, res) => {
 
   try {
     // Fetch all folders for the specific client
-    const folders = await documentRepository.findFoldersByClientId(clientId);
+    const folders = await documentRepository.findFoldersByClientId(clientId, teamspaceId);
 
     if (folders.length === 0) {
       return res.status(404).json({ message: 'No folders found for this client' });
@@ -1868,6 +1899,18 @@ router.get('/:clientId/folders', async (req, res) => {
 *           type: integer
 *         required: true
 *         description: The ID of the folder
+*     requestBody:
+*       description: Teamspace Id
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               teamspaceId:
+*                 type: string
+*                 description: The name of the teamspace
+*                 example: "New Project Teamspace"
 *     responses:
 *       200:
 *         description: Folder retrieved successfully
@@ -1876,9 +1919,10 @@ router.get('/:clientId/folders', async (req, res) => {
 */
 router.get('/:clientId/folders/:folderId', async (req, res) => {
   const folderId = parseInt(req.params.folderId);
+  const teamspaceId = parseInt(req.params.folderId);
 
   try {
-      const folder = await documentRepository.getFolderById(folderId);
+      const folder = await documentRepository.getFolderById(folderId,teamspaceId);
       if (!folder) {
           return res.status(404).json({ error: 'Folder not found' });
       }
