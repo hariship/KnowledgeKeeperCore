@@ -189,6 +189,10 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let teamspaceName = req?.body?.teamspaceName;
     let teamspaceId = req?.body?.teamspaceId;
 
+    if(!teamspaceId){
+      return res.status(400).json({ status: false, message: 'TeamspaceId is mandatory' });
+    }
+
     console.log('folderName',folderName)
     let client: Partial<Client> = {};
 
