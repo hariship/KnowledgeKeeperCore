@@ -26,9 +26,8 @@ export class DocumentRepository {
             relations:['folder']
           });
 
-        const isUnique = !documentExists;
 
-        return isUnique;
+        return documentExists;
     }
 
     public async updateDocumentsWithParsedData(parsedDocument: string, dbPath: string): Promise<void> {

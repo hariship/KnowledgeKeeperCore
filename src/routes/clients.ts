@@ -293,6 +293,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           docContentUrl: s3Url,
           versionNumber: 1.0,
           isTrained: false,
+          documentName,
           reTrainingRequired: false,
           updatedAt: new Date(),
           client: clientId,
@@ -1092,6 +1093,10 @@ router.post('/:clientId/folders/:folderId/documents/unique', verifyToken, async 
     return res.status(400).json({ status: 'failed', message: 'Document name is required' });
   }
   try {
+    const folder = await documentRepository.getFolderById(parseInt(folderId));
+    if(!folder){
+      return res.status(400).json({ status: 'failed', message: 'Folder Id is incorrect' });
+    }
     const documentExists = await documentRepository.isUniqueDocumentNameByFolder(parseInt(
                 folderId),
               documentName)
