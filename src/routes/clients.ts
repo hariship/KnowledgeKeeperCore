@@ -2678,9 +2678,9 @@ router.post('/:clientId/byte/:byteId/feedback', async (req, res) => {
  *               userId:
  *                 type: integer
  *                 example: 1
- *               role:
+ *               email:
  *                 type: string
- *                 example: "MEMBER"
+ *                 example: "dummy@gmail.com"
  *     responses:
  *       200:
  *         description: User invited successfully
@@ -2690,7 +2690,7 @@ router.post('/:clientId/byte/:byteId/feedback', async (req, res) => {
  *         description: Could not invite user
  */
 router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
-  const { userId, role } = req.body;
+  const { userId, email } = req.body;
   const teamspaceId = parseInt(req.params.teamspaceId);
 
   try {
@@ -2699,7 +2699,13 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
       const userTeamspaceRepository = new UserTeamspaceRepository(); // Assuming a repository for the relationship
 
       // Find the user and teamspace
-      const user = await userRepository.findUserById(userId)
+      let user:any = ''
+      if(userId){
+        user = await userRepository.findUserById(userId)
+      }else if(email){
+        user = await userRepository.findUserByEmail(email)
+      }
+      
       const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId)
 
       if (!user || !teamspace) {
@@ -2711,7 +2717,7 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
       userTeamspace.user = user;
       userTeamspace.teamspace = teamspace;
       userTeamspace.status = 'INVITED';
-      userTeamspace.role = role || 'MEMBER'; // Default to MEMBER role
+      userTeamspace.role = 'MEMBER'; // Default to MEMBER role
 
       await userTeamspaceRepository.saveTeamspace(userTeamspace);
 
