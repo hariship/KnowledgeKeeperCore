@@ -187,11 +187,10 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let folderName = req.body?.folderName;
     let documentName = req?.body?.documentName;
     let teamspaceName = req?.body?.teamspaceName;
-    let teamspaceId = req?.body?.teamspaceId;
 
-    if(!teamspaceId){
-      return res.status(400).json({ status: false, message: 'TeamspaceId is mandatory' });
-    }
+    // if(!teamspaceId){
+    //   return res.status(400).json({ status: false, message: 'TeamspaceId is mandatory' });
+    // }
 
     console.log('folderName',folderName)
     let client: Partial<Client> = {};
@@ -223,27 +222,6 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
          
     clientId = client?.id
     clientName = client.clientName
-    let teamspace: any;
-    const teamspaceRepo = new TeamspaceRepository();
-    if(teamspaceId){
-      const teamspace = await teamspaceRepo.getTeamspaceById(teamspaceId);
-      if(!teamspace){
-        return res.json({
-          status: false,
-          message: 'No teamspace found with the id'
-        });
-      }
-    }else if(teamspaceName){
-      const teamspaceReq = {
-        teamspaceName,
-        isTrained:false,
-        reTrainingRequired: false,
-        totalNumberOfDocs: 0,
-        client: clientId
-      }
-      teamspace = await teamspaceRepo.createTeamspace(teamspaceReq)
-      console.log(teamspace)
-    }
 
     let folder:any;
     if(folderId){
@@ -255,13 +233,24 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
         });
       }
     }else if(folderName){
+      let teamspace: any;
+      const teamspaceRepo = new TeamspaceRepository();
+      const teamspaceName = folderName;
+        const teamspaceReq = {
+          teamspaceName,
+          isTrained:false,
+          reTrainingRequired: false,
+          totalNumberOfDocs: 0,
+          client: clientId
+        }
+        teamspace = await teamspaceRepo.createTeamspace(teamspaceReq)  
       const folderReq = {
         folderName,
         isTrained:false,
         reTrainingRequired: false,
         totalNumberOfDocs: 0,
         client: clientId,
-        teamspaceId
+        teamspace
       }
       folder = await documentRepo.createFolder(folderReq)
       console.log(folder)
@@ -269,6 +258,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     // Step 2: Upload the file to S3 
     const s3Url = await uploadToS3(file, clientName);
+    const teamspace = folder.teamspace
 
     let document = await documentRepo.findDocumentByDocUrl(s3Url);
 
@@ -298,7 +288,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           updatedAt: new Date(),
           client: clientId,
           folder: folderId,
-          teamspace: teamspaceId
+          teamspace: folder?.teamspace.id
         }
       }
       document = await documentRepo.createDocument(createdocumentRequest);
