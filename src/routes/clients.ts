@@ -978,6 +978,67 @@ router.get('/:clientId/bytes/trash', verifyToken, async (req, res) => {
 
 /**
  * @swagger
+ * /clients/{clientId}/teamspaces/unique:
+ *   post:
+ *     tags:
+ *       - Teamspaces
+ *     summary: "Check if a teamspace name is unique within a client"
+ *     description: "This API checks if a teamspace name is unique within a specified client."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         description: "The ID of the client"
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               teamspaceName:
+ *                 type: string
+ *                 description: "The name of the teamspace"
+ *     responses:
+ *       200:
+ *         description: "Teamspace name uniqueness check result."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isUnique:
+ *                   type: boolean
+ *                   description: "Whether the teamspace name is unique within the client."
+ */
+
+router.post('/:clientId/teamspaces/unique', verifyToken, async (req, res) => {
+  const { clientId } = req.params;
+  const { teamspaceName } = req.body;
+
+  if (!teamspaceName) {
+    return res.status(400).json({ status: 'failed', message: 'Teamspace name is required' });
+  }
+  try {
+    const teamspaceRepository = new TeamspaceRepository();
+    const teamspaceExists = await teamspaceRepository.isUniqueTeamspaceNameByClient(
+      parseInt(clientId),
+      teamspaceName
+    );
+
+    const isUnique = !teamspaceExists;
+
+    res.json({ status: 'success', isUnique });
+  } catch (error) {
+    console.error('Error checking teamspace name uniqueness:', error);
+    res.status(500).json({ status: 'failed', message: 'Error checking teamspace name' });
+  }
+});
+
+/**
+ * @swagger
  * /clients/{clientId}/folders/{folderId}/documents/unique:
  *   post:
  *     tags:
