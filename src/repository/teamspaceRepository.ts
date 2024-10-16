@@ -10,7 +10,7 @@ export class TeamspaceRepository{
         this.teamspaceRepo = AppDataSource.getRepository(Teamspace); // Get the UserDetails repository from AppDataSource
     }
   
-    async isUniqueTeamspaceNameByClient(clientId:number,teamspaceName: string): Promise<Boolean>{
+    async isUniqueTeamspaceNameByClient(clientId:number,teamspaceName: string): Promise<any>{
        // Query to check if a teamspace with the same name exists under the specified client
        try{
        const existingTeamspace = await this.teamspaceRepo.findOne({
@@ -23,7 +23,7 @@ export class TeamspaceRepository{
       });
 
       // If the query returns a result, it means the teamspace name is not unique
-      return !!existingTeamspace;
+      return existingTeamspace;
     } catch (error:any) {
       console.error('Error checking teamspace name uniqueness:', error);
       return false;
