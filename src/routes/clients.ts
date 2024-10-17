@@ -262,8 +262,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     // Step 2: Upload the file to S3 
     const s3Url = await uploadToS3(file, clientName);
-    console.log(req.body)
-    console.log(docId)
+    console.log('request-body',req.body)
+    console.log('documentId',docId)
     let document:any=''
     if(docId){
       document = await documentRepo.findDocumentById(parseInt(docId));
