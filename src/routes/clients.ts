@@ -102,6 +102,9 @@ router.post('/users/exists', authenticate, async (req: Request, res: Response) =
  *               clientId:
  *                 type: integer
  *                 description: "The client ID associated with the document"
+ *               docId:
+ *                 type: integer
+ *                 description: "The document id associated with the document"
  *               documentName:
  *                 type: string
  *                 description: "The document name associated with the document"
@@ -186,6 +189,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let folderId = parseInt(req.body.folderId, 10);
     let folderName = req.body?.folderName;
     let documentName = req?.body?.documentName;
+    let docId = req?.body?.docId;
     let teamspaceName = req?.body?.teamspaceName;
 
     // if(!teamspaceId){
@@ -259,8 +263,12 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     // Step 2: Upload the file to S3 
     const s3Url = await uploadToS3(file, clientName);
     const teamspace = folder.teamspace
-
-    let document = await documentRepo.findDocumentByDocUrl(s3Url);
+    let document:any=''
+    if(docId){
+      document = await documentRepo.findDocumentById(docId);
+    }else{
+      document = await documentRepo.findDocumentByDocUrl(s3Url);
+    }
 
     console.log(s3Url)
     folderId = folder?.id ? folder.id : null

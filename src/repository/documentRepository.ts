@@ -192,7 +192,7 @@ export class DocumentRepository {
                     data_id: uuidv4(),
                     s3_document_path: s3DocumentPaths,
                     s3_bucket: "knowledge-keeper-results",
-                    teamspace_name: "teamspace", //TODO: Update teamspace
+                    teamspace_name: "teamspace",
                     s3_db_path: "data/test/",
                     teamspace_s3_path: "data/test/"
                 };
