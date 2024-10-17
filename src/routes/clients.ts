@@ -271,6 +271,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     }
 
     console.log('folder',folder)
+    console.log(document)
 
     const teamspace = folder ? folder.teamspace : document.teamspace
 
@@ -301,7 +302,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           updatedAt: new Date(),
           client: clientId,
           folder: folderId,
-          teamspace: folder?.teamspace.id
+          teamspace: folder ? folder.teamspace : document.teamspace
         }
       }
       document = await documentRepo.createDocument(createdocumentRequest);
