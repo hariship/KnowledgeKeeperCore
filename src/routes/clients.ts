@@ -1268,12 +1268,18 @@ router.post('/:clientId/teamspaces/:teamspaceId/folders/unique', async (req, res
 // Create a new byte (recommendation)
 router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
   const { recommendation } = req.body;
-  let { clientId }: any = req.params;
+  let { clientId, email }: any = req.params;
 
   const userId = req.user.userId
 
   clientId = parseInt(clientId)
 
+
+  if(!email){
+    const userRepo = new UserRepository();
+    const user = await userRepo.findUserById(userId)
+    email = user?.email
+  }
   
   // Validate the input fields
   if (!recommendation || !userId) {
@@ -1288,7 +1294,7 @@ router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
     const byteRepo = new ByteRepository();
 
     // Create the new byte
-    const newByte = await byteRepo.createByte(recommendation, userId,clientId);
+    const newByte = await byteRepo.createByte(recommendation, userId,clientId,email);
 
     res.json({
       status: 'success',

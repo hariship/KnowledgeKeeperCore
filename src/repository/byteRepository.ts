@@ -114,14 +114,15 @@ export class ByteRepository {
       }
 
     // Find a byte by its ID
-    async createByte(byteInfo: any, user: UserDetails, clientId:any): Promise<Byte | null> {
+    async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string): Promise<Byte | null> {
         const newByte = await this.byteRepo.create({
             byteInfo,
             requestedBy: user,
             noOfRecommendations: 0,
             isProcessedByRecommendation: false,
             status: 'open',
-            clientId
+            clientId,
+            requestedByEmail: email
           });
           let byteSaved = await this.byteRepo.save(newByte);
           let dataId = uuidv4();

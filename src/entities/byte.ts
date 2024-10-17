@@ -15,6 +15,9 @@ export class Byte {
     @JoinColumn({ name: "requestedBy" })
     requestedBy: UserDetails;
 
+    @Column({nullable: true})
+    requestedByEmail: string;
+
     @Column({ nullable: true })
     noOfRecommendations: number;
 
