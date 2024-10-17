@@ -262,13 +262,16 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     // Step 2: Upload the file to S3 
     const s3Url = await uploadToS3(file, clientName);
-    const teamspace = folder.teamspace
+
     let document:any=''
     if(docId){
       document = await documentRepo.findDocumentById(docId);
     }else{
       document = await documentRepo.findDocumentByDocUrl(s3Url);
     }
+
+    const teamspace = folder ? folder.teamspace : document.teamspace
+
 
     console.log(s3Url)
     folderId = folder?.id ? folder.id : null
