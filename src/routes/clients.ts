@@ -270,6 +270,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       document = await documentRepo.findDocumentByDocUrl(s3Url);
     }
 
+    console.log('folder',folder)
+
     const teamspace = folder ? folder.teamspace : document.teamspace
 
 
