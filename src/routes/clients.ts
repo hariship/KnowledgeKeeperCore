@@ -189,7 +189,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let folderId = parseInt(req.body.folderId, 10);
     let folderName = req.body?.folderName;
     let documentName = req?.body?.documentName;
-    let docId = req?.body?.docId;
+    let docId = req?.body?.documentId;
     let teamspaceName = req?.body?.teamspaceName;
 
     // if(!teamspaceId){
