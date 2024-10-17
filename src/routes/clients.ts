@@ -302,7 +302,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           updatedAt: new Date(),
           client: clientId,
           folder: folderId,
-          teamspace: folder ? folder.teamspace : document.teamspace
+          teamspace
         }
       }
       document = await documentRepo.createDocument(createdocumentRequest);
