@@ -489,7 +489,7 @@ router.post('/modify', async (req: Request, res: Response) => {
   console.log(req.body)
   let { userId, docId, byteId,byteInfo, changeRequestType, changes, changeSummary, isTrained, clientId, recommendationAction } = req.body;
 
-  if (!userId || !docId || !changeRequestType || !changes || !changeSummary || clientId) {
+  if ( !docId || !changeRequestType || !changes || !changeSummary || clientId) {
     return res.status(400).json({
       status: 'failed',
       message: 'Missing required fields',
