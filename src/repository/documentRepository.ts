@@ -7,6 +7,8 @@ import { Task } from '../entities/task';
 import { TaskRepository } from './taskRepository';
 import { STATUS, TASK_NAMES } from '../utils/constants';
 import { ByteRepository } from './byteRepository';
+import { Recommendation } from '../entities/recommendation';
+import { Byte } from '../entities/byte';
 const { v4: uuidv4 } = require('uuid');
 
 export class DocumentRepository {
@@ -147,6 +149,19 @@ export class DocumentRepository {
 
         try {
             // Step 1: Delete all documents associated with the folder
+            let documents = await this.documentRepo.find({
+                where:{
+                    folder: {
+                        id
+                    }
+                },
+                relations: ['folder']
+            })
+            for(let document of documents){
+                const byteRepo = new ByteRepository();
+                await byteRepo.deleteRecommendationByDocId(document.id)
+            }
+            
             await queryRunner.manager
                 .createQueryBuilder()
                 .delete()

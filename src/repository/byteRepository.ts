@@ -157,11 +157,12 @@ export class ByteRepository {
         return byte;
     }
 
-    async deleteRecommendationByDocId(docId:any): Promise<Recommendation | null> {
-      const recommendation = await this.recommendationRepo.findOne({ where: { document: docId } });
-      if(recommendation){
-        await this.recommendationRepo.remove(recommendation);
-        return recommendation;
+    async deleteRecommendationByDocId(docId:number): Promise<Recommendation[] | null> {
+      const recommendations = await this.recommendationRepo.find({ where: { document: {
+        id:docId} } });
+      if(recommendations){
+        await this.recommendationRepo.remove(recommendations);
+        return recommendations;
       }
       return null;
     }
