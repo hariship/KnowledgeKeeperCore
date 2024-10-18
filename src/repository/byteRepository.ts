@@ -157,6 +157,15 @@ export class ByteRepository {
         return byte;
     }
 
+    async deleteRecommendationByDocId(docId:any): Promise<Recommendation | null> {
+      const recommendation = await this.recommendationRepo.findOne({ where: { document: docId } });
+      if(recommendation){
+        await this.recommendationRepo.remove(recommendation);
+        return recommendation;
+      }
+      return null;
+    }
+
     async callExternalRecommendationService(byte: Partial<Byte>){
         let response = await axios.post(
             `http://3.142.50.84:5000/v1/predict`,

@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Task } from '../entities/task';
 import { TaskRepository } from './taskRepository';
 import { STATUS, TASK_NAMES } from '../utils/constants';
+import { ByteRepository } from './byteRepository';
 const { v4: uuidv4 } = require('uuid');
 
 export class DocumentRepository {
@@ -106,7 +107,16 @@ export class DocumentRepository {
 
     // Delete a document by ID
     async deleteDocument(docId: number): Promise<void> {
+        await this.removeDocumentFromRecommendation(docId);
         await this.documentRepo.delete(docId);
+    }
+
+    private async removeDocumentFromRecommendation(docId: number): Promise<Boolean> {
+        // Your logic to remove the document from the recommendation system goes here
+        // For example, you might call a service to update the recommendation system.
+        const byteRepo = new ByteRepository();
+        await byteRepo.deleteRecommendationByDocId(docId);
+        return true;
     }
 
     // CRUD for Folders
