@@ -37,7 +37,8 @@ export class ByteRepository {
         return this.byteRepo.find({
             where: {
                 status: 'open',
-                clientId
+                clientId,
+                isDeleted: false
             },
             relations: ['clientId']
         });
@@ -59,7 +60,8 @@ export class ByteRepository {
         return this.byteRepo.find({
             where: {
                 status: Not('open'),
-                clientId
+                clientId,
+                isDeleted: false
             },
             relations: ['docId','clientId']
         });
