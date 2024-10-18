@@ -162,6 +162,15 @@ export class ByteRepository {
         id:docId} } });
       if(recommendations){
         await this.recommendationRepo.remove(recommendations);
+        let byteIds = recommendations.map(recommendation => recommendation?.byte?.id);
+        for(let byteId of byteIds){
+          let byte = await this.byteRepo.findOneBy({ 
+              id: byteId
+          })
+          if(byte?.noOfRecommendations){
+            await this.byteRepo.update(byteId, {noOfRecommendations: byte?.noOfRecommendations - 1} )
+          }
+        }
         return recommendations;
       }
       return null;
