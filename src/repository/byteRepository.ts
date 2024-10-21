@@ -279,7 +279,7 @@ export class ByteRepository {
                   previous_string: recommendationJson?.text_relevancy == 0 ? '' : recommendationJson?.splitted_content,
                   section_main_heading1: recommendationJson?.section_main_heading1,
                   section_main_heading2: recommendationJson?.section_main_heading2,
-                  section_main_heading3: recommendationJson?.section_main_heading2,
+                  section_main_heading3: recommendationJson?.section_main_heading3,
                   section_main_heading4: recommendationJson?.section_main_heading4
               });
             }
