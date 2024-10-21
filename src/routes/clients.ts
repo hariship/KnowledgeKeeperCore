@@ -504,12 +504,12 @@ router.post('/modify', async (req: Request, res: Response) => {
   console.log(req.body)
   let { userId, docId, byteId,byteInfo, changeRequestType, changes, changeSummary, isTrained, clientId, recommendationAction } = req.body;
 
-  if (!userId || !docId || !changeRequestType || !changes || !changeSummary || !clientId) {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'Missing required fields',
-    });
-  }
+  // if (!userId || !docId || !changeRequestType || !changes || !changeSummary || !clientId) {
+  //   return res.status(400).json({
+  //     status: 'failed',
+  //     message: 'Missing required fields',
+  //   });
+  // }
   let userDetails: any, docDetails:any, byteDetails:any; 
 
   if(userId){
