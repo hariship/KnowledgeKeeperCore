@@ -218,147 +218,152 @@ export class ByteRepository {
 
     async getRecommendationsBasedOnDocId(documentId: number) {
       try {
-        let recommendationsForDocument = await this.recommendationRepo.find({
-          where: {
-              document: {
-                  id: documentId
-              }
-          },
-          relations: ['byte', 'document'] // Ensure to load the related byte entity
-      });
-      const docRepo = new DocumentRepository();
-      const requestDocument = await docRepo.findDocumentById(documentId)
-
-      if(!requestDocument){
-        return false;
-      }
-      // Initialize the response
-      const document = recommendationsForDocument[0]?.document;
-      
+        // Fetch recommendations that are not present in change_log
+        let recommendationsForDocument = await this.recommendationRepo
+          .createQueryBuilder("recommendation")
+          .leftJoinAndSelect("recommendation.byte", "byte")
+          .leftJoinAndSelect("recommendation.document", "document")
+          .where("document.id = :documentId", { documentId: documentId })
+          .andWhere(`recommendation.id NOT IN (
+              SELECT "recommendationId" FROM "change_log"
+              WHERE "recommendationId" IS NOT NULL
+            )`)
+          .getMany();
+    
+        const docRepo = new DocumentRepository();
+        const requestDocument = await docRepo.findDocumentById(documentId);
+    
+        if (!requestDocument) {
+          return false;
+        }
+    
+        // Initialize the response
         const response: any = {
           document: {
-              doc_id: requestDocument.id,
-              doc_content: requestDocument.docContentUrl,
-              bytes: [] // This will hold bytes and their recommendations
+            doc_id: requestDocument.id,
+            doc_content: requestDocument.docContentUrl,
+            bytes: [] // This will hold bytes and their recommendations
           }
-        }
-      
-      // Organize recommendations by byte
-      const byteRecommendationsMap = new Map<any, { byteId: any, recommendations: any[] }>();
-      
-      if (recommendationsForDocument && recommendationsForDocument.length > 0) {
+        };
+    
+        // Organize recommendations by byte
+        const byteRecommendationsMap = new Map<any, { byteId: any, recommendations: any[] }>();
+    
+        if (recommendationsForDocument && recommendationsForDocument.length > 0) {
           for (let recommendation of recommendationsForDocument) {
-            if (recommendation && recommendation.byte){
+            if (recommendation && recommendation.byte) {
               const byte = recommendation.byte; // Assuming each recommendation is associated with a byte
               const byteId = byte ? byte.id : null; // Set byteId to null if no byte is associated
-      
+    
               // Initialize byte recommendation structure with byteId (or null) if not already present
               if (!byteRecommendationsMap.has(byteId)) {
-                  byteRecommendationsMap.set(byteId, {
-                      byteId: byteId, // Will be null if no byte exists
-                      recommendations: [] // Recommendations will be grouped here
-                  });
+                byteRecommendationsMap.set(byteId, {
+                  byteId: byteId, // Will be null if no byte exists
+                  recommendations: [] // Recommendations will be grouped here
+                });
               }
-      
+    
               // Safely get the byte object from the map (since we ensured it exists above)
               const byteEntry = byteRecommendationsMap.get(byteId)!; // Using non-null assertion here
-      
+    
               // Parse the recommendation JSON if it exists
               const recommendationJson = JSON.parse(recommendation?.recommendation || '{}');
-      
+    
               // Add the recommendation under the byte (or null byteId)
-              if(recommendation){
+              if (recommendation) {
                 byteEntry.recommendations.push({
                   id: recommendation.id,
                   change_request_type:
-                      recommendation?.recommendationAction === 'new_section' ||
-                      recommendation?.recommendationAction === 'add'
-                          ? 'Add'
-                          : 'Replace',
+                    recommendation?.recommendationAction === 'new_section' ||
+                    recommendation?.recommendationAction === 'add'
+                      ? 'Add'
+                      : 'Replace',
                   change_request_text: recommendationJson?.generated_text,
-                  previous_string: recommendationJson?.text_relevancy == 0 ? '' : recommendationJson?.splitted_content,
+                  previous_string:
+                    recommendationJson?.text_relevancy == 0
+                      ? ''
+                      : recommendationJson?.splitted_content,
                   section_main_heading1: recommendationJson?.section_main_heading1,
                   section_main_heading2: recommendationJson?.section_main_heading2,
                   section_main_heading3: recommendationJson?.section_main_heading3,
                   section_main_heading4: recommendationJson?.section_main_heading4
-              });
-            }
-             
+                });
               }
-              
+            }
           }
-      
-      
+    
           // Add all bytes and their recommendations to the response
           response.document.bytes = Array.from(byteRecommendationsMap.values());
-      }
-      
-      // Now the response is ready and properly organized by byte (or null byteId)
-      return response;
-    } catch (error) {
+        }
+    
+        // Now the response is ready and properly organized by byte (or null byteId)
+        return response;
+      } catch (error) {
         console.error('Error fetching recommendations:', error);
         throw new Error('Failed to fetch recommendations');
-    } 
+      }
     }
 
     async getRecommendations(byte: Partial<Byte>) {
       try {
-        let recommendationsForByte = await this.recommendationRepo.find({
-            where: {
-                byte: {
-                    id: byte?.id
-                }
-            },
-            relations: ['document'] // assuming that each recommendation has a document relation
-        });
-
+        // Fetch recommendations that are not present in change_log
+        let recommendationsForByte = await this.recommendationRepo
+          .createQueryBuilder("recommendation")
+          .leftJoinAndSelect("recommendation.document", "document")
+          .where("recommendation.byteId = :byteId", { byteId: byte?.id })
+          .andWhere(`recommendation.id NOT IN (
+              SELECT "recommendationId" FROM "change_log"
+              WHERE "recommendationId" IS NOT NULL
+            )`)
+          .getMany();
+    
         console.log(byte);
-
+    
         const response: any = {
-            request_id: byte.id,
-            request_text: byte.byteInfo,
-            sender: byte?.requestedBy?.email,
-            date_time: byte?.createdAt,
-            documents: []
+          request_id: byte.id,
+          request_text: byte.byteInfo,
+          sender: byte?.requestedBy?.email,
+          date_time: byte?.createdAt,
+          documents: []
         };
-
+    
         const documentMap = new Map(); // Map to group recommendations by document
-
-        if (recommendationsForByte) {
-            for (let recommendationByte of recommendationsForByte) {
-                const recommendationJson = JSON.parse(recommendationByte?.recommendation);
-
-                // Check if the document already exists in the response
-                if (!documentMap.has(recommendationByte.document.id)) {
-                    // Add a new document entry if it doesn't exist
-                    documentMap.set(recommendationByte.document.id, {
-                        doc_id: recommendationByte.document.id,
-                        doc_content: recommendationByte.document.docContentUrl,
-                        recommendations: []
-                    });
-                }
-
-                // Add the recommendation to the corresponding document
-                documentMap.get(recommendationByte.document.id).recommendations.push({
-                    id: recommendationByte.id,
-                    change_request_type: (recommendationByte?.recommendationAction == 'new_section' || recommendationByte?.recommendationAction == 'add') ? 'Add' : 'Replace',
-                    change_request_text: recommendationJson?.generated_text,
-                    previous_string: recommendationJson?.text_relevancy == 0 ? '' : recommendationJson?.splitted_content,
-                    section_main_heading1: recommendationJson?.section_main_heading1,
-                    section_main_heading2: recommendationJson?.section_main_heading2,
-                    section_main_heading3: recommendationJson?.section_main_heading3,
-                    section_main_heading4: recommendationJson?.section_main_heading4,
-                });
+    
+        if (recommendationsForByte && recommendationsForByte.length > 0) {
+          for (let recommendationByte of recommendationsForByte) {
+            const recommendationJson = JSON.parse(recommendationByte?.recommendation);
+    
+            // Check if the document already exists in the response
+            if (!documentMap.has(recommendationByte.document.id)) {
+              // Add a new document entry if it doesn't exist
+              documentMap.set(recommendationByte.document.id, {
+                doc_id: recommendationByte.document.id,
+                doc_content: recommendationByte.document.docContentUrl,
+                recommendations: []
+              });
             }
+    
+            // Add the recommendation to the corresponding document
+            documentMap.get(recommendationByte.document.id).recommendations.push({
+              id: recommendationByte.id,
+              change_request_type: (recommendationByte?.recommendationAction == 'new_section' || recommendationByte?.recommendationAction == 'add') ? 'Add' : 'Replace',
+              change_request_text: recommendationJson?.generated_text,
+              previous_string: recommendationJson?.text_relevancy == 0 ? '' : recommendationJson?.splitted_content,
+              section_main_heading1: recommendationJson?.section_main_heading1,
+              section_main_heading2: recommendationJson?.section_main_heading2,
+              section_main_heading3: recommendationJson?.section_main_heading3,
+              section_main_heading4: recommendationJson?.section_main_heading4,
+            });
+          }
         }
-
+    
         // Convert the map to an array of documents
         response.documents = Array.from(documentMap.values());
-
+    
         return response;
-    } catch (error) {
+      } catch (error) {
         console.error(error);
         throw error;
+      }
     }
-  }
 }

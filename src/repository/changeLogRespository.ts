@@ -3,6 +3,7 @@ import { ChangeLog } from '../entities/change_logs';
 import { AppDataSource } from '../db/data_source';
 import { KnowledgeKeeperError } from '../errors/errors';
 import { KNOWLEDGE_KEEPER_ERROR } from '../errors/errorConstants';
+import { Recommendation } from '../entities/recommendation';
 
 export class ChangeLogRepository{
 
@@ -26,9 +27,13 @@ export class ChangeLogRepository{
     }>,
     changeSummary: string,
     isTrained: boolean,
-    aiRecommendationStatus: string
-  ): Promise<ChangeLog> {
+    aiRecommendationStatus: string,
+    recommendationId: number
+  ): Promise<ChangeLog | null> {
     console.log('aiRecommendationStatus',aiRecommendationStatus)
+    const recommendationRepo = AppDataSource.getRepository(Recommendation);
+    let recommendation = await recommendationRepo.findOneBy({id:recommendationId})
+    if(recommendation){
     const changeLog = this.changeLogRepo.create({
       document: { id: docId }, // Assuming Document entity is related via ManyToOne
       byte: { id: byteId }, // Assuming Byte entity is related via ManyToOne
@@ -40,9 +45,12 @@ export class ChangeLogRepository{
       sectionContent: changes[0].sectionContent,
       externalAttributeId: changes[0].externalAttributeId,
       isTrained,
-      aiRecommendationStatus
-    });
-    return await this.changeLogRepo.save(changeLog);
+      aiRecommendationStatus,
+      recommendation
+      });
+      return await this.changeLogRepo.save(changeLog);
+    }
+    return null;
   }
 
   async createChangeLog(
@@ -58,9 +66,11 @@ export class ChangeLogRepository{
     }>,
     changeSummary: string,
     isTrained: boolean,
-    aiRecommendationStatus: string
+    aiRecommendationStatus: string,
+    recommendationId: number
   ): Promise<any> {
     try {
+      console.log('recommendationId',recommendationId)
       await this.create(
         userId,
         docId,
@@ -69,7 +79,8 @@ export class ChangeLogRepository{
         changes,
         changeSummary,
         isTrained,
-        aiRecommendationStatus
+        aiRecommendationStatus,
+        recommendationId
       );
       return {
         status: 'success',

@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDa
 import { Document } from './document';
 import { Byte } from './byte';
 import { UserDetails } from './user_details';
+import { Recommendation } from './recommendation';
 
 @Entity()
 export class ChangeLog {
@@ -15,6 +16,10 @@ export class ChangeLog {
     @ManyToOne(() => Byte)
     @JoinColumn({ name: "byteId" })
     byte: Byte;
+
+    @ManyToOne(() => Recommendation)
+    @JoinColumn({ name: "recommendationId" })
+    recommendation: Recommendation;
 
     @ManyToOne(() => UserDetails)
     @JoinColumn({ name: "changedBy" })
