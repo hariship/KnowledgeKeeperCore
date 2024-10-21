@@ -455,7 +455,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
  *               recommendationId:
  *                 type: integer
  *                 description: "Unique id of the recommendation"
- *                 example: false
+ *                 example: 2
  *               recommendationAction:
  *                 type: string
  *                 description: "The type of recommendaiton whether accepted or not logged"
