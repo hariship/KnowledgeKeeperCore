@@ -236,7 +236,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           message: 'No folder found with the id'
         });
       }
-    }else if(folderName){
+    }else if(folderName && !teamspaceName){
       let teamspace: any;
       const teamspaceRepo = new TeamspaceRepository();
       const teamspaceName = folderName;
@@ -335,7 +335,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     }
 
     // call split data into chunks
-    await documentRepo.callSplitDataIntoChunks();
+    await documentRepo.callSplitDataIntoChunks(folder?.teamspace?.teamspaceName);
 
 
 

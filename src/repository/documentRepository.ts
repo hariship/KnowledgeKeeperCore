@@ -202,7 +202,7 @@ export class DocumentRepository {
         }
     }
 
-    public async callSplitDataIntoChunks() {
+    public async callSplitDataIntoChunks(teamspaceName: string) {
         try {
             const documents = await this.getAllDocuments();
 
@@ -218,7 +218,7 @@ export class DocumentRepository {
                     data_id: uuidv4(),
                     s3_document_path: s3DocumentPaths,
                     s3_bucket: "knowledge-keeper-results",
-                    teamspace_name: "teamspace",
+                    teamspace_name: teamspaceName,
                     s3_db_path: "data/test/",
                     teamspace_s3_path: "data/test/"
                 };
