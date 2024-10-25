@@ -70,6 +70,13 @@ export class TaskRepository {
         }
     }
 
+    public async getMostRecentTaskByName(taskName: string): Promise<Task | null> {
+        return this.taskRepo.createQueryBuilder('task')
+            .where('task.taskName = :taskName', { taskName })
+            .orderBy('task.createdAt', 'DESC')
+            .getOne(); // Fetch the most recent task
+    }
+
     async pollTaskStatus(){
         try {
             // Get all tasks with status PENDING or IN_PROGRESS

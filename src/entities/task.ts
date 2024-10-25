@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Timestamp } from 'typeorm';
 
 @Entity()
 export class Task {
@@ -16,4 +16,7 @@ export class Task {
 
     @Column({nullable: true })
     byteId: number
+
+    @Column({type: 'date', nullable: true })
+    createdAt: Date
 }

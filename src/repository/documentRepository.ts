@@ -204,6 +204,23 @@ export class DocumentRepository {
 
     public async callSplitDataIntoChunks(teamspaceName: string) {
         try {
+            const taskRepo = new TaskRepository();
+            const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
+    
+            // Fetch the most recent task for SPLIT_DATA_INTO_CHUNKS
+            const recentTask = await taskRepo.getMostRecentTaskByName(taskName);
+    
+            // If the recent task exists, check if the createdAt is older than 1 hour
+            if (recentTask) {
+                const oneHourAgo = new Date();
+                oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+    
+                if (new Date(recentTask.createdAt) > oneHourAgo) {
+                    console.log('Skipping API call as the last task was created less than 1 hour ago.');
+                    return;
+                }
+            }
+
             const documents = await this.getAllDocuments();
 
             if (documents.length > 0) {
