@@ -84,7 +84,7 @@ export class TaskRepository {
     
             for (const task of pendingTasks) {
                 console.log('Poliing for task:', task)
-                const response = await axios.get(`http://3.142.50.84:5000/v1/task_status/${task.taskId}`, {
+                const response = await axios.get(`http://18.116.66.245:5000/v1/task_status/${task.taskId}`, {
                     headers: {
                         'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with actual token
                     }

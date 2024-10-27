@@ -98,7 +98,7 @@ export class ByteRepository {
 
           try {
             // Await the Axios POST request
-            const response = await axios.post('http://3.142.50.84:5000/v1/recommend-bytes', requestData, {
+            const response = await axios.post('http://18.116.66.245:5000/v1/recommend-bytes', requestData, {
               headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499'
@@ -178,7 +178,7 @@ export class ByteRepository {
 
     async callExternalRecommendationService(byte: Partial<Byte>){
         let response = await axios.post(
-            `http://3.142.50.84:5000/v1/predict`,
+            `http://18.116.66.245:5000/v1/predict`,
             { 
               input_text: byte?.byteInfo,
               data_id: "Door Dash Test 1"
