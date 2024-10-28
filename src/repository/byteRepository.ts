@@ -202,6 +202,10 @@ export class ByteRepository {
       })
         if (result && byteSaved){
           let recommendationData = result?.data
+          console.log('result')
+          console.log(result)
+          console.log('recommendationData')
+          console.log(recommendationData)
           for(let recommendationContent of recommendationData){
             const newRecommendation = await this.recommendationRepo.create({
               byte: byteSaved,
