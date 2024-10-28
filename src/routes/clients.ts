@@ -565,15 +565,21 @@ router.post('/modify', async (req: Request, res: Response) => {
   // After logging the change, check the recommendationAction
   if (recommendationAction === 'ACCEPTED' || recommendationAction === 'REJECTED') {
     // Update the byte status to resolved
-    
-    const updatedByte = await byteRepo.updateByte(byteId, {status:'resolved'});
-    
-    if (!updatedByte) {
-      return res.status(500).json({
-        status: 'failed',
-        message: 'Failed to update byte status',
-      });
+
+    let recommendationsForByte = await byteRepo.getRecommendations(byteDetails);
+
+    if(recommendationsForByte.documents.length == 0){
+      // No more recommendations so update the byte as resolved
+      const updatedByte = await byteRepo.updateByte(byteId, {status:'resolved'});
+      if (!updatedByte) {
+        return res.status(500).json({
+          status: 'failed',
+          message: 'Failed to update byte status',
+        });
+      }
     }
+    
+    
   }
 
   return res.json(result);
