@@ -115,7 +115,7 @@ export class ByteRepository {
               // Log response for each teamspace
               console.log(`Response for Teamspace ${teamspace.teamspaceName}:`, response.data);
               let finalResponse = response?.data
-              if(finalResponse.data){
+              if(finalResponse){
                 const taskRepo = new TaskRepository();
                 const taskName = TASK_NAMES.RECOMMEND_BYTES;
                 await taskRepo.createTask(finalResponse.task_id, STATUS.PENDING, taskName, dataId, byteSaved.id)
