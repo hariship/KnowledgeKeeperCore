@@ -85,7 +85,7 @@ export class ByteRepository {
         });
       }
 
-      async callExternalRecommendationByteService(byteInfo: any) {
+      async callExternalRecommendationByteService(byteInfo: any, byteSaved: any) {
         try {
           const dataId = uuidv4();
           const teamspaceRepository = AppDataSource.getRepository(Teamspace);
@@ -114,7 +114,12 @@ export class ByteRepository {
       
               // Log response for each teamspace
               console.log(`Response for Teamspace ${teamspace.teamspaceName}:`, response.data);
-              return response.data;
+              let finalResponse = response?.data
+              if(finalResponse.data){
+                const taskRepo = new TaskRepository();
+                const taskName = TASK_NAMES.RECOMMEND_BYTES;
+                await taskRepo.createTask(finalResponse.task_id, STATUS.PENDING, taskName, dataId, byteSaved.id)
+              }
             } catch (error: any) {
               console.error(`Error for Teamspace ${teamspace.teamspaceName}:`, error.response ? error.response.data : error.message);
             }
@@ -137,12 +142,7 @@ export class ByteRepository {
           });
           let byteSaved = await this.byteRepo.save(newByte);
           let dataId = uuidv4();
-          let response = await this.callExternalRecommendationByteService(byteInfo)
-          if(response){
-            const taskRepo = new TaskRepository();
-            const taskName = TASK_NAMES.RECOMMEND_BYTES;
-            await taskRepo.createTask(response.task_id, STATUS.PENDING, taskName, dataId, byteSaved.id)
-          }
+          let response = await this.callExternalRecommendationByteService(byteInfo, byteSaved)
           return byteSaved;
     }  
     
