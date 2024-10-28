@@ -213,7 +213,7 @@ export class DocumentRepository {
             // If the recent task exists, check if the createdAt is older than 1 hour
             if (recentTask) {
                 const oneHourAgo = new Date();
-                oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+                oneHourAgo.setHours(oneHourAgo.getMinutes() - 15);
     
                 if (new Date(recentTask.createdAt) > oneHourAgo) {
                     console.log('Skipping API call as the last task was created less than 1 hour ago.');
