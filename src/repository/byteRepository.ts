@@ -99,7 +99,7 @@ export class ByteRepository {
               data_id: dataId,
               input_text: byteInfo,
               s3_bucket: 'knowledge-keeper-results',
-              s3_db_path: `data/test/${teamspace.teamspaceName}.ann`,
+              s3_db_path: `data/test/${teamspace.teamspaceName}_db.ann`,
               s3_sentenced_document_path: `data/test/${teamspace.teamspaceName}_parsed.csv`
             };
       
