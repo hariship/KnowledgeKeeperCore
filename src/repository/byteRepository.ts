@@ -11,6 +11,7 @@ import { TaskRepository } from "./taskRepository";
 import { STATUS, TASK_NAMES } from "../utils/constants";
 const {v4: uuidv4 } = require('uuid');
 import { Not } from 'typeorm';
+import { Teamspace } from "../entities/teamspace";
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
@@ -84,35 +85,43 @@ export class ByteRepository {
         });
       }
 
-      async callExternalRecommendationByteService(byteInfo:string){
-        const dataId = uuidv4();
-        // Define the request data
-        const requestData = {
-          data_id: dataId,
-          input_text: byteInfo,
-          s3_bucket: 'knowledge-keeper-results',
-          s3_db_path: 'data/test/teamspace_db.ann',
-          s3_sentenced_document_path: 'data/test/teamspace_parsed.csv'
-        };
-
-
-          try {
-            // Await the Axios POST request
-            const response = await axios.post('http://18.116.66.245:5000/v1/recommend-bytes', requestData, {
-              headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499'
-              }
-            });
-            
-            // Handle the successful response
-            console.log('Response Data:', response.data);
-            
-            return response.data;
-          } catch (error:any) {
-            // Handle any errors that occurred during the request
-            console.error('Error:', error.response ? error.response.data : error.message);
+      async callExternalRecommendationByteService(byteInfo: any) {
+        try {
+          const dataId = uuidv4();
+          const teamspaceRepository = AppDataSource.getRepository(Teamspace);
+          
+          // Retrieve all teamspaces from the database
+          const teamspaces = await teamspaceRepository.find();
+      
+          for (const teamspace of teamspaces) {
+            // Update s3_db_path and s3_sentenced_document_path dynamically with the teamspace name
+            const requestData = {
+              data_id: dataId,
+              input_text: byteInfo,
+              s3_bucket: 'knowledge-keeper-results',
+              s3_db_path: `data/test/${teamspace.teamspaceName}.ann`,
+              s3_sentenced_document_path: `data/test/${teamspace.teamspaceName}_parsed.csv`
+            };
+      
+            try {
+              // Send Axios POST request for each teamspace
+              const response = await axios.post('http://18.116.66.245:5000/v1/recommend-bytes', requestData, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499'
+                }
+              });
+      
+              // Log response for each teamspace
+              console.log(`Response for Teamspace ${teamspace.teamspaceName}:`, response.data);
+              return response.data;
+            } catch (error: any) {
+              console.error(`Error for Teamspace ${teamspace.teamspaceName}:`, error.response ? error.response.data : error.message);
+            }
           }
+        } catch (error:any) {
+          console.error('Error retrieving teamspaces:', error.message);
+        }
       }
 
     // Find a byte by its ID
