@@ -577,6 +577,9 @@ router.post('/modify', async (req: Request, res: Response) => {
           message: 'Failed to update byte status',
         });
       }
+    }else{
+      // Update recommendation count here
+      await byteRepo.updateByte(byteId, {noOfRecommendations:byteDetails?.noOfRecommendations - 1});
     }
     
     
