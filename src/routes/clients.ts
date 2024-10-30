@@ -719,10 +719,11 @@ router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
  */
 
 // POST: Mark a byte as resolved
-router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (req, res) => {
+router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (req:any, res) => {
   try {
     const { byteId } = req.params;
     const {resolutionDetails} = req.body;
+    const userId = req?.user?.userId
 
     const byteRepo = new ByteRepository();
 
@@ -735,6 +736,11 @@ router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (re
 
     // Mark byte as resolved and add resolution details
     byte.status = resolutionDetails;
+  
+    if(resolutionDetails == 'resolved'){
+      //mark all recommendations under that byte as closed by adding change_log
+      await byteRepo.handleRecommendations(byte, userId)
+    }
     await byteRepo.saveByte(byte); // Assuming save will update the byte in the database
 
     res.json({

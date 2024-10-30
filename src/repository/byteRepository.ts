@@ -12,6 +12,7 @@ import { STATUS, TASK_NAMES } from "../utils/constants";
 const {v4: uuidv4 } = require('uuid');
 import { Not } from 'typeorm';
 import { Teamspace } from "../entities/teamspace";
+import { ChangeLogRepository } from "./changeLogRespository";
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
@@ -68,6 +69,45 @@ export class ByteRepository {
         });
     }
 
+    async handleRecommendations(byte: any, userId: number) {
+      // Step 1: Call getRecommendations to get the list of documents and recommendations
+      const response = await this.getRecommendations(byte);  // Assume this returns the recommendations in a set of documents
+    
+      // Step 2: Loop through the documents and their recommendations
+      for (const doc of response.documents) {
+        const docId = doc.doc_id;
+    
+        for (const recommendation of doc.recommendations) {
+          const recommendationId = recommendation.id;
+          const changeRequestType = recommendation.change_request_type; // 'Add' or 'Replace' based on your logic
+          const changeSummary = 'ACCEPT';  // As per your example
+          const isTrained = false;  // Default to false unless updated otherwise
+          const recommendationAction = 'ACCEPT';  // Based on the action taken
+    
+          // Step 3: Call the changeLogRepo.createChangeLog function for each recommendation
+          const changes:any = [];  // Assuming this is the format for changes, customize as needed
+    
+          try {
+            const changeLogRepo = new ChangeLogRepository();
+            await changeLogRepo.createChangeLog(
+              userId,                 // User ID already available
+              docId,                  // From the document object
+              byte.id,                // Byte ID from the byte object
+              changeRequestType,       // 'Add' or 'Replace'
+              changes,                // Set to an empty array or provide actual changes
+              changeSummary,          // Summary for the change
+              isTrained,              // Whether or not it's trained
+              recommendationAction,   // Action taken, in this case 'ACCEPT'
+              recommendationId        // ID of the specific recommendation
+            );
+    
+            console.log(`Change log created for recommendation ${recommendationId} in document ${docId}`);
+          } catch (error) {
+            console.error(`Error creating change log for recommendation ${recommendationId} in document ${docId}: `, error);
+          }
+        }
+      }
+    }
     // Find a byte by its ID
     async findByteById(byteId: number): Promise<Byte | null> {
         return await this.byteRepo.findOne({
