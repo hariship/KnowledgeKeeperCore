@@ -23,6 +23,7 @@ import { UserTeamspaceRepository } from '../repository/userTeamspaceRepository';
 import { UserTeamspace } from '../entities/user_teamspace';
 import { verify } from 'crypto';
 import { Client } from '../entities/client';
+import { getDiffWordsWithSpace } from '../modules/userModule';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -258,13 +259,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     // Calculate the difference between the new document (html1) and existing document (html2)
     const html1 = file.buffer.toString('utf-8');
-    const differences = diffWordsWithSpace(html2, html1).filter(part => part.added || part.removed);
-
-    // Structure the differences for easier processing
-    const structuredDiff = differences.map(part => ({
-      type: part.added ? 'added' : 'removed',
-      content: part.value.trim()
-    }));
+    const differences = getDiffWordsWithSpace(html1, html2)
+     
 
     const teamspace = folder ? folder.teamspace : document?.teamspace;
 
@@ -306,7 +302,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     }
 
     // call split data into chunks
-    await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName, structuredDiff);
+    await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName, differences);
 
 
 

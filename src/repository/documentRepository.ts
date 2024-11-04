@@ -202,7 +202,7 @@ export class DocumentRepository {
         }
     }
 
-    public async callSplitDataIntoChunks(teamspaceName: string, structuredDiff?: object) {
+    public async callSplitDataIntoChunks(teamspaceName: string, differences?: object) {
         try {
             const taskRepo = new TaskRepository();
             const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
@@ -238,7 +238,7 @@ export class DocumentRepository {
                     teamspace_name: teamspaceName,
                     s3_db_path: "data/test/",
                     teamspace_s3_path: "data/test/",
-                    structuredDiff
+                    differences
                 };
 
                 // Call the split_data_into_chunks API
