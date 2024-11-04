@@ -302,7 +302,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     }
 
     // call split data into chunks
-    await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName, differences);
+    await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName, differences, document.id);
 
 
 
