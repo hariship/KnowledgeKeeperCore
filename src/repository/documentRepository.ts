@@ -202,7 +202,7 @@ export class DocumentRepository {
         }
     }
 
-    public async callSplitDataIntoChunks(teamspaceName: string) {
+    public async callSplitDataIntoChunks(teamspaceName: string, differences?: object, docId?: number) {
         try {
             const taskRepo = new TaskRepository();
             const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
@@ -237,7 +237,9 @@ export class DocumentRepository {
                     s3_bucket: "knowledge-keeper-results",
                     teamspace_name: teamspaceName,
                     s3_db_path: "data/test/",
-                    teamspace_s3_path: "data/test/"
+                    teamspace_s3_path: "data/test/",
+                    differences,
+                    document_id: docId
                 };
 
                 // Call the split_data_into_chunks API
