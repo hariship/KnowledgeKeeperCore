@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { AppDataSource } from '../db/data_source';
 import { Document } from '../entities/document'; // Your document entity
-import { Client } from '../entities/client';
+import { diffWordsWithSpace } from 'diff';
 import multer from 'multer';
 import { extractHeadersFromHtml, sendMessageToRabbitMQ, uploadToS3 } from '../modules/s3Module';
 import { DocumentRepository } from '../repository/documentRepository';
@@ -22,6 +22,7 @@ import { TaskRepository } from '../repository/taskRepository';
 import { UserTeamspaceRepository } from '../repository/userTeamspaceRepository';
 import { UserTeamspace } from '../entities/user_teamspace';
 import { verify } from 'crypto';
+import { Client } from '../entities/client';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -192,120 +193,94 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     let docId = req?.body?.documentId;
     let teamspaceName = req?.body?.teamspaceName;
 
-    // if(!teamspaceId){
-    //   return res.status(400).json({ status: false, message: 'TeamspaceId is mandatory' });
-    // }
+    let client: any = {};
 
-    console.log('folderName',folderName)
-    let client: Partial<Client> = {};
-
-    if(!clientName && !clientId){
-      return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.BAD_CLIENT_REQUEST))
+    if (!clientName && !clientId) {
+      return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.BAD_CLIENT_REQUEST));
     }
+
     const documentRepo = new DocumentRepository();
-
-    // Step 1: Create and save document to database
     const clientRepo = new ClientRepository();
-    if(clientId){
-      const clientFound = await clientRepo.findClientById(clientId)
-      if(!clientFound || Object.values(clientFound) == null){
-        return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.CLIENT_NOT_FOUND))
-      }
-      client = clientFound
-    }else{
-      if(clientName){
-        const clientFound = await clientRepo.findClientByName(clientName)
-        if(clientFound){
-          client = clientFound
-        }else{
-          // Create client using clientName
-          client = await clientRepo.createClient(clientName)
-        }
-      }
-    }
-         
-    clientId = client?.id
-    clientName = client.clientName
 
-    let folder:any;
-    if(folderId){
-      folder = await documentRepo.getFolderById(folderId)
-      if(!folder){
-        return res.json({
-          status: false,
-          message: 'No folder found with the id'
-        });
+    if (clientId) {
+      const clientFound = await clientRepo.findClientById(clientId);
+      if (!clientFound || Object.values(clientFound).every(value => value === null)) {
+        return res.status(400).json(new KnowledgeKeeperError(KNOWLEDGE_KEEPER_ERROR.CLIENT_NOT_FOUND));
       }
-    }else if(folderName && !teamspaceName){
-      let teamspace: any;
+      client = clientFound;
+    } else if (clientName) {
+      const clientFound = await clientRepo.findClientByName(clientName);
+      client = clientFound || await clientRepo.createClient(clientName);
+    }
+
+    clientId = client?.id;
+    clientName = client.clientName;
+
+    let folder: any;
+    if (folderId) {
+      folder = await documentRepo.getFolderById(folderId);
+      if (!folder) {
+        return res.json({ status: false, message: 'No folder found with the id' });
+      }
+    } else if (folderName && !teamspaceName) {
       const teamspaceRepo = new TeamspaceRepository();
-      const teamspaceName = folderName;
-        const teamspaceReq = {
-          teamspaceName,
-          isTrained:false,
-          reTrainingRequired: false,
-          totalNumberOfDocs: 0,
-          client: clientId
-        }
-        teamspace = await teamspaceRepo.createTeamspace(teamspaceReq)  
-      const folderReq = {
+      const teamspaceReq = {
+        teamspaceName: folderName,
+        isTrained: false,
+        reTrainingRequired: false,
+        totalNumberOfDocs: 0,
+        client: clientId
+      };
+      const teamspace = await teamspaceRepo.createTeamspace(teamspaceReq);
+
+      folder = await documentRepo.createFolder({
         folderName,
-        isTrained:false,
+        isTrained: false,
         reTrainingRequired: false,
         totalNumberOfDocs: 0,
         client: clientId,
         teamspace
-      }
-      folder = await documentRepo.createFolder(folderReq)
-      console.log(folder)
+      });
     }
 
-    // Step 2: Upload the file to S3 
+    // Upload new file to S3
     const s3Url = await uploadToS3(file, clientName);
-    console.log('request-body',req.body)
-    console.log('documentId',docId)
-    let document:any=''
-    if(docId){
-      document = await documentRepo.findDocumentById(parseInt(docId));
-    }else{
-      document = await documentRepo.findDocumentByDocUrl(s3Url);
+
+    // Fetch existing document (if any) from S3 to compare with the new one
+    let html2 = '';
+    let document = docId ? await documentRepo.findDocumentById(parseInt(docId)) : await documentRepo.findDocumentByDocUrl(s3Url);
+
+    if (document && document.docContentUrl) {
+      // Use the existing document's S3 URL to fetch HTML content
+      const response = await axios.get(document.docContentUrl);
+      html2 = response.data;
     }
 
-    console.log('folder',folder)
-    console.log(document)
+    // Calculate the difference between the new document (html1) and existing document (html2)
+    const html1 = file.buffer.toString('utf-8');
+    const differences = diffWordsWithSpace(html2, html1).filter(part => part.added || part.removed);
 
-    const teamspace = folder ? folder.teamspace : document.teamspace
+    // Structure the differences for easier processing
+    const structuredDiff = differences.map(part => ({
+      type: part.added ? 'added' : 'removed',
+      content: part.value.trim()
+    }));
 
+    const teamspace = folder ? folder.teamspace : document?.teamspace;
 
-    console.log(s3Url)
-    folderId = folder?.id ? folder.id : null
-    let createdocumentRequest = {}
-    if(!document || Object.values(document) == null){
-      if(folder && teamspace){
-        createdocumentRequest = {
-          docContentUrl: s3Url,
-          documentName,
-          versionNumber: 1.0,
-          isTrained: false,
-          reTrainingRequired: false,
-          updatedAt: new Date(),
-          client: client,
-          folder: folder,
-          teamspace: teamspace
-        }
-      }else{
-        createdocumentRequest = {
-          docContentUrl: s3Url,
-          versionNumber: 1.0,
-          isTrained: false,
-          documentName,
-          reTrainingRequired: false,
-          updatedAt: new Date(),
-          client: clientId,
-          folder: folderId,
-          teamspace
-        }
-      }
+    let createdocumentRequest = {
+      docContentUrl: s3Url,
+      documentName,
+      versionNumber: 1.0,
+      isTrained: false,
+      reTrainingRequired: false,
+      updatedAt: new Date(),
+      client: client,
+      folder: folder,
+      teamspace: teamspace
+    };
+
+    if (!document || Object.values(document).every(value => value === null)) {
       document = await documentRepo.createDocument(createdocumentRequest);
     }
 
@@ -327,15 +302,11 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     if (match && match[1]) {
       const s3Path = match[1];
-      console.log(s3Path);
-      const updateData = {
-        s3Path
-      }
-      await documentRepo.updateDocument(document.id, updateData)
+      await documentRepo.updateDocument(document.id, { s3Path });
     }
 
     // call split data into chunks
-    await documentRepo.callSplitDataIntoChunks(document?.teamspace?.teamspaceName);
+    await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName, structuredDiff);
 
 
 
@@ -355,6 +326,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     return res.status(500).json({ status: false, message: 'Server error' });
   }
 });
+
 
 /**
  * components:
