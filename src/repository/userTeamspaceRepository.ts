@@ -2,6 +2,7 @@ import { EntityRepository, Repository } from 'typeorm';
 import { UserTeamspace } from '../entities/user_teamspace';
 import { AppDataSource } from '../db/data_source';
 import { Teamspace } from '../entities/teamspace';
+import { UserDetails } from '../entities/user_details';
 
 export class UserTeamspaceRepository{
 
@@ -10,6 +11,36 @@ export class UserTeamspaceRepository{
     constructor() {
         this.userTeamspaceRepo = AppDataSource.getRepository(UserTeamspace); // Get the UserDetails repository from AppDataSource
     }
+
+    async removeUserTeamspaceAccessRecord(teamspaceId: number, userId: number){
+        const accessRecord =  await this.userTeamspaceRepo.findOne({
+            where: {
+              teamspace: { id: teamspaceId },
+              user: { id: userId },
+            },
+          });
+
+          if (!accessRecord) {
+            return {
+              status: 'error',
+              message: 'User-teamspace access not found.',
+            };
+          }
+      
+          // Remove access
+          await this.userTeamspaceRepo.remove(accessRecord);
+    }
+
+    async findUsersByTeamspaceId(teamspaceId: number): Promise<UserDetails[]> {
+        const userTeamspaceRecords = await this.userTeamspaceRepo.find({
+          where: {
+            teamspace: { id: teamspaceId },
+          },
+          relations: ['user'],
+        });
+    
+        return userTeamspaceRecords.map(record => record.user);
+      }
 
     async findUserTeamspacesForClient(userId: number): Promise<Teamspace[]> {
         return this.userTeamspaceRepo.find({

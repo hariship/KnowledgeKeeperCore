@@ -1513,6 +1513,216 @@ router.get('/clientDetails', verifyToken, async (req:any, res:any) => {
 
 /**
  * @swagger
+ * /clients/{clientId}/teamspaces/{teamspaceId}/users:
+ *   get:
+ *     tags:
+ *       - Clients
+ *     summary: "List all users in a specific teamspace for a client"
+ *     description: "Fetches all users that have access to a specific teamspace for a given client based on entries in the user_teamspace table."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: "The ID of the client associated with the teamspace."
+ *       - in: path
+ *         name: teamspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: "The ID of the teamspace to list users for."
+ *     responses:
+ *       200:
+ *         description: "Successfully retrieved users in the teamspace."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/definitions/User'
+ *       400:
+ *         description: "Missing or invalid clientId or teamspaceId."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "clientId and teamspaceId are required."
+ *       500:
+ *         description: "Internal server error."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Server error while retrieving users."
+ */
+router.get('/clients/:clientId/teamspaces/:teamspaceId/users', verifyToken, async (req, res) => {
+  const { clientId, teamspaceId } = req.params;
+
+  if (!clientId || !teamspaceId) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'clientId and teamspaceId are required.',
+    });
+  }
+
+  try {
+    const userTeamspaceRepo = new UserTeamspaceRepository();
+
+    // Fetch all users in the specified teamspace for the client
+    const users = await userTeamspaceRepo.findUsersByTeamspaceId(
+      parseInt(teamspaceId, 10)
+    );
+
+    res.json({
+      status: 'success',
+      users,
+    });
+  } catch (error) {
+    console.error('Error retrieving users in teamspace:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error while retrieving users.',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /clients/{clientId}/teamspaces/{teamspaceId}/users/{userId}:
+ *   delete:
+ *     tags:
+ *       - Clients
+ *     summary: "Remove a user's access to a specific teamspace for a client"
+ *     description: "Removes a user's access to a specified teamspace for a given client by deleting the record in the user_teamspace table."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: "The ID of the client associated with the teamspace."
+ *       - in: path
+ *         name: teamspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: "The ID of the teamspace to remove the user's access from."
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: "The ID of the user whose access to the teamspace will be removed."
+ *     responses:
+ *       200:
+ *         description: "User access to the teamspace removed successfully."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "User access to the teamspace removed successfully."
+ *       400:
+ *         description: "Missing or invalid parameters."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "clientId, teamspaceId, and userId are required."
+ *       404:
+ *         description: "User-teamspace access not found."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "User-teamspace access not found."
+ *       500:
+ *         description: "Internal server error."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Server error while removing user access."
+ */
+router.delete('/:clientId/teamspaces/:teamspaceId/users/:userId', verifyToken, async (req, res) => {
+  const { teamspaceId, userId } = req.params;
+
+  if (!teamspaceId || !userId) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'teamspaceId, and userId are required.',
+    });
+  }
+
+  try {
+    const userTeamspaceRepo = new UserTeamspaceRepository();
+
+    // Find the user-teamspace access record
+    const accessRecord = await userTeamspaceRepo.removeUserTeamspaceAccessRecord(parseInt(teamspaceId), parseInt(userId));
+
+    if(accessRecord && accessRecord.status == 'error'){
+      return {
+        status: 'failed',
+        message: accessRecord.message
+      }
+    }
+    res.json({
+      status: 'success',
+      message: 'User access to the teamspace removed successfully.',
+    });
+  } catch (error) {
+    console.error('Error removing user-teamspace access:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error while removing user access.',
+    });
+  }
+});
+
+/**
+ * @swagger
  * /clients/{clientId}/bytes/{byteId}/recommendations:
  *   get:
  *     tags:
