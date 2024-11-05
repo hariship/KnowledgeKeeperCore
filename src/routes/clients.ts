@@ -847,7 +847,7 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
  *                   example: "success"
  *                 message:
  *                   type: string
- *                   example: "Byte marked as deleted"
+ *                   example: "Change Request is deleted"
  *       400:
  *         description: "Bad request - Byte ID is missing or invalid"
  *         content:
@@ -912,11 +912,11 @@ router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
 
     res.json({
       status: 'success',
-      message: 'Byte marked as deleted',
+      message: 'Change Request is deleted',
     });
   } catch (error) {
     console.error('Error marking byte as deleted:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to mark byte as deleted' });
+    res.status(500).json({ status: 'error', message: 'Failed to mark change request as deleted' });
   }
 });
 
