@@ -713,7 +713,7 @@ router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (re
 
     res.json({
       status: 'success',
-      message: 'Byte has been marked as resolved.'
+      message: 'Change request has been resolved.'
     });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to mark byte as resolved' });
