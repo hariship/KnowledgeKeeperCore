@@ -1475,33 +1475,40 @@ router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
  *                   type: string
  *                   example: "Server error"
  */
+router.get('/clientDetails', verifyToken, async (req:any, res:any) => {
+  const clientId = Array.isArray(req.query.clientId) ? req.query.clientId[0] : req.query.clientId;
+  const userId = req.user?.userId; // Assuming `userId` is set in `verifyToken` middleware
 
-  router.get('/clientDetails', verifyToken, async (req, res) => {
-    const clientId = Array.isArray(req.query.clientId) ? req.query.clientId[0] : req.query.clientId;
-    if (!clientId || typeof clientId !== 'string') {
-        return res.status(400).json({
-            status: 'error',
-            message: 'Client ID is required'
-        });
+  if (!clientId || typeof clientId !== 'string') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Client ID is required'
+    });
+  }
+  try {
+    const clientRepo = new ClientRepository();
+    const client = await clientRepo.findClientById(parseInt(clientId, 10));
+    if (!client) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Client not found'
+      });
     }
-    try {
-        const clientRepo = new ClientRepository();
-        const client = await clientRepo.findClientById(parseInt(clientId,10));
-        if (!client) {
-            return res.status(404).json({
-                status: 'error',
-                message: 'Client not found'
-            });
-        }
-        res.json({
-            status: 'success',
-            message: 'Client details fetched successfully',
-            client: client
-        });
-    } catch (error) {
-      console.log(error)
-        res.status(500).json({ status: 'error', message: 'Server error' });
-    }
+
+    // Fetch teamspaces the user has access to for this client
+    const userTeamspaceRepo = new UserTeamspaceRepository();
+    const teamspaces = await userTeamspaceRepo.findUserTeamspacesForClient(userId);
+
+    res.json({
+      status: 'success',
+      message: 'Client details and teamspaces fetched successfully',
+      client: client,
+      teamspaces: teamspaces
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Server error' });
+  }
 });
 
 /**

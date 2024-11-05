@@ -61,6 +61,16 @@ export class DocumentRepository {
         });
       }
 
+      async findFolderById(folderId: number): Promise<Folder|null> {
+        let requestBody:any = {
+            id: folderId
+        }
+        return await this.folderRepo.findOne({
+          where: requestBody,
+          relations: ['client', 'teamspace'], // Fetch related client information
+        });
+      }
+
     // Find document by both clientId and docId
     async findDocumentByClientAndId(clientId: number, docId: number): Promise<Document | null> {
         return await this.documentRepo.findOne({
