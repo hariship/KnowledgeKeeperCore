@@ -118,6 +118,7 @@ export class TaskRepository {
                     // Update documents with parsed_document and db_path
                     const byteRepo = new ByteRepository();
                     await byteRepo.saveRecommendations(result, task.byteId);
+                    await byteRepo.updateByte(task.byteId, { isProcessedByRecommendation: true});
     
                     console.log(`Documents updated with parsed data for task: ${task.taskId}`);
                 }
