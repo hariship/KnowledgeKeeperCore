@@ -216,7 +216,7 @@ export class ByteRepository {
           let byte = await this.byteRepo.findOneBy({ 
               id: byteId
           })
-          if(byte?.noOfRecommendations){
+          if(byte?.noOfRecommendations && byte?.noOfRecommendations > 0){
             await this.byteRepo.update(byteId, {noOfRecommendations: byte?.noOfRecommendations - 1} )
           }
         }
