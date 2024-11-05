@@ -801,7 +801,7 @@ router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (re
  */
 
 // POST: Upload image to specified S3 bucket associated with a document
-router.post('/clients/:clientId/documents/:docId/upload-image', upload.single('image'), async (req: Request, res: Response) => {
+router.post('/:clientId/documents/:docId/upload-image', upload.single('image'), async (req: Request, res: Response) => {
   try {
     const { clientId, docId } = req.params;
     const folderPath = `uploads/${docId}`
