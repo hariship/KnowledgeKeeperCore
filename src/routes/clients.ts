@@ -640,10 +640,14 @@ router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               resolutionDetails:
+ *               userFeedback:
  *                 type: string
  *                 description: "Details about the resolution."
  *                 example: "The issue was resolved by updating the signal strength."
+ *               resolutionDetails:
+ *                 type: string
+ *                 description: "Markes whether its was closed or resolved"
+ *                 example: "resolved"
  *     responses:
  *       200:
  *         description: "Successfully marked the byte as resolved."
@@ -690,7 +694,7 @@ router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
 router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (req:any, res) => {
   try {
     const { byteId } = req.params;
-    const {resolutionDetails} = req.body;
+    const {resolutionDetails, userFeedback} = req.body;
     const userId = req?.user?.userId
 
     const byteRepo = new ByteRepository();
@@ -704,6 +708,7 @@ router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (re
 
     // Mark byte as resolved and add resolution details
     byte.status = resolutionDetails;
+    byte.userFeedback = userFeedback;
   
     if(resolutionDetails == 'resolved'){
       //mark all recommendations under that byte as closed by adding change_log
