@@ -80,9 +80,9 @@ export class ByteRepository {
         for (const recommendation of doc.recommendations) {
           const recommendationId = recommendation.id;
           const changeRequestType = recommendation.change_request_type; // 'Add' or 'Replace' based on your logic
-          const changeSummary = 'ACCEPT';  // As per your example
+          const changeSummary = 'ACCEPTED';  // As per your example
           const isTrained = false;  // Default to false unless updated otherwise
-          const recommendationAction = 'ACCEPT';  // Based on the action taken
+          const recommendationAction = 'ACCEPTED';  // Based on the action taken
     
           // Step 3: Call the changeLogRepo.createChangeLog function for each recommendation
           const changes:any = [];  // Assuming this is the format for changes, customize as needed
