@@ -3,7 +3,7 @@ import { AppDataSource } from '../db/data_source';
 import { Document } from '../entities/document'; // Your document entity
 import { diffWordsWithSpace } from 'diff';
 import multer from 'multer';
-import { extractHeadersFromHtml, sendMessageToRabbitMQ, uploadToS3 } from '../modules/s3Module';
+import { extractHeadersFromHtml, sendMessageToRabbitMQ, uploadImageToS3, uploadToS3 } from '../modules/s3Module';
 import { DocumentRepository } from '../repository/documentRepository';
 import { ClientRepository } from '../repository/clientRepository';
 import { KnowledgeKeeperError } from '../errors/errors';
@@ -724,6 +724,110 @@ router.post('/:clientId/bytes/:byteId/resolve-or-closed', verifyToken, async (re
     res.status(500).json({ status: 'error', message: 'Failed to mark byte as resolved' });
   }
 });
+
+/**
+ * @swagger
+ * /clients/{clientId}/documents/{docId}/upload-image:
+ *   post:
+ *     tags:
+ *       - Upload
+ *     summary: "Upload an image associated with a document to a specified S3 bucket"
+ *     description: "Uploads an image file to a specified S3 bucket for a given document and returns the file URL."
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: "The ID of the client to which the document belongs."
+ *       - in: path
+ *         name: docId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: "The ID of the document to associate the image with."
+ *     requestBody:
+ *       description: "Image file to upload"
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: "The image file to upload."
+ *     responses:
+ *       200:
+ *         description: "Successfully uploaded the image and returned the S3 URL."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 imageUrl:
+ *                   type: string
+ *                   example: "https://default-bucket.s3.region.amazonaws.com/uploads/image123.jpg"
+ *       400:
+ *         description: "Bad Request - Invalid parameters or file format."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid clientId, docId, or file format."
+ *       500:
+ *         description: "Internal server error."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Failed to upload image to S3."
+ */
+
+// POST: Upload image to specified S3 bucket associated with a document
+router.post('/clients/:clientId/documents/:docId/upload-image', upload.single('image'), async (req: Request, res: Response) => {
+  try {
+    const { clientId, docId } = req.params;
+    const folderPath = `uploads/${docId}`
+
+    // Validate clientId, docId, and file presence
+    if (!clientId || !docId) {
+      return res.status(400).json({ status: 'error', message: 'clientId and docId are required.' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'No image file provided.' });
+    }
+    const bucketName = 'knowledgekeeper-images'
+    // Upload image to S3
+    const imageUrl = await uploadImageToS3(req.file,bucketName, folderPath as string);
+
+    res.json({
+      status: 'success',
+      imageUrl,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Failed to upload image to S3' });
+  }
+});
+
 
 /**
  * @swagger
