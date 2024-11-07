@@ -11,13 +11,13 @@ const s3 = new S3Client({
     },
 });
 
-// Function to upload image to s3
 export const uploadImageToS3 = async (
   file: Express.Multer.File,
   bucketName: string,
   folderPath: string = 'uploads'  // Default folder path if not provided
 ): Promise<string> => {
-  const s3 = new S3Client({ region: 'us-east-2' });
+  const region = 'us-east-2'; // Explicitly set the region
+  const s3 = new S3Client({ region });
 
   const filePath = `${folderPath}/${Date.now()}_${file.originalname}`;
   const params = {
@@ -27,12 +27,17 @@ export const uploadImageToS3 = async (
     ContentType: file.mimetype,
   };
 
-  // Upload file to S3
-  const command = new PutObjectCommand(params);
-  await s3.send(command);
+  try {
+    // Upload file to S3
+    const command = new PutObjectCommand(params);
+    await s3.send(command);
 
-  // Return the constructed S3 file URL
-  return `https://${bucketName}.s3.${s3.config.region}.amazonaws.com/${filePath}`;
+    // Return the constructed S3 file URL
+    return `https://${bucketName}.s3.${region}.amazonaws.com/${filePath}`;
+  } catch (error) {
+    console.error("Error uploading to S3:", error); // Log any errors for debugging
+    throw error; // Rethrow the error for higher-level handling
+  }
 };
 
 // Function to upload file to S3
