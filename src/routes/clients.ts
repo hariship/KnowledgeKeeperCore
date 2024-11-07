@@ -1574,7 +1574,7 @@ router.get('/clientDetails', verifyToken, async (req:any, res:any) => {
  *                   type: string
  *                   example: "Server error while retrieving users."
  */
-router.get('/clients/:clientId/teamspaces/:teamspaceId/users', verifyToken, async (req, res) => {
+router.get('/:clientId/teamspaces/:teamspaceId/users', verifyToken, async (req, res) => {
   const { clientId, teamspaceId } = req.params;
 
   if (!clientId || !teamspaceId) {
