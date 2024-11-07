@@ -5,6 +5,7 @@ import axios from 'axios';
 import { STATUS, TASK_NAMES } from "../utils/constants";
 import { DocumentRepository } from "./documentRepository";
 import { ByteRepository } from "./byteRepository";
+const diff = require('diff');
 
 export class TaskRepository {
     private taskRepo: Repository<Task>;
@@ -76,6 +77,93 @@ export class TaskRepository {
             .orderBy('task.createdAt', 'DESC')
             .getOne(); // Fetch the most recent task
     }
+
+    public async wrapChangeRequestWithHeading(headingTag:any, headingContent:any, changeText:any, recommendationContent: any) {
+        let previous_string = `<${headingTag}>${headingContent}</${headingTag}> ${changeText}`;
+        recommendationContent.previous_string = previous_string
+        return recommendationContent
+    }
+    
+    // Function to find the best match from a list of elements based on change_request_text
+    public async findBestMatch(elements:any, changeRequest:any) {
+        let bestMatchElement = null;
+        let highestSimilarityScore = 0;
+    
+        elements.forEach((element: { content: any; }) => {
+            const changes = diff.diffWords(element.content, changeRequest);
+            const similarityScore = changes.reduce((score: any, part: { added: any; removed: any; count: any; }) => {
+                return part.added || part.removed ? score : score + part.count;
+            }, 0);
+    
+            if (similarityScore > highestSimilarityScore) {
+                highestSimilarityScore = similarityScore;
+                bestMatchElement = element;
+            }
+        });
+    
+        return bestMatchElement;
+    }
+    
+    // Main function to get wrapped content
+    public async getWrappedContent(data: any) {
+        const { change_request_text, previous_string } = data;
+        const sectionHeadings = [
+            { tag: 'h1', content: data.section_main_heading1 },
+            { tag: 'h2', content: data.section_main_heading2 },
+            { tag: 'h3', content: data.section_main_heading3 },
+            { tag: 'h4', content: data.section_main_heading4 }
+        ];
+    
+        // Filter out empty headings
+        const filteredHeadings = sectionHeadings.filter(heading => heading.content);
+    
+        // Regular expression to match any HTML tag and its content
+        const tagRegex = /<(\w+)[^>]*>(.*?)<\/\1>/gs;
+    
+        // Extract tags and their contents from previous_string
+        const elements = [];
+        let match;
+        while ((match = tagRegex.exec(previous_string)) !== null) {
+            elements.push({
+                tag: match[1],  // HTML tag name, e.g., 'p', 'ul', 'li'
+                content: match[0]  // Entire tag content, e.g., "<p>...</p>"
+            });
+        }
+    
+        // Find the best match for change_request_text in top-level elements
+        let bestMatchElement:any = this.findBestMatch(elements, change_request_text);
+    
+        // If the best match is a <ul> tag, further check <li> elements individually
+        if (bestMatchElement && bestMatchElement.tag === 'ul') {
+            const liElements = [];
+            const liRegex = /<li>(.*?)<\/li>/gs;
+            let liMatch;
+            while ((liMatch = liRegex.exec(bestMatchElement.content)) !== null) {
+                liElements.push({
+                    tag: 'li',
+                    content: `<li>${liMatch[1]}</li>`
+                });
+            }
+    
+            const bestLiMatch = this.findBestMatch(liElements, change_request_text);
+            if (bestLiMatch) {
+                bestMatchElement = bestLiMatch;  // Override with best-matching <li> element
+            }
+        }
+    
+        // Apply headings based on `section_main_heading` values
+        if (bestMatchElement && filteredHeadings.length > 0) {
+            return this.wrapChangeRequestWithHeading(
+                filteredHeadings[0].tag,
+                filteredHeadings[0].content,
+                bestMatchElement.content,
+                data
+            );
+        } else {
+            return data;
+        }
+    }
+    
 
     async pollTaskStatus(){
         try {
