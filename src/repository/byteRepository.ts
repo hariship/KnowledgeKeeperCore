@@ -257,7 +257,7 @@ export class ByteRepository {
           console.log(recommendationData)
           for(let recommendationContent of recommendationData){
             const taskRepo = new TaskRepository();
-            taskRepo.getWrappedContent(recommendationContent)
+            recommendationContent = await taskRepo.getWrappedContent(recommendationContent)
             const newRecommendation = await this.recommendationRepo.create({
               byte: byteSaved,
               recommendation: recommendationContent,
