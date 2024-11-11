@@ -1,18 +1,59 @@
-import { Repository } from "typeorm";
+import { Not, Repository } from "typeorm";
 import { Task } from "../entities/task";
 import { AppDataSource } from "../db/data_source";
 import axios from 'axios';
 import { STATUS, TASK_NAMES } from "../utils/constants";
 import { DocumentRepository } from "./documentRepository";
 import { ByteRepository } from "./byteRepository";
+import { ChangeLog } from "../entities/change_logs";
+import { Recommendation } from "../entities/recommendation";
 const diff = require('diff');
 
 export class TaskRepository {
     private taskRepo: Repository<Task>;
+    private recommendationRepo: Repository<Recommendation>;
+    private changeLogRepo: Repository<ChangeLog>
 
     constructor() {
         this.taskRepo = AppDataSource.getRepository(Task);
+        this.recommendationRepo = AppDataSource.getRepository(Recommendation);
+        this.changeLogRepo = AppDataSource.getRepository(ChangeLog);
     }
+
+    async isPendingUserRecommendationForByte(byteId: number): Promise<any> {
+        // Query for pending recommendations in ChangeLog associated with the byteId
+        let pendingCount = 0;
+
+        if(byteId){
+            const recommendations:any = await this.recommendationRepo.findOne({
+                where: {
+                  byte: { id: byteId }
+                },
+                relations: ['byte']
+              });
+              if(recommendations){
+                for (const recommendation of recommendations) {
+                    const changeLogEntry = await this.changeLogRepo.findOne({
+                      where: { recommendation: { id: recommendation.id } },
+                    });
+              
+                    // If there is no ChangeLog entry for this recommendation, it is pending
+                    if (!changeLogEntry) {
+                      pendingCount++;
+                    }
+                  }
+            }
+
+        }
+        return {
+            isPending: pendingCount > 0 ? true : false,
+            noOfRecommendationsPending: pendingCount
+        };
+        
+
+        // If there are pending recommendations, return true
+        return  false;
+      }
 
     public async isPendingTaskForByte(byteId:number){
         return this.taskRepo.findOne({

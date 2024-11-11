@@ -2938,6 +2938,59 @@ router.get('/:clientId/byte/:byteId/is-pending',verifyToken, async (req, res) =>
 
 /**
  * @swagger
+ * /clients/{clientId}/byte/{byteId}/is-pending-user-recommendation:
+ *   get:
+ *     summary: Get the count of pending recommendations for the given byteId
+ *     tags: [Bytes]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *       - in: path
+ *         name: byteId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the byte
+ *     responses:
+ *       200:
+ *         description: Returns the count of pending recommendations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 pendingCount:
+ *                   type: integer
+ *       404:
+ *         description: Byte or recommendations not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/:clientId/byte/:byteId/is-pending-user-recommendation', verifyToken, async (req, res) => {
+  const byteId = parseInt(req.params.byteId);
+
+  try {
+    const taskRepository = new TaskRepository;
+
+    // Get the count of pending recommendations for the specified byteId
+    const pendingStatus = await taskRepository.isPendingUserRecommendationForByte(byteId);
+
+    return res.status(200).json({ status: 'success', pendingStatus });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'failed', error: 'Could not retrieve pending recommendations count' });
+  }
+});
+
+
+/**
+ * @swagger
  * /clients/{clientId}/byte/{byteId}/feedback:
  *   post:
  *     summary: Add feedback to a byte
