@@ -31,7 +31,7 @@ export class TaskRepository {
                 },
                 relations: ['byte']
               });
-              if(recommendations){
+              if(recommendations && recommendations.length > 0){
                 for (const recommendation of recommendations) {
                     const changeLogEntry = await this.changeLogRepo.findOne({
                       where: { recommendation: { id: recommendation.id } },
