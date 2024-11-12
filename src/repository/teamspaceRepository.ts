@@ -53,6 +53,16 @@ export class TeamspaceRepository{
     );
   }
 
+  // Get a teamspace by its ID
+  async getTeamspaceByName(teamspaceName: string): Promise<Teamspace | null> {
+    return this.teamspaceRepo.findOne({
+        where:{
+            teamspaceName
+        }, 
+        relations: ['document'] }
+    );
+  }
+
   // Update a teamspace
   async updateTeamspace(teamspaceId: number, updateData: Partial<Teamspace>): Promise<Teamspace | null> {
     const teamspace = await this.teamspaceRepo.findOne({

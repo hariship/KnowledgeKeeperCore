@@ -9,6 +9,7 @@ import { STATUS, TASK_NAMES } from '../utils/constants';
 import { ByteRepository } from './byteRepository';
 import { Recommendation } from '../entities/recommendation';
 import { Byte } from '../entities/byte';
+import { TeamspaceRepository } from './teamspaceRepository';
 const { v4: uuidv4 } = require('uuid');
 
 export class DocumentRepository {
@@ -212,6 +213,24 @@ export class DocumentRepository {
         }
     }
 
+    public async getAllDocumentsByTeamspace(teamspaceId:number): Promise<Document[]> {
+        try {
+            // Fetch all documents from the DB
+            const documents = await this.documentRepo.find({
+                where:{
+                    teamspace: {id: teamspaceId}
+                },
+                relations:['teamspace']
+            });
+
+            // Return the documents from the database
+            return documents;
+        } catch (error) {
+            console.error('Error fetching documents:', error);
+            throw error;
+        }
+    }
+
     public async callSplitDataIntoChunks(teamspaceName: string, differences?: object, docId?: number) {
         try {
             const taskRepo = new TaskRepository();
@@ -230,11 +249,15 @@ export class DocumentRepository {
                     return;
                 }
             }
-
-            const documents = await this.getAllDocuments();
+            const teamspaceRepo = new TeamspaceRepository();
+            const teamspace = await teamspaceRepo.getTeamspaceByName(teamspaceName)
+            let documents:any = []
+            if(teamspace){
+                documents = await this.getAllDocumentsByTeamspace(teamspace?.id);
+            }
 
             if (documents.length > 0) {
-                const s3DocumentPaths = documents.map(doc => ({
+                const s3DocumentPaths = documents.map((doc: { id: { toString: () => any; }; s3Path: any; }) => ({
                     document_id: doc.id.toString(),
                     s3_path: doc.s3Path
                 }));
