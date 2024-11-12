@@ -31,12 +31,14 @@ export class TaskRepository {
                 },
                 relations: ['byte']
               });
+              console.log('recommendations',recommendations)
               if(recommendations && recommendations.length > 0){
                 for (const recommendation of recommendations) {
+                    console.log('recommendation',recommendation)
                     const changeLogEntry = await this.changeLogRepo.findOne({
                       where: { recommendation: recommendation.id },
                     });
-              
+                    console.log(changeLogEntry);
                     // If there is no ChangeLog entry for this recommendation, it is pending
                     if (!changeLogEntry) {
                       pendingCount++;
