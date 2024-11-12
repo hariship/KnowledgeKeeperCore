@@ -37,6 +37,7 @@ export class TaskRepository {
                     console.log('recommendation',recommendation)
                     const changeLogEntry = await this.changeLogRepo.findOne({
                       where: { recommendation: recommendation.id },
+                      relations:['recommendation']
                     });
                     console.log(changeLogEntry);
                     // If there is no ChangeLog entry for this recommendation, it is pending
