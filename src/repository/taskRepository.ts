@@ -1,4 +1,4 @@
-import { Not, Repository } from "typeorm";
+import { In, Not, Repository } from "typeorm";
 import { Task } from "../entities/task";
 import { AppDataSource } from "../db/data_source";
 import axios from 'axios';
@@ -32,20 +32,19 @@ export class TaskRepository {
                 relations: ['byte']
               });
               console.log('recommendations',recommendations)
-              if(recommendations && recommendations.length > 0){
-                for (const recommendation of recommendations) {
-                    console.log('recommendation',recommendation)
-                    const changeLogEntry = await this.changeLogRepo.findOne({
-                      where: { recommendation: recommendation.id },
-                      relations:['recommendation']
-                    });
-                    console.log(changeLogEntry);
-                    // If there is no ChangeLog entry for this recommendation, it is pending
-                    if (!changeLogEntry) {
-                      pendingCount++;
-                    }
-                  }
-            }
+              const recommendationIds = recommendations.map((rec: { id: any; }) => rec.id);
+
+              // Find all ChangeLog entries that have a matching recommendation
+            const existingChangeLogs = await this.changeLogRepo.find({
+                where: { recommendation: In(recommendationIds) },
+                relations: ['recommendation']
+            });
+
+            // Get all IDs from existing ChangeLogs
+            const loggedRecommendationIds = new Set(existingChangeLogs.map(log => log.recommendation.id));
+
+            // Calculate the pending count as the recommendations that don't have a ChangeLog
+            const pendingCount = recommendationIds.filter((id: number) => !loggedRecommendationIds.has(id)).length;
 
         }
         return {
