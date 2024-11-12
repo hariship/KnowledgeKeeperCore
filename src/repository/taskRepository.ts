@@ -44,9 +44,9 @@ export class TaskRepository {
             const loggedRecommendationIds = new Set(existingChangeLogs.map(log => log.recommendation.id));
 
             // Calculate the pending count as the recommendations that don't have a ChangeLog
-            const pendingCount = recommendationIds.filter((id: number) => !loggedRecommendationIds.has(id)).length;
-
-        }
+            pendingCount = recommendationIds.filter((id: number) => !loggedRecommendationIds.has(id)).length;
+            console.log(pendingCount)
+        }  
         return {
             isPending: pendingCount > 0 ? true : false,
             noOfRecommendationsPending: pendingCount
