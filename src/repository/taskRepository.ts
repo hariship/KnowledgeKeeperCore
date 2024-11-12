@@ -34,7 +34,7 @@ export class TaskRepository {
               if(recommendations && recommendations.length > 0){
                 for (const recommendation of recommendations) {
                     const changeLogEntry = await this.changeLogRepo.findOne({
-                      where: { recommendation: { id: recommendation.id } },
+                      where: { recommendation: recommendation.id },
                     });
               
                     // If there is no ChangeLog entry for this recommendation, it is pending
