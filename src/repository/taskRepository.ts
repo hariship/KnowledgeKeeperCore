@@ -25,7 +25,7 @@ export class TaskRepository {
         let pendingCount = 0;
 
         if(byteId){
-            const recommendations:any = await this.recommendationRepo.findOne({
+            const recommendations:any = await this.recommendationRepo.find({
                 where: {
                   byte: { id: byteId }
                 },
