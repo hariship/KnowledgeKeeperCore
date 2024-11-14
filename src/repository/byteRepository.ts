@@ -42,7 +42,10 @@ export class ByteRepository {
                 clientId,
                 isDeleted: false
             },
-            relations: ['clientId']
+            relations: ['clientId'],
+            order: {
+              createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
+          }
         });
     }
 
