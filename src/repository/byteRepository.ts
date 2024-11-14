@@ -266,7 +266,7 @@ export class ByteRepository {
             });
             await this.recommendationRepo.save(newRecommendation);
           }
-          byteSaved.noOfRecommendations = result?.data.length
+          byteSaved.noOfRecommendations = byteSaved.noOfRecommendations + result?.data.length
           await this.byteRepo.save(byteSaved)
         }
     }
