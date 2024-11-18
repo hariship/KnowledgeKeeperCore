@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ChangeLog } from '../entities/change_logs';
 import { AppDataSource } from '../db/data_source';
 import { KnowledgeKeeperError } from '../errors/errors';
@@ -104,6 +104,12 @@ export class ChangeLogRepository{
     return await this.changeLogRepo.find({
       where: { changedBy: { id: userId } },
       relations: ['document', 'changedBy', 'byte'],
+    });
+  }
+
+  async deleteChangeLogBasedOnDocId(documentIds: number[]){
+    return await this.changeLogRepo.delete({
+      document: In(documentIds)
     });
   }
 }

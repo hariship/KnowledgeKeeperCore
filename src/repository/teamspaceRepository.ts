@@ -1,6 +1,9 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, In, Repository } from 'typeorm';
 import { Teamspace } from '../entities/teamspace';
 import { AppDataSource } from '../db/data_source';
+import { ChangeLogRepository } from './changeLogRespository';
+import { ByteRepository } from './byteRepository';
+import { DocumentRepository } from './documentRepository';
 
 export class TeamspaceRepository{
 
@@ -79,6 +82,35 @@ export class TeamspaceRepository{
 
   // Delete a teamspace by ID
   async deleteTeamspace(teamspaceId: number): Promise<void> {
+    // Step 1: Extract all documents for the teamspace
+    const documentRepo = new DocumentRepository();
+    const changeLogRepo = new ChangeLogRepository();
+    const byteRepo = new ByteRepository();
+
+    const documents = await documentRepo.getAllDocumentsByTeamspace(teamspaceId);
+    // Step 2: Extract all document IDs
+    const documentIds = documents.map(doc => doc.id);
+
+    // Step 3: Remove entries from ChangeLog based on docId
+    if (documentIds.length > 0) {
+      await changeLogRepo.deleteChangeLogBasedOnDocId(documentIds)
+    }
+
+    // Step 4: Remove entries from RecommendationRepo based on docId
+    if (documentIds.length > 0) {
+      await byteRepo.removeRecommendationBasedOnDocId(documentIds)
+    }
+
+    // Step 5: Remove entries from Document table based on document IDs
+    if (documentIds.length > 0) {
+      await documentRepo.deleteDocumentsBasedOnDocIds(documentIds)
+    }
+
+    // Step 6: Remove entries from Folder table based on teamspaceId
+    await documentRepo.deleteFolderBasedOnTeamspace(teamspaceId)
+
+    
+
     await this.teamspaceRepo.delete(teamspaceId);
   }
 }

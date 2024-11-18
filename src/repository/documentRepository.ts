@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AppDataSource } from '../db/data_source';  // Import your data source
 import { Document } from '../entities/document';  // Import your Document entity
 import { Folder } from '../entities/folder';
@@ -124,6 +124,12 @@ export class DocumentRepository {
         await this.documentRepo.delete(docId);
     }
 
+    async deleteDocumentsBasedOnDocIds(docIds: number []): Promise<void> {
+        await this.documentRepo.delete({
+            id: In(docIds)
+        });
+    }
+
     private async removeDocumentFromRecommendation(docId: number): Promise<Boolean> {
         // Your logic to remove the document from the recommendation system goes here
         // For example, you might call a service to update the recommendation system.
@@ -145,6 +151,14 @@ export class DocumentRepository {
             requestBody.teamspaceId = teamspaceId
         }
         return this.folderRepo.findOne({ where: requestBody, relations: ['client','teamspace'] });
+    }
+
+    async deleteFolderBasedOnTeamspace(teamspaceId: any){
+        await this.folderRepo.delete({
+            teamspace: {
+                id: teamspaceId
+            }
+        })
     }
 
     async updateFolder(id: number, folderData: Partial<Folder>): Promise<Folder | null> {

@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { Byte } from "../entities/byte";
 import { AppDataSource } from "../db/data_source";
 import { UserDetails } from "../entities/user_details";
@@ -272,6 +272,14 @@ export class ByteRepository {
           byteSaved.noOfRecommendations = byteSaved.noOfRecommendations + result?.data.length
           await this.byteRepo.save(byteSaved)
         }
+    }
+
+    async removeRecommendationBasedOnDocId(documentIds: number []){
+      if(documentIds){
+        await this.recommendationRepo.delete({
+          document: In(documentIds)
+        })  
+      }
     }
 
     async getRecommendationsBasedOnDocId(documentId: number) {
