@@ -10,6 +10,7 @@ import { ByteRepository } from './byteRepository';
 import { Recommendation } from '../entities/recommendation';
 import { Byte } from '../entities/byte';
 import { TeamspaceRepository } from './teamspaceRepository';
+import { ChangeLogRepository } from './changeLogRespository';
 const { v4: uuidv4 } = require('uuid');
 
 export class DocumentRepository {
@@ -182,6 +183,9 @@ export class DocumentRepository {
                 },
                 relations: ['folder']
             })
+            let documentIds = documents.map((document)=> document.id)
+            const changeLogRepo = new ChangeLogRepository();
+            await changeLogRepo.deleteChangeLogBasedOnDocId(documentIds)
             for(let document of documents){
                 const byteRepo = new ByteRepository();
                 await byteRepo.deleteRecommendationByDocId(document.id)
