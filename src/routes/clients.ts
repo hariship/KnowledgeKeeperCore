@@ -3111,9 +3111,15 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
       if (!user || !teamspace) {
           return res.status(404).json({ error: 'User or Teamspace not found' });
       }
+      const userTeamspace = new UserTeamspace();
+      // Check if the user is already part of the teamspace
+      const existingUserTeamspace = await userTeamspaceRepository.checkUserAccessToTeamspace(userId,teamspaceId);
+
+      if (existingUserTeamspace) {
+          return res.status(400).json({ error: 'User is already invited to this teamspace' });
+      }
 
       // Create a new UserTeamspace entry (invite the user)
-      const userTeamspace = new UserTeamspace();
       userTeamspace.user = user;
       userTeamspace.teamspace = teamspace;
       userTeamspace.status = 'INVITED';
