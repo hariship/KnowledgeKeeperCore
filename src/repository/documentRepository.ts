@@ -186,11 +186,10 @@ export class DocumentRepository {
             let documentIds = documents.map((document)=> document.id)
             console.log(documentIds)
             const changeLogRepo = new ChangeLogRepository();
+            const byteRepo = new ByteRepository();
             await changeLogRepo.deleteChangeLogBasedOnDocId(documentIds)
-            for(let document of documents){
-                const byteRepo = new ByteRepository();
-                await byteRepo.deleteRecommendationByDocId(document.id)
-            }
+
+            await byteRepo.removeRecommendationBasedOnDocId(documentIds)
             
             await queryRunner.manager
                 .createQueryBuilder()
