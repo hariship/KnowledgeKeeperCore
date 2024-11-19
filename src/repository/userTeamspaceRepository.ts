@@ -38,8 +38,13 @@ export class UserTeamspaceRepository{
           },
           relations: ['user'],
         });
+        // Extract users
+        const users = userTeamspaceRecords.map(record => record.user);
     
-        return userTeamspaceRecords.map(record => record.user);
+        // Remove duplicates based on user id
+        const uniqueUsers = Array.from(new Map(users.map(user => [user.id, user])).values());
+          
+        return uniqueUsers;
       }
 
     async findUserTeamspacesForClient(userId: number): Promise<Teamspace[]> {
