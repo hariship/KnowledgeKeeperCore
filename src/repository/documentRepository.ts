@@ -184,6 +184,7 @@ export class DocumentRepository {
                 relations: ['folder']
             })
             let documentIds = documents.map((document)=> document.id)
+            console.log(documentIds)
             const changeLogRepo = new ChangeLogRepository();
             await changeLogRepo.deleteChangeLogBasedOnDocId(documentIds)
             for(let document of documents){
