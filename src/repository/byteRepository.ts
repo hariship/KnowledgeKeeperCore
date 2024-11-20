@@ -229,11 +229,12 @@ export class ByteRepository {
     }
 
     async callExternalRecommendationService(byte: Partial<Byte>){
+        let uuid = uuidv4();
         let response = await axios.post(
             `http://18.116.66.245:5000/v1/predict`,
             { 
               input_text: byte?.byteInfo,
-              data_id: "Door Dash Test 1"
+              data_id: uuid
             },
             {
               headers: {
