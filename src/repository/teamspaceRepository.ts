@@ -4,6 +4,7 @@ import { AppDataSource } from '../db/data_source';
 import { ChangeLogRepository } from './changeLogRespository';
 import { ByteRepository } from './byteRepository';
 import { DocumentRepository } from './documentRepository';
+import { UserTeamspaceRepository } from './userTeamspaceRepository';
 
 export class TeamspaceRepository{
 
@@ -86,6 +87,8 @@ export class TeamspaceRepository{
     const documentRepo = new DocumentRepository();
     const changeLogRepo = new ChangeLogRepository();
     const byteRepo = new ByteRepository();
+    const userTeamspaceRepo =  new UserTeamspaceRepository();
+    await userTeamspaceRepo.removeUserTeamspaceByTeamspaceId(teamspaceId);
 
     const documents = await documentRepo.getAllDocumentsByTeamspace(teamspaceId);
     // Step 2: Extract all document IDs

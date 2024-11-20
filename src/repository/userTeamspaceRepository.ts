@@ -12,6 +12,22 @@ export class UserTeamspaceRepository{
         this.userTeamspaceRepo = AppDataSource.getRepository(UserTeamspace); // Get the UserDetails repository from AppDataSource
     }
 
+    async removeUserTeamspaceByTeamspaceId(teamspaceId: number){
+      const accessRecord =  await this.userTeamspaceRepo.findOne({
+          where: {
+            teamspace: { id: teamspaceId },
+          },
+        });
+
+        if (accessRecord) {
+          await this.userTeamspaceRepo.remove(accessRecord);
+          return true;
+        }
+    
+        // Remove access
+        return false;
+  }
+
     async removeUserTeamspaceAccessRecord(teamspaceId: number, userId: number){
         const accessRecord =  await this.userTeamspaceRepo.findOne({
             where: {
