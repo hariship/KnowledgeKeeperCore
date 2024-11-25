@@ -5,7 +5,7 @@ services:
     image: knowledgekeeper-core:latest
     container_name: node_app
     ports:
-      - "5000:5000"
+      - "6000:6000"
     environment:
       NODE_ENV: production
     volumes:
