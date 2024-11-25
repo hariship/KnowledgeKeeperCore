@@ -16,12 +16,12 @@ export class InitDB1725791466074 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "recommendation" ("id" SERIAL NOT NULL, "recommendationAction" "public"."recommendation_recommendationaction_enum" NOT NULL, "recommendation" text NOT NULL, "byteId" integer, "docId" integer, CONSTRAINT "PK_17cb51984a6627ef2ce7370e23c" PRIMARY KEY ("id"))`);
         await queryRunner.query(`ALTER TABLE "document" ADD CONSTRAINT "FK_ba81651e4c4251969ba7bcbd1bc" FOREIGN KEY ("clientId") REFERENCES "client"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "document" ADD CONSTRAINT "FK_76b187510eda9c862f9944808a8" FOREIGN KEY ("folderId") REFERENCES "folder"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "document" ADD CONSTRAINT "FK_a581782d3fe36e6cb98e40b0572" FOREIGN KEY ("createdBy") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "document" ADD CONSTRAINT "FK_b673325f49729b6320020c7bec6" FOREIGN KEY ("updatedBy") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "byte" ADD CONSTRAINT "FK_d94a11a3fccf94cacafd577a238" FOREIGN KEY ("requestedBy") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "document" ADD CONSTRAINT "FK_a581782d3fe36e6cb98e40b0572" FOREIGN KEY ("createdBy") REFERENCES "user_details"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "document" ADD CONSTRAINT "FK_b673325f49729b6320020c7bec6" FOREIGN KEY ("updatedBy") REFERENCES "user_details"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "byte" ADD CONSTRAINT "FK_d94a11a3fccf94cacafd577a238" FOREIGN KEY ("requestedBy") REFERENCES "user_details"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "change_log" ADD CONSTRAINT "FK_7047a0236d18fb8d10f1ebf7c84" FOREIGN KEY ("docId") REFERENCES "document"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "change_log" ADD CONSTRAINT "FK_8d15d51e8a35cbc5afc3f8c90fe" FOREIGN KEY ("byteId") REFERENCES "byte"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "change_log" ADD CONSTRAINT "FK_06f66a69771e43e01c5115499ee" FOREIGN KEY ("changedBy") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "change_log" ADD CONSTRAINT "FK_06f66a69771e43e01c5115499ee" FOREIGN KEY ("changedBy") REFERENCES "user_details"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "recommendation" ADD CONSTRAINT "FK_39ba66f0679dc35e662f36e2556" FOREIGN KEY ("byteId") REFERENCES "byte"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "recommendation" ADD CONSTRAINT "FK_56039e9706cc1f0d036f042d281" FOREIGN KEY ("docId") REFERENCES "document"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
