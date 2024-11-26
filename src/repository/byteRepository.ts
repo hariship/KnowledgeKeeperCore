@@ -415,7 +415,7 @@ export class ByteRepository {
               id: recommendationByte.id,
               change_request_type: (recommendationByte?.recommendationAction == 'new_section' || recommendationByte?.recommendationAction == 'add') ? 'Add' : 'Replace',
               change_request_text: recommendationJson?.generated_text,
-              previous_string: recommendationJson?.text_relevancy == 0 ? '' : recommendationJson?.splitted_content,
+              previous_string: recommendationJson?.splitted_content,
               section_main_heading1: recommendationJson?.section_main_heading1,
               section_main_heading2: recommendationJson?.section_main_heading2,
               section_main_heading3: recommendationJson?.section_main_heading3,
