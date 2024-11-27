@@ -264,13 +264,18 @@ export class ByteRepository {
           for(let recommendationContent of recommendationData){
             const taskRepo = new TaskRepository();
             recommendationContent = await taskRepo.getWrappedContent(recommendationContent)
-            const newRecommendation = await this.recommendationRepo.create({
-              byte: byteSaved,
-              recommendation: recommendationContent,
-              document: recommendationContent?.document_id,
-              recommendationAction: recommendationContent?.metadata?.updation_type
-            });
-            await this.recommendationRepo.save(newRecommendation);
+            let documentRepo = new DocumentRepository();
+            let document = await documentRepo.findDocumentById(parseInt(recommendationContent?.document_id))
+            if(document){
+              const newRecommendation = await this.recommendationRepo.create({
+                byte: byteSaved,
+                recommendation: recommendationContent,
+                document,
+                recommendationAction: recommendationContent?.metadata?.updation_type
+              });
+              await this.recommendationRepo.save(newRecommendation);
+            }
+            
           }
           byteSaved.noOfRecommendations = byteSaved.noOfRecommendations + result?.data.length
           await this.byteRepo.save(byteSaved)
