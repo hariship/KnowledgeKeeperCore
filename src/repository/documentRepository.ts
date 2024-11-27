@@ -342,9 +342,7 @@ export class DocumentRepository {
                     s3_bucket: "knowledge-keeper-results",
                     teamspace_name: teamspaceName,
                     s3_db_path: "data/test/",
-                    teamspace_s3_path: "data/test/",
-                    differences,
-                    document_id: docId
+                    teamspace_s3_path: "data/test/"
                 };
 
                 // Call the split_data_into_chunks API

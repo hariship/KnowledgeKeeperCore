@@ -17,6 +17,8 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
   let currentModifiedTable = '';
   let insideTable = false;
 
+  console.log("differences",differences)
+
   // Normalize text to minimize noise from whitespace and formatting differences
   const normalizeWhitespace = (str: string) => str.replace(/\s+/g, ' ').trim();
 
@@ -26,6 +28,9 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
   // Ensure input HTML strings are clean and well-structured
   html1 = cleanHTML(html1);
   html2 = cleanHTML(html2);
+
+  console.log(html1)
+  console.log(html2)
 
   differences.forEach((part) => {
       const headingMatch = part.value.match(/<(h[1-4])[^>]*>(.*?)<\/\1>/i);
@@ -90,6 +95,8 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
           });
       }
   });
+
+  console.log('structuredDiff',structuredDiff)
 
   return structuredDiff;
 }
