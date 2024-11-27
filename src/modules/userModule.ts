@@ -106,5 +106,5 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
   diffElements(tree1 as HTMLElement, tree2 as HTMLElement, headingLevels);
 
-  return structuredDiff.shift();
+  return [structuredDiff];
 }
