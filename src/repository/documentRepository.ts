@@ -294,7 +294,7 @@ export class DocumentRepository {
                     document_id: docId
                 };
 
-                // Call the split_data_into_chunks API
+                // Call the update_data_into_chunks API
                 const response = await axios.post('http://18.116.66.245:9100/v2/update_data_into_chunks', updateDataIntoChunksRequest, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -316,7 +316,7 @@ export class DocumentRepository {
             }
         } catch (error:any) {
             console.log(error)
-            console.error('Error calling split_data_into_chunks:', error.message);
+            console.error('Error calling update_data_into_chunks:', error.message);
         }
     }
 
