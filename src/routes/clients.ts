@@ -255,7 +255,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       document = await documentRepo.findDocumentById(parseInt(docId));
     }
     let isNewDocument = true;
-    let differences = []
+    let differences:any = []
     
     if (document && document.docContentUrl) {
       // Use the existing document's S3 URL to fetch HTML content
