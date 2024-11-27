@@ -275,7 +275,7 @@ export class DocumentRepository {
                     s3_db_path: "data/test/",
                     teamspace_s3_path: "data/test/",
                     differences,
-                    document_id: docId
+                    document_id: `${docId}`
                 };
 
                 // Call the update_data_into_chunks API
