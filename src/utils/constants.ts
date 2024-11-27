@@ -30,7 +30,7 @@ export const STATUS = {
 }
 
 export const TASK_NAMES = {
-    SPLIT_DATA_INTO_CHUNKS : 'split_data_into_chunks_task',
+    SPLIT_DATA_INTO_CHUNKS : 'parse_document_qdrant_task',
     RECOMMEND_BYTES: 'recommend_bytes',
     UPDATE_DATA_INTO_CHUNKS: 'update_data_into_chunks_task'
 }
