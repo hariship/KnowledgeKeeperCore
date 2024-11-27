@@ -13,6 +13,15 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
   const structuredDiff: any[] = [];
   const headingLevels: { [key: string]: string } = {};
 
+  const ignorePatterns = [
+    `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
+  ];
+
+  // Helper: Check if content matches any ignore pattern
+  const shouldIgnore = (content: string) => {
+    return ignorePatterns.some((pattern) => content.includes(pattern));
+  };
+
   const parseHTML = (html: string) => {
       try {
           return parse(html, { lowerCaseTagName: true });
@@ -36,6 +45,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
       currentHeadings: { [key: string]: string }
   ) => {
       if (!el1 && el2) {
+        if (shouldIgnore(el2.outerHTML)) return;
           structuredDiff.push({
               ...currentHeadings,
               type: 'added',
