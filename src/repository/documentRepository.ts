@@ -288,7 +288,7 @@ export class DocumentRepository {
 
                 // Assuming the API returns task_id
                 const { task_id } = response.data;
-                console.log(response.data.detail)
+                console.log(JSON.stringify(response.data.detail))
                 console.log(`Task created with ID: ${task_id}`);
 
                 // Update task table with the task_id and status (PENDING)
