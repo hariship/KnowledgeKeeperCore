@@ -234,6 +234,7 @@ export class TaskRepository {
                 console.log(task.taskName)
                 if (task.taskStatus == STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.SPLIT_DATA_INTO_CHUNKS) {
                     // Update task status in the DB
+                    console.log('coming here')
                     await this.updateTaskStatus(task.taskId, reponseTaskStatus);
 
                     // Once the task is completed, update the documents
@@ -266,6 +267,8 @@ export class TaskRepository {
     
                     console.log(`Documents updated with parsed data for task: ${task.taskId}`);
                 }
+                console.log('not coming here')
+
             }
         } catch (error:any) {
             console.error('Error polling task status:', error.message);
