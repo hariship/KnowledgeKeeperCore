@@ -12,12 +12,15 @@ export const generateToken = (user: any) => {
 export async function getStructuredHTMLDiff(html1: string, html2: string) {
     const structuredDiff: any[] = [];
 
+    // Normalize double quotes for comparison
     const normalizeQuotes = (str: string) => str.replace(/\\"/g, '"').replace(/\\\\"/g, '\\"');
 
+    // Patterns to ignore
     const ignorePatterns = [
         `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
     ];
 
+    // Check if content should be ignored
     const shouldIgnore = (content: string) => {
         return ignorePatterns.some((pattern) => content.includes(pattern));
     };
@@ -33,7 +36,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
     const extractSections = (root: HTMLElement) => {
         const sections: { [key: string]: string } = {};
-        let currentHeadings:any = {
+        const currentHeadings:any = {
             section_main_heading1: '',
             section_main_heading2: '',
             section_main_heading3: '',
@@ -42,6 +45,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
         root.childNodes.forEach((node) => {
             if (node instanceof HTMLElement) {
+                // Detect headings and map them to the correct level
                 if (node.tagName.match(/^h[1-4]$/i)) {
                     const level = parseInt(node.tagName.charAt(1));
                     currentHeadings[`section_main_heading${level}`] = node.outerHTML.trim();
@@ -51,9 +55,15 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
                         currentHeadings[`section_main_heading${i}`] = '';
                     }
                 } else {
-                    const sectionKey = Object.values(currentHeadings).filter(Boolean).join(' > ');
-                    if (!sections[sectionKey]) sections[sectionKey] = '';
-                    sections[sectionKey] += node.outerHTML.trim();
+                    // Append content to the current section
+                    const headingKey = `${currentHeadings.section_main_heading1 || ''} > ${
+                        currentHeadings.section_main_heading2 || ''
+                    } > ${currentHeadings.section_main_heading3 || ''} > ${
+                        currentHeadings.section_main_heading4 || ''
+                    }`.trim();
+
+                    if (!sections[headingKey]) sections[headingKey] = '';
+                    sections[headingKey] += node.outerHTML.trim();
                 }
             }
         });
