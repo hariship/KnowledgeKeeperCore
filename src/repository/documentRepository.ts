@@ -254,38 +254,22 @@ export class DocumentRepository {
             const taskRepo = new TaskRepository();
             const taskName = TASK_NAMES.UPDATE_DATA_INTO_CHUNKS;
     
-            // Fetch the most recent task for SPLIT_DATA_INTO_CHUNKS
-            const recentTask = await taskRepo.getMostRecentTaskByName(taskName);
-    
-            // If the recent task exists, check if the createdAt is older than 1 hour
-            // if (recentTask) {
-            //     const oneHourAgo = new Date();
-            //     oneHourAgo.setHours(oneHourAgo.getMinutes() - 5);
-    
-            //     if (new Date(recentTask.createdAt) > oneHourAgo) {
-            //         console.log('Skipping API call as the last task was created less than 1 hour ago.');
-            //         return;
-            //     }
-            // }
-            const teamspaceRepo = new TeamspaceRepository();
-            const teamspace = await teamspaceRepo.getTeamspaceByName(teamspaceName)
-            let documents:any = []
-            if(teamspace){
-                documents = await this.getAllDocumentsByTeamspace(teamspace?.id);
-            }
-
-            if (documents.length > 0) {
-                const s3DocumentPaths = documents.map((doc: { id: { toString: () => any; }; s3Path: any; }) => ({
-                    document_id: doc.id.toString(),
-                    s3_path: doc.s3Path
-                }));
-
-                console.log('s3DocumentPaths',s3DocumentPaths)
+          
+            
+            const document = await this.documentRepo.findOne({
+                where:{
+                    id:docId
+                },
+                relations:['teamspace']
+            });
+            if (document) {
+                const s3DocumentPath = document.s3SentencedDocumentPath;
+                console.log('s3DocumentPaths',s3DocumentPath)
                 console.log(differences)
 
                 const updateDataIntoChunksRequest = {
                     data_id: uuidv4(),
-                    s3_document_path: s3DocumentPaths,
+                    s3_document_path: s3DocumentPath,
                     s3_bucket: "knowledge-keeper-results",
                     teamspace_name: teamspaceName,
                     s3_db_path: "data/test/",
@@ -307,8 +291,6 @@ export class DocumentRepository {
                 console.log(`Task created with ID: ${task_id}`);
 
                 // Update task table with the task_id and status (PENDING)
-                const taskRepo = new TaskRepository();
-                const taskName = TASK_NAMES.UPDATE_DATA_INTO_CHUNKS;
                 const dataId = uuidv4();
                 await taskRepo.createTask(task_id, STATUS.PENDING, taskName, dataId);
             } else {
