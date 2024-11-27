@@ -287,7 +287,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     const data_id = uuidv4();
     const dataExistsRequest  = {
       data_id,
-      teamspaceName : teamspace?.teamspaceName,
+      teamspace_name : teamspace?.teamspaceName,
       document_id : `${document?.id}`
     }
     // Check for pending task status and mark flag accordingly
