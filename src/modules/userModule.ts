@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { diffWordsWithSpace } from 'diff';
+import { parse } from 'node-html-parser'; // Install via `npm install node-html-parser`
 
 
 export const generateToken = (user: any) => {
@@ -9,83 +10,86 @@ export const generateToken = (user: any) => {
 };
 
 export async function getDiffWordsWithSpace(html1: string, html2: string) {
-    const differences = diffWordsWithSpace(html1, html2);
-    const structuredDiff: any[] = [];
-    const headingLevels: { [key: string]: string } = {}; // Track current headings by level
-    let currentOriginalTable = ''; // Capture original table content
-    let currentModifiedTable = ''; // Capture modified table content
-    let insideTable = false; // Track if we're within a table element
-  
-    differences.forEach(part => {
+  const differences = diffWordsWithSpace(html1, html2);
+  const structuredDiff: any[] = [];
+  const headingLevels: { [key: string]: string } = {};
+  let currentOriginalTable = '';
+  let currentModifiedTable = '';
+  let insideTable = false;
+
+  // Normalize text to minimize noise from whitespace and formatting differences
+  const normalizeWhitespace = (str: string) => str.replace(/\s+/g, ' ').trim();
+
+  // Parse HTML to clean and validate structure
+  const cleanHTML = (html: string) => parse(html).toString();
+
+  // Ensure input HTML strings are clean and well-structured
+  html1 = cleanHTML(html1);
+  html2 = cleanHTML(html2);
+
+  differences.forEach((part) => {
       const headingMatch = part.value.match(/<(h[1-4])[^>]*>(.*?)<\/\1>/i);
-  
-      // Update heading levels based on the current heading
+
+      // Handle headings (h1 to h4)
       if (headingMatch) {
-        const headingTag = headingMatch[1];
-        const headingText = headingMatch[2];
-  
-        // Set the current heading level based on tag (h1, h2, h3, h4)
-        headingLevels[`section_main_heading_${headingTag.charAt(1)}`] = headingText;
-  
-        // Clear deeper heading levels when a higher level is encountered
-        for (let i = parseInt(headingTag.charAt(1)) + 1; i <= 4; i++) {
-          delete headingLevels[`section_main_heading_${i}`];
-        }
+          const headingTag = headingMatch[1];
+          const headingText = normalizeWhitespace(headingMatch[2]);
+          headingLevels[`section_main_heading_${headingTag.charAt(1)}`] = headingText;
+
+          // Clear deeper heading levels when encountering a higher-level heading
+          for (let i = parseInt(headingTag.charAt(1)) + 1; i <= 4; i++) {
+              delete headingLevels[`section_main_heading_${i}`];
+          }
       }
-      // Check if we're within a table, and capture the entire table structure
+      // Handle tables
       else if (part.value.includes('<table')) {
-        insideTable = true;
-        currentOriginalTable = ''; // Reset for a new table capture
-        currentModifiedTable = '';
-      }
-  
-      if (insideTable) {
-        // Capture all table content for both original and modified content
-        if (part.added) {
-          currentModifiedTable += part.value;
-        } else if (part.removed) {
-          currentOriginalTable += part.value;
-        } else {
-          // If unchanged, add to both original and modified content to capture the full table
-          currentOriginalTable += part.value;
-          currentModifiedTable += part.value;
-        }
-  
-        // If the table closes, finalize and push the table structure with any modifications
-        if (part.value.includes('</table>')) {
-          insideTable = false;
-  
-          structuredDiff.push({
-            ...headingLevels,
-            type: currentOriginalTable && currentModifiedTable ? 'modified' : currentOriginalTable ? 'removed' : 'added',
-            original_content: currentOriginalTable.trim(),
-            modified_content: currentModifiedTable.trim()
-          });
-  
-          // Reset table capture variables
+          insideTable = true;
           currentOriginalTable = '';
           currentModifiedTable = '';
-        }
       }
-      // Capture image additions/removals outside of tables
+
+      if (insideTable) {
+          if (part.added) {
+              currentModifiedTable += part.value;
+          } else if (part.removed) {
+              currentOriginalTable += part.value;
+          } else {
+              currentOriginalTable += part.value;
+              currentModifiedTable += part.value;
+          }
+
+          if (part.value.includes('</table>')) {
+              insideTable = false;
+              structuredDiff.push({
+                  ...headingLevels,
+                  type: currentOriginalTable && currentModifiedTable ? 'modified' : currentOriginalTable ? 'removed' : 'added',
+                  original_content: normalizeWhitespace(currentOriginalTable),
+                  modified_content: normalizeWhitespace(currentModifiedTable),
+              });
+
+              currentOriginalTable = '';
+              currentModifiedTable = '';
+          }
+      }
+      // Handle images (added or removed)
       else if ((part.added || part.removed) && /<img/i.test(part.value)) {
-        structuredDiff.push({
-          ...headingLevels,
-          type: part.added ? 'added' : 'removed',
-          original_content: part.removed ? part.value.trim() : '',
-          modified_content: part.added ? part.value.trim() : ''
-        });
+          structuredDiff.push({
+              ...headingLevels,
+              type: part.added ? 'added' : 'removed',
+              original_content: part.removed ? normalizeWhitespace(part.value) : '',
+              modified_content: part.added ? normalizeWhitespace(part.value) : '',
+          });
       }
-      // Handle general content modifications outside tables and images
+      // Handle paragraphs, plain text, and other differences
       else if (part.added || part.removed) {
-        structuredDiff.push({
-          ...headingLevels,
-          type: part.added ? 'added' : 'removed',
-          original_content: part.removed ? part.value.trim() : '',
-          modified_content: part.added ? part.value.trim() : ''
-        });
+          structuredDiff.push({
+              ...headingLevels,
+              type: part.added ? 'added' : 'removed',
+              original_content: part.removed ? normalizeWhitespace(part.value) : '',
+              modified_content: part.added ? normalizeWhitespace(part.value) : '',
+          });
       }
-    });
-  
-    return structuredDiff;
-  }
+  });
+
+  return structuredDiff;
+}
