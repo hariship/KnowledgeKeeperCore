@@ -21,6 +21,8 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
       return ignorePatterns.some((pattern) => content.includes(pattern));
   };
 
+  const normalizeQuotes = (str: string) => str.replace(/\\\\"/g, '\\"').replace(/\\"/g, '"');
+
   const parseHTML = (html: string) => {
       try {
           return parse(html, { lowerCaseTagName: true });
@@ -43,29 +45,34 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
       };
 
       if (!el1 && el2) {
+        const content = normalizeQuotes(el2.outerHTML.trim());
           if (shouldIgnore(el2.outerHTML)) return;
           structuredDiff.push({
               ...defaultHeadings,
               type: 'added',
               original_content: '',
-              modified_content: el2.outerHTML.trim(),
+              modified_content: content,
           });
           return;
       }
 
       if (el1 && !el2) {
-          if (shouldIgnore(el1.outerHTML)) return;
+        const content = normalizeQuotes(el1.outerHTML.trim());
+          if (shouldIgnore(content)) return;
           structuredDiff.push({
               ...defaultHeadings,
               type: 'deleted',
-              original_content: el1.outerHTML.trim(),
+              original_content: content,
               modified_content: '',
           });
           return;
       }
 
       if (el1 && el2) {
-          if (shouldIgnore(el1.outerHTML) || shouldIgnore(el2.outerHTML)) return;
+
+        const content1 = normalizeQuotes(el1.outerHTML.trim());
+        const content2 = normalizeQuotes(el2.outerHTML.trim());
+          if (shouldIgnore(content1) || shouldIgnore(content2)) return;
 
           if (el1.tagName && el1.tagName.match(/^h[1-4]$/i)) {
               const level = parseInt(el1.tagName.charAt(1));
@@ -79,8 +86,8 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
               structuredDiff.push({
                   ...defaultHeadings,
                   type: 'modified',
-                  original_content: el1.outerHTML.trim(),
-                  modified_content: el2.outerHTML.trim(),
+                  original_content: content1,
+                  modified_content: content2,
               });
           }
 
