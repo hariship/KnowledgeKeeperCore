@@ -33,7 +33,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
     const extractSections = (root: HTMLElement) => {
         const sections: { [key: string]: string } = {};
-        const currentHeadings:any = {
+        const currentHeadings: { [key: string]: string } = {
             section_main_heading1: '',
             section_main_heading2: '',
             section_main_heading3: '',
@@ -44,17 +44,23 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
             if (node instanceof HTMLElement) {
                 if (node.tagName.match(/^h[1-4]$/i)) {
                     const level = parseInt(node.tagName.charAt(1));
-                    currentHeadings[`section_main_heading${level}`] = node.outerHTML.trim();
+                    const headingKey = `section_main_heading${level}`;
+                    currentHeadings[headingKey] = node.outerHTML.trim();
 
                     // Clear deeper headings
                     for (let i = level + 1; i <= 4; i++) {
                         currentHeadings[`section_main_heading${i}`] = '';
                     }
                 } else {
-                    // Aggregate content under the current heading context
-                    const headingKey = Object.values(currentHeadings)
-                        .filter((heading) => heading) // Include only populated headings
-                        .join(' > ');
+                    // Dynamically map headings based on presence
+                    const activeHeadings = Object.entries(currentHeadings)
+                        .filter(([_, value]) => value)
+                        .reduce((acc, [key, value]) => {
+                            acc[key] = value;
+                            return acc;
+                        }, {} as { [key: string]: string });
+
+                    const headingKey = JSON.stringify(activeHeadings);
                     if (!sections[headingKey]) sections[headingKey] = '';
                     sections[headingKey] += node.outerHTML.trim();
                 }
@@ -73,32 +79,25 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
             if (shouldIgnore(content1) && shouldIgnore(content2)) return;
 
-            const headingParts = heading.split(' > ').filter(Boolean); // Split and clean heading hierarchy
-            console.log('--------',headingParts)
-            const headingMap:any = {
-                section_main_heading1: headingParts[0] || '',
-                section_main_heading2: headingParts[1] || '',
-                section_main_heading3: headingParts[2] || '',
-                section_main_heading4: headingParts[3] || '',
-            };
+            const activeHeadings = JSON.parse(heading);
 
             if (!content1 && content2) {
                 structuredDiff.push({
-                    ...headingMap,
+                    ...activeHeadings,
                     type: 'added',
                     original_content: '',
                     modified_content: content2,
                 });
             } else if (content1 && !content2) {
                 structuredDiff.push({
-                    ...headingMap,
+                    ...activeHeadings,
                     type: 'deleted',
                     original_content: content1,
                     modified_content: '',
                 });
             } else if (content1 !== content2) {
                 structuredDiff.push({
-                    ...headingMap,
+                    ...activeHeadings,
                     type: 'modified',
                     original_content: content1,
                     modified_content: content2,
