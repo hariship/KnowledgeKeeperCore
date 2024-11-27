@@ -222,6 +222,7 @@ export class TaskRepository {
                         'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with actual token
                     }
                 });
+
     
                 const reponseTaskStatus = response.data.status;
                 const taskName = response.data.task_name;
@@ -237,6 +238,8 @@ export class TaskRepository {
     
                     // Update documents with parsed_document and db_path
                     const documentRepo = new DocumentRepository();
+                    console.log(response.data.result)
+
                     console.log('split data',response.data)
                     await documentRepo.updateDocumentsWithParsedData(parsed_document, db_path);
     
