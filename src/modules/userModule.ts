@@ -14,12 +14,11 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
   const headingLevels: { [key: string]: string } = {};
 
   const ignorePatterns = [
-    `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
+      `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
   ];
 
-  // Helper: Check if content matches any ignore pattern
   const shouldIgnore = (content: string) => {
-    return ignorePatterns.some((pattern) => content.includes(pattern));
+      return ignorePatterns.some((pattern) => content.includes(pattern));
   };
 
   const parseHTML = (html: string) => {
@@ -31,23 +30,22 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
       }
   };
 
-  const tree1 = parseHTML(html1);
-  const tree2 = parseHTML(html2);
-
-  if (!tree1 || !tree2) {
-      console.error('Failed to parse one or both HTML inputs.');
-      return [];
-  }
-
   const diffElements = (
       el1: HTMLElement | null,
       el2: HTMLElement | null,
       currentHeadings: { [key: string]: string }
   ) => {
+      const defaultHeadings = {
+          section_main_heading_1: currentHeadings.section_main_heading_1 || '',
+          section_main_heading_2: currentHeadings.section_main_heading_2 || '',
+          section_main_heading_3: currentHeadings.section_main_heading_3 || '',
+          section_main_heading_4: currentHeadings.section_main_heading_4 || '',
+      };
+
       if (!el1 && el2) {
-        if (shouldIgnore(el2.outerHTML)) return;
+          if (shouldIgnore(el2.outerHTML)) return;
           structuredDiff.push({
-              ...currentHeadings,
+              ...defaultHeadings,
               type: 'added',
               original_content: '',
               modified_content: el2.outerHTML.trim(),
@@ -56,8 +54,9 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
       }
 
       if (el1 && !el2) {
+          if (shouldIgnore(el1.outerHTML)) return;
           structuredDiff.push({
-              ...currentHeadings,
+              ...defaultHeadings,
               type: 'deleted',
               original_content: el1.outerHTML.trim(),
               modified_content: '',
@@ -66,6 +65,8 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
       }
 
       if (el1 && el2) {
+          if (shouldIgnore(el1.outerHTML) || shouldIgnore(el2.outerHTML)) return;
+
           if (el1.tagName && el1.tagName.match(/^h[1-4]$/i)) {
               const level = parseInt(el1.tagName.charAt(1));
               currentHeadings[`section_main_heading_${level}`] = el2.text.trim();
@@ -76,7 +77,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
           if (el1.innerHTML.trim() !== el2.innerHTML.trim()) {
               structuredDiff.push({
-                  ...currentHeadings,
+                  ...defaultHeadings,
                   type: 'modified',
                   original_content: el1.outerHTML.trim(),
                   modified_content: el2.outerHTML.trim(),
@@ -94,6 +95,14 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
           console.warn('Unexpected state: el1 or el2 is invalid:', { el1, el2 });
       }
   };
+
+  const tree1 = parseHTML(html1);
+  const tree2 = parseHTML(html2);
+
+  if (!tree1 || !tree2) {
+      console.error('Failed to parse one or both HTML inputs.');
+      return [];
+  }
 
   diffElements(tree1 as HTMLElement, tree2 as HTMLElement, headingLevels);
 
