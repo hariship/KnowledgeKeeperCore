@@ -31,6 +31,10 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
         }
     };
 
+    const extractTextContent = (node: HTMLElement) => {
+        return node.textContent.trim();
+    };
+
     const extractSections = (root: HTMLElement) => {
         const sections: { [key: string]: string } = {};
         const currentHeadings: { [key: string]: string } = {
@@ -45,7 +49,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
                 if (node.tagName.match(/^h[1-4]$/i)) {
                     const level = parseInt(node.tagName.charAt(1));
                     const headingKey = `section_main_heading${level}`;
-                    currentHeadings[headingKey] = node.outerHTML.trim();
+                    currentHeadings[headingKey] = extractTextContent(node);
 
                     // Clear deeper headings
                     for (let i = level + 1; i <= 4; i++) {
@@ -54,7 +58,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
                 } else {
                     // Dynamically map headings based on presence
                     const activeHeadings = Object.entries(currentHeadings)
-                        .filter(([_, value]) => value)
+                        .filter(([_, value]) => value) // Include only populated headings
                         .reduce((acc, [key, value]) => {
                             acc[key] = value;
                             return acc;
