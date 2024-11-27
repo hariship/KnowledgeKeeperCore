@@ -300,10 +300,10 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       }
     });
     console.log(response.data)
-    if(response.data){
+    if(response.data.exists){
       isNewDocument = false
     }else{
-      console.log(response.data.detail)
+      console.log(response.data)
       isNewDocument = true
     }
 
