@@ -74,6 +74,17 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
         if (shouldIgnore(content1) || shouldIgnore(content2)) return;
 
+        // Handle headings (h1 to h4)
+        if (el1.tagName && el1.tagName.match(/^h[1-4]$/i)) {
+            const level = parseInt(el1.tagName.charAt(1));
+            currentHeadings[`section_main_heading${level}`] = el1.text.trim();
+
+            // Clear deeper heading levels
+            for (let i = level + 1; i <= 4; i++) {
+                currentHeadings[`section_main_heading${i}`] = '';
+            }
+        }
+
         // Handle <table> as a whole and avoid splitting <tr> independently
         if (el1.tagName === 'table' && el2.tagName === 'table') {
             if (el1.outerHTML.trim() !== el2.outerHTML.trim()) {
@@ -105,7 +116,6 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
         }
     }
 };
-
   const tree1 = parseHTML(html1);
   const tree2 = parseHTML(html2);
 
