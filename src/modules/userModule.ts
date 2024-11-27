@@ -15,23 +15,28 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
   const headingLevels: { [key: string]: string } = {};
   let currentOriginalTable = '';
   let currentModifiedTable = '';
-  let insideTable = false; 
-  console.log(html1)
-  console.log(html2)
-  console.log("differences",differences)
+  let insideTable = false;
 
   // Normalize text to minimize noise from whitespace and formatting differences
   const normalizeWhitespace = (str: string) => str.replace(/\s+/g, ' ').trim();
 
   // Parse HTML to clean and validate structure
-  const cleanHTML = (html: string) => parse(html).toString();
+  const cleanHTML = (html: string) => {
+      const root = parse(html, {
+          lowerCaseTagName: true, // Convert all tags to lowercase
+          comment: false,        // Remove comments
+          blockTextElements: { script: false, style: false }, // Handle script and style tags
+      });
+      return root.toString();
+  };
 
   // Ensure input HTML strings are clean and well-structured
   html1 = cleanHTML(html1);
   html2 = cleanHTML(html2);
 
-  console.log(html1)
-  console.log(html2)
+  console.log('Cleaned HTML1:', html1);
+  console.log('Cleaned HTML2:', html2);
+  console.log('Differences:', differences);
 
   differences.forEach((part) => {
       const headingMatch = part.value.match(/<(h[1-4])[^>]*>(.*?)<\/\1>/i);
@@ -88,16 +93,20 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
       }
       // Handle paragraphs, plain text, and other differences
       else if (part.added || part.removed) {
+          // Validate if the part contains broken tags
+          const isValidHTML = part.value.startsWith('<') && part.value.endsWith('>');
+          const content = isValidHTML ? part.value : normalizeWhitespace(part.value);
+
           structuredDiff.push({
               ...headingLevels,
               type: part.added ? 'added' : 'removed',
-              original_content: part.removed ? normalizeWhitespace(part.value) : '',
-              modified_content: part.added ? normalizeWhitespace(part.value) : '',
+              original_content: part.removed ? content : '',
+              modified_content: part.added ? content : '',
           });
       }
   });
 
-  console.log('structuredDiff',structuredDiff)
+  console.log('Structured Diff:', structuredDiff);
 
   return structuredDiff;
 }
