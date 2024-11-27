@@ -246,7 +246,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     // Upload new file to S3
     const s3Url = await uploadToS3(file, clientName);
-
+    
     // Fetch existing document (if any) from S3 to compare with the new one
     let html2 = '';
     let document = docId ? await documentRepo.findDocumentById(parseInt(docId)) : await documentRepo.findDocumentByDocUrl(s3Url);
@@ -257,10 +257,11 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       html2 = response.data;
     }
 
+
     // Calculate the difference between the new document (html1) and existing document (html2)
     const html1 = file.buffer.toString('utf-8');
     const differences = getDiffWordsWithSpace(html1, html2)
-     
+    let isNewDocument = false;
 
     const teamspace = folder ? folder.teamspace : document?.teamspace;
 
@@ -278,6 +279,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     if (!document || Object.values(document).every(value => value === null)) {
       document = await documentRepo.createDocument(createdocumentRequest);
+      isNewDocument = true
     }
 
     if(folder){
@@ -285,13 +287,13 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       folder = await documentRepo.updateFolder(folder?.id, {totalNumberOfDocs: folder?.totalNumberOfDocs + 1});
     }
     
-    // Step 3: Place a request in RabbitMQ
-    await sendMessageToRabbitMQ({
-      docId: document.id,
-      versionNumber: document.versionNumber,
-      clientId,
-      isTrained: false
-    });
+    // // Step 3: Place a request in RabbitMQ
+    // await sendMessageToRabbitMQ({
+    //   docId: document.id,
+    //   versionNumber: document.versionNumber,
+    //   clientId,
+    //   isTrained: false
+    // });
 
     const regex = /https:\/\/[^\/]+\.com\/(.+)/;
     const match = s3Url.match(regex);
@@ -302,7 +304,11 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     }
 
     // call split data into chunks
-    await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName, differences, document.id);
+    if(isNewDocument){
+      await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName);
+    }else{
+      await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName, differences, document.id);
+    }
 
 
 

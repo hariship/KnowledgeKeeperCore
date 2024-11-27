@@ -249,6 +249,77 @@ export class DocumentRepository {
         }
     }
 
+    public async callUpdateDocumentDifference(teamspaceName: string, differences?: object, docId?: number) {
+        try {
+            const taskRepo = new TaskRepository();
+            const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
+    
+            // Fetch the most recent task for SPLIT_DATA_INTO_CHUNKS
+            const recentTask = await taskRepo.getMostRecentTaskByName(taskName);
+    
+            // If the recent task exists, check if the createdAt is older than 1 hour
+            if (recentTask) {
+                const oneHourAgo = new Date();
+                oneHourAgo.setHours(oneHourAgo.getMinutes() - 5);
+    
+                if (new Date(recentTask.createdAt) > oneHourAgo) {
+                    console.log('Skipping API call as the last task was created less than 1 hour ago.');
+                    return;
+                }
+            }
+            const teamspaceRepo = new TeamspaceRepository();
+            const teamspace = await teamspaceRepo.getTeamspaceByName(teamspaceName)
+            let documents:any = []
+            if(teamspace){
+                documents = await this.getAllDocumentsByTeamspace(teamspace?.id);
+            }
+
+            if (documents.length > 0) {
+                const s3DocumentPaths = documents.map((doc: { id: { toString: () => any; }; s3Path: any; }) => ({
+                    document_id: doc.id.toString(),
+                    s3_path: doc.s3Path
+                }));
+
+                console.log('s3DocumentPaths',s3DocumentPaths)
+                console.log(differences)
+
+                const splitDataIntoChunksRequest = {
+                    data_id: uuidv4(),
+                    s3_document_path: s3DocumentPaths,
+                    s3_bucket: "knowledge-keeper-results",
+                    teamspace_name: teamspaceName,
+                    s3_db_path: "data/test/",
+                    teamspace_s3_path: "data/test/",
+                    differences,
+                    document_id: docId
+                };
+
+                // Call the split_data_into_chunks API
+                const response = await axios.post('http://18.116.66.245:9100/v2/update_data_into_chunks', splitDataIntoChunksRequest, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
+                    }
+                });
+
+                // Assuming the API returns task_id
+                const { task_id } = response.data;
+                console.log(`Task created with ID: ${task_id}`);
+
+                // Update task table with the task_id and status (PENDING)
+                const taskRepo = new TaskRepository();
+                const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
+                const dataId = uuidv4();
+                await taskRepo.createTask(task_id, STATUS.PENDING, taskName, dataId);
+            } else {
+                console.log('No new or modified documents found.');
+            }
+        } catch (error:any) {
+            console.log(error)
+            console.error('Error calling split_data_into_chunks:', error.message);
+        }
+    }
+
     public async callSplitDataIntoChunks(teamspaceName: string, differences?: object, docId?: number) {
         try {
             const taskRepo = new TaskRepository();
@@ -294,7 +365,7 @@ export class DocumentRepository {
                 };
 
                 // Call the split_data_into_chunks API
-                const response = await axios.post('http://18.116.66.245:9100/v1/split_data_into_chunks', splitDataIntoChunksRequest, {
+                const response = await axios.post('http://18.116.66.245:9100/v2/split_data_into_chunks', splitDataIntoChunksRequest, {
                     headers: {
                         'Content-Type': 'application/json',
                         'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
