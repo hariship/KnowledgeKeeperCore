@@ -284,6 +284,8 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       document = await documentRepo.createDocument(createdocumentRequest);
     }
 
+    console.log(teamspace?.teamspaceName)
+
     const data_id = uuidv4();
     const dataExistsRequest  = {
       data_id,
