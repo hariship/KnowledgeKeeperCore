@@ -38,7 +38,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
         el1: HTMLElement | null,
         el2: HTMLElement | null,
         currentHeadings: { [key: string]: string },
-        parentProcessed: boolean = false // Track if parent was already processed
+        parentProcessed: boolean = false // Tracks if parent was already processed
     ) => {
         const defaultHeadings = {
             section_main_heading1: currentHeadings.section_main_heading1 || '',
@@ -87,7 +87,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
                 const level = parseInt(el1.tagName.charAt(1));
                 currentHeadings[`section_main_heading${level}`] = el1.text.trim();
     
-                // Clear deeper headings
+                // Clear deeper headings (e.g., reset heading3 and heading4 when heading2 is updated)
                 for (let i = level + 1; i <= 4; i++) {
                     currentHeadings[`section_main_heading${i}`] = '';
                 }
@@ -129,35 +129,39 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
             }
         }
     };
-
-    const tree1 = parseHTML(html1);
-    const tree2 = parseHTML(html2);
-
-    if (!tree1 || !tree2) {
-        console.error('Failed to parse one or both HTML inputs.');
-        return [];
-    }
-
-    const currentHeadings = {
-        section_main_heading1: '',
-        section_main_heading2: '',
-        section_main_heading3: '',
-        section_main_heading4: '',
-    };
-
-    diffElements(tree1 as HTMLElement, tree2 as HTMLElement, currentHeadings);
-
-    // Generate structured diffs by headings
-    for (const heading in sections) {
-        structuredDiff.push({
-            ...Object.fromEntries(
-                Object.entries(currentHeadings).filter(([_, value]) => heading.includes(value))
-            ),
-            type: sections[heading].type,
-            original_content: sections[heading].original.join('\n'),
-            modified_content: sections[heading].modified.join('\n'),
+    
+    // Consolidate the structured diff to include only section-level entries
+    const consolidateDiffBySection = (structuredDiff: any[]) => {
+        const sectionMap: { [key: string]: any } = {};
+    
+        structuredDiff.forEach((entry) => {
+            const sectionKey = `${entry.section_main_heading1}-${entry.section_main_heading2}-${entry.section_main_heading3}-${entry.section_main_heading4}`;
+    
+            if (!sectionMap[sectionKey]) {
+                sectionMap[sectionKey] = {
+                    section_main_heading1: entry.section_main_heading1,
+                    section_main_heading2: entry.section_main_heading2,
+                    section_main_heading3: entry.section_main_heading3,
+                    section_main_heading4: entry.section_main_heading4,
+                    type: 'modified',
+                    original_content: [],
+                    modified_content: [],
+                };
+            }
+    
+            sectionMap[sectionKey].original_content.push(entry.original_content);
+            sectionMap[sectionKey].modified_content.push(entry.modified_content);
         });
-    }
+    
+        return Object.values(sectionMap).map((section) => ({
+            ...section,
+            original_content: section.original_content.join('\n'),
+            modified_content: section.modified_content.join('\n'),
+        }));
+    };
+    
+    // After generating the diff, call this function
+    const consolidatedDiff = consolidateDiffBySection(structuredDiff);
 
-    return structuredDiff;
+    return consolidatedDiff;
 }
