@@ -230,19 +230,20 @@ export class TaskRepository {
     
                 console.log(`Task ${task.taskId} status: ${reponseTaskStatus}`);
                 console.log(response.data.result)
+                console.log(task.taskStatus)
                 if (task.taskStatus == STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.SPLIT_DATA_INTO_CHUNKS) {
                     // Update task status in the DB
                     await this.updateTaskStatus(task.taskId, reponseTaskStatus);
 
                     // Once the task is completed, update the documents
-                    const { parsed_document, db_path } = result;
+                    const { parsed_document, collection_name } = result;
     
                     // Update documents with parsed_document and db_path
                     const documentRepo = new DocumentRepository();
                     console.log(response.data.result)
 
                     console.log('split data',response.data)
-                    await documentRepo.updateDocumentsWithParsedData(parsed_document, db_path);
+                    await documentRepo.updateDocumentsWithParsedData(parsed_document, collection_name);
     
                     console.log(`Documents updated with parsed data for task: ${task.taskId}`);
                 }else if (task.taskStatus == STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.UPDATE_DATA_INTO_CHUNKS) {
@@ -255,7 +256,7 @@ export class TaskRepository {
                     await this.updateTaskStatus(task.taskId, reponseTaskStatus);
 
                     // Once the task is completed, update the documents
-                    const { parsed_document, db_path } = result;
+                    const { parsed_document, collection_name } = result;
     
                     // Update documents with parsed_document and db_path
                     const byteRepo = new ByteRepository();
