@@ -38,10 +38,10 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
     currentHeadings: { [key: string]: string }
 ) => {
     const defaultHeadings = {
-        section_main_heading1: currentHeadings.section_main_heading_1 || '',
-        section_main_heading2: currentHeadings.section_main_heading_2 || '',
-        section_main_heading3: currentHeadings.section_main_heading_3 || '',
-        section_main_heading4: currentHeadings.section_main_heading_4 || '',
+        section_main_heading1: currentHeadings.section_main_heading1 || '',
+        section_main_heading2: currentHeadings.section_main_heading2 || '',
+        section_main_heading3: currentHeadings.section_main_heading3 || '',
+        section_main_heading4: currentHeadings.section_main_heading4 || '',
     };
 
     if (!el1 && el2) {
