@@ -19,4 +19,7 @@ export class Task {
 
     @Column({type: 'date', nullable: true })
     createdAt: Date
+
+    @Column({nullable: true })
+    docId: number
 }

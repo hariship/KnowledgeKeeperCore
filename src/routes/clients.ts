@@ -24,6 +24,7 @@ import { UserTeamspace } from '../entities/user_teamspace';
 import { verify } from 'crypto';
 import { Client } from '../entities/client';
 import { getDiffWordsWithSpace } from '../modules/userModule';
+import { STATUS, TASK_NAMES } from '../utils/constants';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -246,19 +247,29 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     // Upload new file to S3
     const s3Url = await uploadToS3(file, clientName);
-    
+    console.log(s3Url)
     // Fetch existing document (if any) from S3 to compare with the new one
     let html2 = '';
     let document = docId ? await documentRepo.findDocumentById(parseInt(docId)) : await documentRepo.findDocumentByDocUrl(s3Url);
     let isNewDocument = false;
-    console.log(document)
+
+    // Check for pending task status and mark flag accordingly
+    const taskRepo = new TaskRepository();
+    const pendingTasks = await taskRepo.getPendingTasks();
+
+    for (const task of pendingTasks) {
+      console.log('Polling for task:', task)
+      if(task.taskName == TASK_NAMES.SPLIT_DATA_INTO_CHUNKS && task.docId == document?.id && task.taskStatus === STATUS.COMPLETED){
+          isNewDocument = false
+        }else{
+          isNewDocument = true
+        }
+    }
     if (document && document.docContentUrl) {
       // Use the existing document's S3 URL to fetch HTML content
       const response = await axios.get(document.docContentUrl);
       html2 = response.data;
-      isNewDocument = false;
     }
-
 
     // Calculate the difference between the new document (html1) and existing document (html2)
     const html1 = file.buffer.toString('utf-8');
@@ -281,7 +292,6 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     if (!document || Object.values(document).every(value => value === null)) {
       document = await documentRepo.createDocument(createdocumentRequest);
-      isNewDocument = true
     }
 
     if(folder){
