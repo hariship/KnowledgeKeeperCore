@@ -22,11 +22,23 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
         }
     };
 
+
+    const normalizeQuotes = (str: string) => str.replace(/\\\\"/g, '\\"').replace(/\\"/g, '"');
+          
+    const ignorePatterns = [
+        `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
+    ];
+    
+    const shouldIgnore = (content: string) => {
+        return ignorePatterns.some((pattern) => content.includes(pattern));
+    }
+
+
     const diffElements = (
         el1: HTMLElement | null,
         el2: HTMLElement | null,
         currentHeadings: { [key: string]: string },
-        parentProcessed: boolean = false // Tracks if parent was already processed
+        parentProcessed: boolean = false // Track if parent was already processed
     ) => {
         const defaultHeadings = {
             section_main_heading1: currentHeadings.section_main_heading1 || '',
@@ -34,17 +46,6 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
             section_main_heading3: currentHeadings.section_main_heading3 || '',
             section_main_heading4: currentHeadings.section_main_heading4 || '',
         };
-
-        const normalizeQuotes = (str: string) => str.replace(/\\\\"/g, '\\"').replace(/\\"/g, '"');
-          
-        const ignorePatterns = [
-            `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
-        ];
-        
-        const shouldIgnore = (content: string) => {
-            return ignorePatterns.some((pattern) => content.includes(pattern));
-        }
-
     
         // Handle added content
         if (!el1 && el2) {
@@ -86,13 +87,13 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
                 const level = parseInt(el1.tagName.charAt(1));
                 currentHeadings[`section_main_heading${level}`] = el1.text.trim();
     
-                // Clear deeper headings (e.g., reset heading3 and heading4 when heading2 is updated)
+                // Clear deeper headings
                 for (let i = level + 1; i <= 4; i++) {
                     currentHeadings[`section_main_heading${i}`] = '';
                 }
             }
     
-            // Handle <table> as a whole
+            // Handle <table> as a single entity
             if (el1.tagName === 'table' && el2.tagName === 'table') {
                 if (content1 !== content2) {
                     structuredDiff.push({
@@ -124,7 +125,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
     
             const maxLength = Math.max(children1.length, children2.length);
             for (let i = 0; i < maxLength; i++) {
-                diffElements(children1[i] || null, children2[i] || null, currentHeadings);
+                diffElements(children1[i] || null, children2[i] || null, currentHeadings, false);
             }
         }
     };
