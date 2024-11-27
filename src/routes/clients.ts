@@ -262,7 +262,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       const response = await axios.get(document.docContentUrl);
       html2 = response.data;
       // Calculate the difference between the new document (html1) and existing document (html2)
-      differences = await getDiffWordsWithSpace(html1, html2)
+      differences = await getDiffWordsWithSpace(html2, html1)
     }
 
     const s3Url = await uploadToS3(file, clientName);
