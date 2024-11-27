@@ -307,7 +307,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     if(isNewDocument){
       await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName);
     }else{
-      await documentRepo.callSplitDataIntoChunks(teamspace?.teamspaceName, differences, document.id);
+      await documentRepo.callUpdateDocumentDifference(teamspace?.teamspaceName, differences, document.id);
     }
 
 
