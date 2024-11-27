@@ -12,7 +12,19 @@ export const generateToken = (user: any) => {
 export async function getStructuredHTMLDiff(html1: string, html2: string) {
     const structuredDiff: any[] = [];
 
-    // Parse HTML into a structured format
+    // Normalize double quotes for comparison
+    const normalizeQuotes = (str: string) => str.replace(/\\"/g, '"').replace(/\\\\"/g, '\\"');
+
+    // Patterns to ignore
+    const ignorePatterns = [
+        `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
+    ];
+
+    // Check if content should be ignored
+    const shouldIgnore = (content: string) => {
+        return ignorePatterns.some((pattern) => content.includes(pattern));
+    };
+
     const parseHTML = (html: string) => {
         try {
             return parse(html, { lowerCaseTagName: true });
@@ -22,34 +34,36 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
         }
     };
 
-    const normalizeQuotes = (str: string) => str.replace(/\\\\"/g, '\\"').replace(/\\"/g, '"');
-
-    const ignorePatterns = [
-        `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
-    ];
-
-    const shouldIgnore = (content: string) => {
-        return ignorePatterns.some((pattern) => content.includes(pattern));
-    };
-
     const extractSections = (root: HTMLElement) => {
         const sections: { [key: string]: string } = {};
-        let currentHeading = '';
+        const currentHeadings: { [key: string]: string } = {
+            section_main_heading1: '',
+            section_main_heading2: '',
+            section_main_heading3: '',
+            section_main_heading4: '',
+        };
 
         root.childNodes.forEach((node) => {
             if (node instanceof HTMLElement) {
                 // Detect headings
                 if (node.tagName.match(/^h[1-4]$/i)) {
-                    currentHeading = node.outerHTML.trim();
-                    sections[currentHeading] = '';
-                } else if (currentHeading) {
+                    const level = parseInt(node.tagName.charAt(1));
+                    currentHeadings[`section_main_heading${level}`] = node.outerHTML.trim();
+
+                    // Clear deeper headings
+                    for (let i = level + 1; i <= 4; i++) {
+                        currentHeadings[`section_main_heading${i}`] = '';
+                    }
+                } else {
                     // Append content to the current section
-                    sections[currentHeading] += node.outerHTML.trim();
+                    const headingKey = Object.values(currentHeadings).filter(Boolean).join(' > ');
+                    if (!sections[headingKey]) sections[headingKey] = '';
+                    sections[headingKey] += node.outerHTML.trim();
                 }
             }
         });
 
-        return sections;
+        return { sections, currentHeadings };
     };
 
     const compareSections = (sections1: { [key: string]: string }, sections2: { [key: string]: string }) => {
@@ -61,10 +75,21 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
             if (shouldIgnore(content1) && shouldIgnore(content2)) return;
 
+            const headingParts = heading.split(' > ').filter(Boolean);
+            const headingMap = headingParts.reduce((acc:any, part, index) => {
+                acc[`section_main_heading${index + 1}`] = part;
+                return acc;
+            }, {
+                section_main_heading1: '',
+                section_main_heading2: '',
+                section_main_heading3: '',
+                section_main_heading4: '',
+            });
+
             if (!content1 && content2) {
                 // New section added
                 structuredDiff.push({
-                    section_heading: heading,
+                    ...headingMap,
                     type: 'added',
                     original_content: '',
                     modified_content: content2,
@@ -72,7 +97,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
             } else if (content1 && !content2) {
                 // Section removed
                 structuredDiff.push({
-                    section_heading: heading,
+                    ...headingMap,
                     type: 'deleted',
                     original_content: content1,
                     modified_content: '',
@@ -80,7 +105,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
             } else if (content1 !== content2) {
                 // Section modified
                 structuredDiff.push({
-                    section_heading: heading,
+                    ...headingMap,
                     type: 'modified',
                     original_content: content1,
                     modified_content: content2,
@@ -97,8 +122,8 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
         return [];
     }
 
-    const sections1 = extractSections(tree1 as HTMLElement);
-    const sections2 = extractSections(tree2 as HTMLElement);
+    const { sections: sections1 } = extractSections(tree1 as HTMLElement);
+    const { sections: sections2 } = extractSections(tree2 as HTMLElement);
 
     compareSections(sections1, sections2);
 
