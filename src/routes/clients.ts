@@ -257,14 +257,20 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     const taskRepo = new TaskRepository();
     const pendingTasks = await taskRepo.getPendingTasks();
 
-    for (const task of pendingTasks) {
-      console.log('Polling for task:', task)
-      if(task.taskName == TASK_NAMES.SPLIT_DATA_INTO_CHUNKS && task.docId == document?.id && task.taskStatus === STATUS.COMPLETED){
-          isNewDocument = false
-        }else{
-          isNewDocument = true
-        }
+    if(pendingTasks.length == 0){
+      isNewDocument = true
+    }else{
+      for (const task of pendingTasks) {
+        console.log('Polling for task:', task)
+        if(task.taskName == TASK_NAMES.SPLIT_DATA_INTO_CHUNKS && task.docId == document?.id && task.taskStatus === STATUS.COMPLETED){
+            isNewDocument = false
+          }else{
+            isNewDocument = true
+          }
+      }
     }
+
+    
     if (document && document.docContentUrl) {
       // Use the existing document's S3 URL to fetch HTML content
       const response = await axios.get(document.docContentUrl);
