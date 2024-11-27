@@ -31,78 +31,70 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
   };
 
   const diffElements = (
-    el1: HTMLElement | null,
-    el2: HTMLElement | null,
-    currentHeadings: { [key: string]: string },
-    parentLevelHandled: boolean = false // New flag to track parent-level handling
-) => {
-    const defaultHeadings = {
-        section_main_heading_1: currentHeadings.section_main_heading_1 || '',
-        section_main_heading_2: currentHeadings.section_main_heading_2 || '',
-        section_main_heading_3: currentHeadings.section_main_heading_3 || '',
-        section_main_heading_4: currentHeadings.section_main_heading_4 || '',
-    };
+      el1: HTMLElement | null,
+      el2: HTMLElement | null,
+      currentHeadings: { [key: string]: string }
+  ) => {
+      const defaultHeadings = {
+          section_main_heading_1: currentHeadings.section_main_heading_1 || '',
+          section_main_heading_2: currentHeadings.section_main_heading_2 || '',
+          section_main_heading_3: currentHeadings.section_main_heading_3 || '',
+          section_main_heading_4: currentHeadings.section_main_heading_4 || '',
+      };
 
-    if (!el1 && el2) {
-        if (shouldIgnore(el2.outerHTML)) return;
-        structuredDiff.push({
-            ...defaultHeadings,
-            type: 'added',
-            original_content: '',
-            modified_content: el2.outerHTML.trim(),
-        });
-        return;
-    }
+      if (!el1 && el2) {
+          if (shouldIgnore(el2.outerHTML)) return;
+          structuredDiff.push({
+              ...defaultHeadings,
+              type: 'added',
+              original_content: '',
+              modified_content: el2.outerHTML.trim(),
+          });
+          return;
+      }
 
-    if (el1 && !el2) {
-        if (shouldIgnore(el1.outerHTML)) return;
-        structuredDiff.push({
-            ...defaultHeadings,
-            type: 'deleted',
-            original_content: el1.outerHTML.trim(),
-            modified_content: '',
-        });
-        return;
-    }
+      if (el1 && !el2) {
+          if (shouldIgnore(el1.outerHTML)) return;
+          structuredDiff.push({
+              ...defaultHeadings,
+              type: 'deleted',
+              original_content: el1.outerHTML.trim(),
+              modified_content: '',
+          });
+          return;
+      }
 
-    if (el1 && el2) {
-        if (shouldIgnore(el1.outerHTML) || shouldIgnore(el2.outerHTML)) return;
+      if (el1 && el2) {
+          if (shouldIgnore(el1.outerHTML) || shouldIgnore(el2.outerHTML)) return;
 
-        // Handle heading updates
-        if (el1.tagName && el1.tagName.match(/^h[1-4]$/i)) {
-            const level = parseInt(el1.tagName.charAt(1));
-            currentHeadings[`section_main_heading_${level}`] = el2.text.trim();
-            for (let i = level + 1; i <= 4; i++) {
-                currentHeadings[`section_main_heading_${i}`] = '';
-            }
-        }
+          if (el1.tagName && el1.tagName.match(/^h[1-4]$/i)) {
+              const level = parseInt(el1.tagName.charAt(1));
+              currentHeadings[`section_main_heading_${level}`] = el2.text.trim();
+              for (let i = level + 1; i <= 4; i++) {
+                  currentHeadings[`section_main_heading_${i}`] = '';
+              }
+          }
 
-        // Skip parent-level diff if children will handle differences
-        if (!parentLevelHandled && el1.innerHTML.trim() !== el2.innerHTML.trim()) {
-            const children1 = el1.childNodes.filter((node) => node instanceof HTMLElement) as HTMLElement[];
-            const children2 = el2.childNodes.filter((node) => node instanceof HTMLElement) as HTMLElement[];
+          if (el1.innerHTML.trim() !== el2.innerHTML.trim()) {
+              structuredDiff.push({
+                  ...defaultHeadings,
+                  type: 'modified',
+                  original_content: el1.outerHTML.trim(),
+                  modified_content: el2.outerHTML.trim(),
+              });
+          }
 
-            if (children1.length > 0 || children2.length > 0) {
-                const maxLength = Math.max(children1.length, children2.length);
-                for (let i = 0; i < maxLength; i++) {
-                    diffElements(children1[i] || null, children2[i] || null, currentHeadings, true);
-                }
-                return; // Avoid creating parent-level diff if children handle it
-            }
+          const children1 = el1.childNodes.filter((node) => node instanceof HTMLElement) as HTMLElement[];
+          const children2 = el2.childNodes.filter((node) => node instanceof HTMLElement) as HTMLElement[];
 
-            structuredDiff.push({
-                ...defaultHeadings,
-                type: 'modified',
-                original_content: el1.outerHTML.trim(),
-                modified_content: el2.outerHTML.trim(),
-            });
-        } else if (el1.innerHTML.trim() === el2.innerHTML.trim()) {
-            return; // No meaningful differences, skip this element
-        }
-    } else {
-        console.warn('Unexpected state: el1 or el2 is invalid:', { el1, el2 });
-    }
-};
+          const maxLength = Math.max(children1.length, children2.length);
+          for (let i = 0; i < maxLength; i++) {
+              diffElements(children1[i] || null, children2[i] || null, currentHeadings);
+          }
+      } else {
+          console.warn('Unexpected state: el1 or el2 is invalid:', { el1, el2 });
+      }
+  };
 
   const tree1 = parseHTML(html1);
   const tree2 = parseHTML(html2);
@@ -113,6 +105,6 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
   }
 
   diffElements(tree1 as HTMLElement, tree2 as HTMLElement, headingLevels);
-
+  structuredDiff.shift()
   return structuredDiff;
 }
