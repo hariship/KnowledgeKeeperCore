@@ -231,12 +231,9 @@ export class TaskRepository {
     
                 console.log(`Task ${task.taskId} status: ${reponseTaskStatus}`);
                 console.log(response.data.result)
-                console.log(task.taskStatus)
-                console.log(task.taskName)
-                console.log(reponseTaskStatus)
-                console.log(task.taskStatus === STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED)
-                console.log(reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.SPLIT_DATA_INTO_CHUNKS)
-                console.log(task.taskStatus === STATUS.PENDING && taskName === TASK_NAMES.SPLIT_DATA_INTO_CHUNKS)
+                console.log('taskStatus',task.taskStatus)
+                console.log('responseTaskName',task.taskName)
+                console.log('responseStatus',reponseTaskStatus)
                 if (task.taskStatus === STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.SPLIT_DATA_INTO_CHUNKS) {
                     // Update task status in the DB
                     console.log('coming here')
