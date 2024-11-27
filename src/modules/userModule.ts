@@ -74,7 +74,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
             if (shouldIgnore(content1) && shouldIgnore(content2)) return;
 
             const headingParts = heading.split(' > ').filter(Boolean); // Split and clean heading hierarchy
-            console.log(headingParts)
+            console.log('--------',headingParts)
             const headingMap:any = {
                 section_main_heading1: headingParts[0] || '',
                 section_main_heading2: headingParts[1] || '',
