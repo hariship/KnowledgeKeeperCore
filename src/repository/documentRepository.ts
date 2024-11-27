@@ -313,15 +313,15 @@ export class DocumentRepository {
             const recentTask = await taskRepo.getMostRecentTaskByName(taskName);
     
             // If the recent task exists, check if the createdAt is older than 1 hour
-            if (recentTask) {
-                const oneHourAgo = new Date();
-                oneHourAgo.setHours(oneHourAgo.getMinutes() - 5);
+            // if (recentTask) {
+            //     const oneHourAgo = new Date();
+            //     oneHourAgo.setHours(oneHourAgo.getMinutes() - 5);
     
-                if (new Date(recentTask.createdAt) > oneHourAgo) {
-                    console.log('Skipping API call as the last task was created less than 1 hour ago.');
-                    return;
-                }
-            }
+            //     if (new Date(recentTask.createdAt) > oneHourAgo) {
+            //         console.log('Skipping API call as the last task was created less than 1 hour ago.');
+            //         return;
+            //     }
+            // }
             const teamspaceRepo = new TeamspaceRepository();
             const teamspace = await teamspaceRepo.getTeamspaceByName(teamspaceName)
             let documents:any = []
