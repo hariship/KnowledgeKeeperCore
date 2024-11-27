@@ -25,13 +25,17 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
     const diffElements = (
         el1: HTMLElement | null,
         el2: HTMLElement | null,
-        currentHeadings: { [key: string]: string }
+        currentHeadings: { [key: string]: string },
+        parentProcessed: boolean = false // Tracks if parent was already processed
     ) => {
-        const headingKey = Object.entries(currentHeadings)
-            .filter(([_, value]) => value)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join(' > ');
+        const defaultHeadings = {
+            section_main_heading1: currentHeadings.section_main_heading1 || '',
+            section_main_heading2: currentHeadings.section_main_heading2 || '',
+            section_main_heading3: currentHeadings.section_main_heading3 || '',
+            section_main_heading4: currentHeadings.section_main_heading4 || '',
+        };
 
+        const normalizeQuotes = (str: string) => str.replace(/\\\\"/g, '\\"').replace(/\\"/g, '"');
           
         const ignorePatterns = [
             `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
@@ -39,57 +43,85 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
         
         const shouldIgnore = (content: string) => {
             return ignorePatterns.some((pattern) => content.includes(pattern));
-        };
-        
-        const normalizeQuotes = (str: string) => str.replace(/\\\\"/g, '\\"').replace(/\\"/g, '"');
-          
-
-        if (!sections[headingKey]) {
-            sections[headingKey] = { type: 'modified', original: [], modified: [] };
         }
 
+    
+        // Handle added content
         if (!el1 && el2) {
             const content = normalizeQuotes(el2.outerHTML.trim());
             if (!shouldIgnore(content)) {
-                sections[headingKey].type = 'added';
-                sections[headingKey].modified.push(content);
+                structuredDiff.push({
+                    ...defaultHeadings,
+                    type: 'added',
+                    original_content: '',
+                    modified_content: content,
+                });
             }
             return;
         }
-
+    
+        // Handle deleted content
         if (el1 && !el2) {
             const content = normalizeQuotes(el1.outerHTML.trim());
             if (!shouldIgnore(content)) {
-                sections[headingKey].type = 'deleted';
-                sections[headingKey].original.push(content);
+                structuredDiff.push({
+                    ...defaultHeadings,
+                    type: 'deleted',
+                    original_content: content,
+                    modified_content: '',
+                });
             }
             return;
         }
-
+    
+        // Handle modified content
         if (el1 && el2) {
             const content1 = normalizeQuotes(el1.outerHTML.trim());
             const content2 = normalizeQuotes(el2.outerHTML.trim());
-
+    
             if (shouldIgnore(content1) || shouldIgnore(content2)) return;
-
+    
+            // Update current headings if the element is a heading
             if (el1.tagName && el1.tagName.match(/^h[1-4]$/i)) {
                 const level = parseInt(el1.tagName.charAt(1));
                 currentHeadings[`section_main_heading${level}`] = el1.text.trim();
-
-                // Clear deeper headings
+    
+                // Clear deeper headings (e.g., reset heading3 and heading4 when heading2 is updated)
                 for (let i = level + 1; i <= 4; i++) {
                     currentHeadings[`section_main_heading${i}`] = '';
                 }
             }
-
-            if (el1.innerHTML.trim() !== el2.innerHTML.trim()) {
-                sections[headingKey].original.push(content1);
-                sections[headingKey].modified.push(content2);
+    
+            // Handle <table> as a whole
+            if (el1.tagName === 'table' && el2.tagName === 'table') {
+                if (content1 !== content2) {
+                    structuredDiff.push({
+                        ...defaultHeadings,
+                        type: 'modified',
+                        original_content: content1,
+                        modified_content: content2,
+                    });
+                }
+                return; // Skip processing children of <table>
             }
-
+    
+            // Skip child elements if parent is already processed
+            if (parentProcessed) return;
+    
+            // If the element itself differs, add it to the diff
+            if (el1.innerHTML.trim() !== el2.innerHTML.trim()) {
+                structuredDiff.push({
+                    ...defaultHeadings,
+                    type: 'modified',
+                    original_content: content1,
+                    modified_content: content2,
+                });
+            }
+    
+            // Process child elements
             const children1 = el1.childNodes.filter((node) => node instanceof HTMLElement) as HTMLElement[];
             const children2 = el2.childNodes.filter((node) => node instanceof HTMLElement) as HTMLElement[];
-
+    
             const maxLength = Math.max(children1.length, children2.length);
             for (let i = 0; i < maxLength; i++) {
                 diffElements(children1[i] || null, children2[i] || null, currentHeadings);
