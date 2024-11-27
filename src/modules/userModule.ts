@@ -15,8 +15,9 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
   const headingLevels: { [key: string]: string } = {};
   let currentOriginalTable = '';
   let currentModifiedTable = '';
-  let insideTable = false;
-
+  let insideTable = false; 
+  console.log(html1)
+  console.log(html2)
   console.log("differences",differences)
 
   // Normalize text to minimize noise from whitespace and formatting differences
