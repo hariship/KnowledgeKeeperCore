@@ -45,7 +45,7 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
 
         root.childNodes.forEach((node) => {
             if (node instanceof HTMLElement) {
-                // Detect headings
+                // Detect headings and assign to correct level
                 if (node.tagName.match(/^h[1-4]$/i)) {
                     const level = parseInt(node.tagName.charAt(1));
                     currentHeadings[`section_main_heading${level}`] = node.outerHTML.trim();
