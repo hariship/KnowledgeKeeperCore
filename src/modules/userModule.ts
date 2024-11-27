@@ -13,14 +13,15 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
   const differences = diffWordsWithSpace(html1, html2);
   const structuredDiff: any[] = [];
   const headingLevels: { [key: string]: string } = {};
+  const prevHeadingLevels: { [key: string]: string } = {}; // Store previous heading levels
   let currentOriginalTable = '';
   let currentModifiedTable = '';
   let insideTable = false;
 
-  // Normalize text to minimize noise from whitespace and formatting differences
+  // Helper: Normalize text to minimize noise from whitespace and formatting differences
   const normalizeWhitespace = (str: string) => str.replace(/\s+/g, ' ').trim();
 
-  // Parse HTML to clean and validate structure
+  // Helper: Parse and validate HTML structure
   const cleanHTML = (html: string) => {
       const root = parse(html, {
           lowerCaseTagName: true, // Convert all tags to lowercase
@@ -28,6 +29,17 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
           blockTextElements: { script: false, style: false }, // Handle script and style tags
       });
       return root.toString();
+  };
+
+  // Helper: Fix unclosed tags
+  const validateHTML = (content: string) => {
+      try {
+          const root = parse(content, { lowerCaseTagName: true });
+          return root.toString(); // If valid, return cleaned content
+      } catch (error) {
+          console.warn('Invalid HTML found:', content);
+          return content.replace(/<[^>]*$/, ''); // Remove unclosed tag fragments
+      }
   };
 
   // Ensure input HTML strings are clean and well-structured
@@ -45,11 +57,19 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
       if (headingMatch) {
           const headingTag = headingMatch[1];
           const headingText = normalizeWhitespace(headingMatch[2]);
-          headingLevels[`section_main_heading_${headingTag.charAt(1)}`] = headingText;
+          const level = parseInt(headingTag.charAt(1));
+
+          // Update previous heading levels
+          for (let i = 1; i <= 4; i++) {
+              prevHeadingLevels[`prev_section_main_heading${i}`] = headingLevels[`section_main_heading_${i}`] || "";
+          }
+
+          // Update current heading levels
+          headingLevels[`section_main_heading_${level}`] = headingText;
 
           // Clear deeper heading levels when encountering a higher-level heading
-          for (let i = parseInt(headingTag.charAt(1)) + 1; i <= 4; i++) {
-              delete headingLevels[`section_main_heading_${i}`];
+          for (let i = level + 1; i <= 4; i++) {
+              headingLevels[`section_main_heading_${i}`] = "";
           }
       }
       // Handle tables
@@ -73,9 +93,10 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
               insideTable = false;
               structuredDiff.push({
                   ...headingLevels,
-                  type: currentOriginalTable && currentModifiedTable ? 'modified' : currentOriginalTable ? 'removed' : 'added',
-                  original_content: normalizeWhitespace(currentOriginalTable),
-                  modified_content: normalizeWhitespace(currentModifiedTable),
+                  ...prevHeadingLevels,
+                  type: currentOriginalTable && currentModifiedTable ? 'modified' : currentOriginalTable ? 'deleted' : 'added',
+                  original_content: validateHTML(currentOriginalTable),
+                  modified_content: validateHTML(currentModifiedTable),
               });
 
               currentOriginalTable = '';
@@ -86,22 +107,22 @@ export async function getDiffWordsWithSpace(html1: string, html2: string) {
       else if ((part.added || part.removed) && /<img/i.test(part.value)) {
           structuredDiff.push({
               ...headingLevels,
-              type: part.added ? 'added' : 'removed',
-              original_content: part.removed ? normalizeWhitespace(part.value) : '',
-              modified_content: part.added ? normalizeWhitespace(part.value) : '',
+              ...prevHeadingLevels,
+              type: part.added ? 'added' : 'deleted',
+              original_content: part.removed ? validateHTML(part.value) : '',
+              modified_content: part.added ? validateHTML(part.value) : '',
           });
       }
       // Handle paragraphs, plain text, and other differences
       else if (part.added || part.removed) {
-          // Validate if the part contains broken tags
-          const isValidHTML = part.value.startsWith('<') && part.value.endsWith('>');
-          const content = isValidHTML ? part.value : normalizeWhitespace(part.value);
+          const contentType = part.added ? 'added' : 'deleted';
 
           structuredDiff.push({
               ...headingLevels,
-              type: part.added ? 'added' : 'removed',
-              original_content: part.removed ? content : '',
-              modified_content: part.added ? content : '',
+              ...prevHeadingLevels,
+              type: contentType,
+              original_content: part.removed ? validateHTML(part.value) : '',
+              modified_content: part.added ? validateHTML(part.value) : '',
           });
       }
   });
