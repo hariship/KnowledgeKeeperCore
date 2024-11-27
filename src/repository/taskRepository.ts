@@ -235,6 +235,7 @@ export class TaskRepository {
     
                     // Update documents with parsed_document and db_path
                     const documentRepo = new DocumentRepository();
+                    console.log(response.data)
                     await documentRepo.updateDocumentsWithParsedData(parsed_document, db_path);
     
                     console.log(`Documents updated with parsed data for task: ${task.taskId}`);
