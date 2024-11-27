@@ -165,6 +165,7 @@ export class ByteRepository {
                 await taskRepo.createTask(finalResponse.task_id, STATUS.PENDING, taskName, dataId, byteSaved.id)
               }
             } catch (error: any) {
+              console.log(JSON.stringify(error))
               console.error(`Error for Teamspace ${teamspace.teamspaceName}:`, error.response ? error.response.data : error.message);
             }
           }
