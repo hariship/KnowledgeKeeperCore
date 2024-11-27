@@ -297,9 +297,11 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
           'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
       }
     });
+  
     if(response.data){
       isNewDocument = false
     }else{
+      console.log(response.data.detail)
       isNewDocument = true
     }
 
