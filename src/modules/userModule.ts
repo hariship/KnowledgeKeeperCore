@@ -11,8 +11,8 @@ export const generateToken = (user: any) => {
 
 export async function getStructuredHTMLDiff(html1: string, html2: string) {
     const structuredDiff: any[] = [];
-    const sections: { [key: string]: { type: string; original: string[]; modified: string[] } } = {};
 
+    // Parse HTML into a structured format
     const parseHTML = (html: string) => {
         try {
             return parse(html, { lowerCaseTagName: true });
@@ -22,146 +22,85 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
         }
     };
 
-
     const normalizeQuotes = (str: string) => str.replace(/\\\\"/g, '\\"').replace(/\\"/g, '"');
-          
+
     const ignorePatterns = [
         `<p data-f-id=\\"pbf\\" style=\\"text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;\\">Powered by <a href=\\"https://www.froala.com/wysiwyg-editor?pb=1\\" title=\\"Froala Editor\\">Froala Editor</a></p>`
     ];
-    
+
     const shouldIgnore = (content: string) => {
         return ignorePatterns.some((pattern) => content.includes(pattern));
-    }
+    };
 
+    const extractSections = (root: HTMLElement) => {
+        const sections: { [key: string]: string } = {};
+        let currentHeading = '';
 
-    const diffElements = (
-        el1: HTMLElement | null,
-        el2: HTMLElement | null,
-        currentHeadings: { [key: string]: string },
-        parentProcessed: boolean = false // Tracks if parent was already processed
-    ) => {
-        const defaultHeadings = {
-            section_main_heading1: currentHeadings.section_main_heading1 || '',
-            section_main_heading2: currentHeadings.section_main_heading2 || '',
-            section_main_heading3: currentHeadings.section_main_heading3 || '',
-            section_main_heading4: currentHeadings.section_main_heading4 || '',
-        };
-    
-        // Handle added content
-        if (!el1 && el2) {
-            const content = normalizeQuotes(el2.outerHTML.trim());
-            if (!shouldIgnore(content)) {
+        root.childNodes.forEach((node) => {
+            if (node instanceof HTMLElement) {
+                // Detect headings
+                if (node.tagName.match(/^h[1-4]$/i)) {
+                    currentHeading = node.outerHTML.trim();
+                    sections[currentHeading] = '';
+                } else if (currentHeading) {
+                    // Append content to the current section
+                    sections[currentHeading] += node.outerHTML.trim();
+                }
+            }
+        });
+
+        return sections;
+    };
+
+    const compareSections = (sections1: { [key: string]: string }, sections2: { [key: string]: string }) => {
+        const allHeadings = new Set([...Object.keys(sections1), ...Object.keys(sections2)]);
+
+        allHeadings.forEach((heading) => {
+            const content1 = normalizeQuotes(sections1[heading] || '');
+            const content2 = normalizeQuotes(sections2[heading] || '');
+
+            if (shouldIgnore(content1) && shouldIgnore(content2)) return;
+
+            if (!content1 && content2) {
+                // New section added
                 structuredDiff.push({
-                    ...defaultHeadings,
+                    section_heading: heading,
                     type: 'added',
                     original_content: '',
-                    modified_content: content,
+                    modified_content: content2,
                 });
-            }
-            return;
-        }
-    
-        // Handle deleted content
-        if (el1 && !el2) {
-            const content = normalizeQuotes(el1.outerHTML.trim());
-            if (!shouldIgnore(content)) {
+            } else if (content1 && !content2) {
+                // Section removed
                 structuredDiff.push({
-                    ...defaultHeadings,
+                    section_heading: heading,
                     type: 'deleted',
-                    original_content: content,
+                    original_content: content1,
                     modified_content: '',
                 });
-            }
-            return;
-        }
-    
-        // Handle modified content
-        if (el1 && el2) {
-            const content1 = normalizeQuotes(el1.outerHTML.trim());
-            const content2 = normalizeQuotes(el2.outerHTML.trim());
-    
-            if (shouldIgnore(content1) || shouldIgnore(content2)) return;
-    
-            // Update current headings if the element is a heading
-            if (el1.tagName && el1.tagName.match(/^h[1-4]$/i)) {
-                const level = parseInt(el1.tagName.charAt(1));
-                currentHeadings[`section_main_heading${level}`] = el1.text.trim();
-    
-                // Clear deeper headings (e.g., reset heading3 and heading4 when heading2 is updated)
-                for (let i = level + 1; i <= 4; i++) {
-                    currentHeadings[`section_main_heading${i}`] = '';
-                }
-            }
-    
-            // Handle <table> as a single entity
-            if (el1.tagName === 'table' && el2.tagName === 'table') {
-                if (content1 !== content2) {
-                    structuredDiff.push({
-                        ...defaultHeadings,
-                        type: 'modified',
-                        original_content: content1,
-                        modified_content: content2,
-                    });
-                }
-                return; // Skip processing children of <table>
-            }
-    
-            // Skip child elements if parent is already processed
-            if (parentProcessed) return;
-    
-            // If the element itself differs, add it to the diff
-            if (el1.innerHTML.trim() !== el2.innerHTML.trim()) {
+            } else if (content1 !== content2) {
+                // Section modified
                 structuredDiff.push({
-                    ...defaultHeadings,
+                    section_heading: heading,
                     type: 'modified',
                     original_content: content1,
                     modified_content: content2,
                 });
             }
-    
-            // Process child elements
-            const children1 = el1.childNodes.filter((node) => node instanceof HTMLElement) as HTMLElement[];
-            const children2 = el2.childNodes.filter((node) => node instanceof HTMLElement) as HTMLElement[];
-    
-            const maxLength = Math.max(children1.length, children2.length);
-            for (let i = 0; i < maxLength; i++) {
-                diffElements(children1[i] || null, children2[i] || null, currentHeadings, false);
-            }
-        }
-    };
-    
-    // Consolidate the structured diff to include only section-level entries
-    const consolidateDiffBySection = (structuredDiff: any[]) => {
-        const sectionMap: { [key: string]: any } = {};
-    
-        structuredDiff.forEach((entry) => {
-            const sectionKey = `${entry.section_main_heading1}-${entry.section_main_heading2}-${entry.section_main_heading3}-${entry.section_main_heading4}`;
-    
-            if (!sectionMap[sectionKey]) {
-                sectionMap[sectionKey] = {
-                    section_main_heading1: entry.section_main_heading1,
-                    section_main_heading2: entry.section_main_heading2,
-                    section_main_heading3: entry.section_main_heading3,
-                    section_main_heading4: entry.section_main_heading4,
-                    type: 'modified',
-                    original_content: [],
-                    modified_content: [],
-                };
-            }
-    
-            sectionMap[sectionKey].original_content.push(entry.original_content);
-            sectionMap[sectionKey].modified_content.push(entry.modified_content);
         });
-    
-        return Object.values(sectionMap).map((section) => ({
-            ...section,
-            original_content: section.original_content.join('\n'),
-            modified_content: section.modified_content.join('\n'),
-        }));
     };
-    
-    // After generating the diff, call this function
-    const consolidatedDiff = consolidateDiffBySection(structuredDiff);
 
-    return consolidatedDiff;
+    const tree1 = parseHTML(html1);
+    const tree2 = parseHTML(html2);
+
+    if (!tree1 || !tree2) {
+        console.error('Failed to parse one or both HTML inputs.');
+        return [];
+    }
+
+    const sections1 = extractSections(tree1 as HTMLElement);
+    const sections2 = extractSections(tree2 as HTMLElement);
+
+    compareSections(sections1, sections2);
+
+    return structuredDiff;
 }
