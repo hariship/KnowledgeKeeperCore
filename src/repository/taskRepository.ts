@@ -66,13 +66,16 @@ export class TaskRepository {
           });
     }
 
-    public async createTask(taskId: string, taskStatus: string, taskName: string, dataId?: string, byteId?: number){
+    public async createTask(taskId: string, taskStatus: string, taskName: string, dataId?: string, byteId?: number, docId?:number){
         const taskRequest: Partial<Task> = {taskId,taskStatus,taskName}
         if(dataId){
             taskRequest.dataId = dataId
         }
         if(byteId){
             taskRequest.byteId = byteId
+        }
+        if(docId){
+            taskRequest.docId = docId
         }
         const task = await this.taskRepo.create(taskRequest)
         return this.taskRepo.save(task)

@@ -292,7 +292,7 @@ export class DocumentRepository {
 
                 // Update task table with the task_id and status (PENDING)
                 const dataId = uuidv4();
-                await taskRepo.createTask(task_id, STATUS.PENDING, taskName, dataId);
+                await taskRepo.createTask(task_id, STATUS.PENDING, taskName, dataId, docId);
             } else {
                 console.log('No new or modified documents found.');
             }
@@ -362,7 +362,7 @@ export class DocumentRepository {
                 const taskRepo = new TaskRepository();
                 const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
                 const dataId = uuidv4();
-                await taskRepo.createTask(task_id, STATUS.PENDING, taskName, dataId);
+                await taskRepo.createTask(task_id, STATUS.PENDING, taskName, dataId,docId);
             } else {
                 console.log('No new or modified documents found.');
             }
