@@ -21,7 +21,7 @@ import { Folder } from '../entities/folder';
 import { TaskRepository } from '../repository/taskRepository';
 import { UserTeamspaceRepository } from '../repository/userTeamspaceRepository';
 import { UserTeamspace } from '../entities/user_teamspace';
-import { getDiffWordsWithSpace } from '../modules/userModule';
+import { getStructuredHTMLDiff } from '../modules/userModule';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -262,7 +262,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       const response = await axios.get(document.docContentUrl);
       html2 = response.data;
       // Calculate the difference between the new document (html1) and existing document (html2)
-      differences = await getDiffWordsWithSpace(html2, html1)
+      differences = await getStructuredHTMLDiff(html2, html1)
     }
 
     const s3Url = await uploadToS3(file, clientName);
