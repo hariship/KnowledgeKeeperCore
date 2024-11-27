@@ -226,6 +226,7 @@ export class TaskRepository {
     
                 const reponseTaskStatus = response.data.status;
                 const taskName = response.data.task_name;
+                console.log(response.data.task_name)
                 const result = response.data.result;
     
                 console.log(`Task ${task.taskId} status: ${reponseTaskStatus}`);
