@@ -251,23 +251,24 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     // Fetch existing document (if any) from S3 to compare with the new one
     let html2 = '';
     let document = docId ? await documentRepo.findDocumentById(parseInt(docId)) : await documentRepo.findDocumentByDocUrl(s3Url);
-    let isNewDocument = false;
-
+    let isNewDocument = true;
+    const data_id = uuidv4();
+    const dataExistsRequest  = {
+      data_id,
+      teamspaceName,
+      document_id : `${document?.id}`
+    }
     // Check for pending task status and mark flag accordingly
-    const taskRepo = new TaskRepository();
-    const pendingTasks = await taskRepo.getPendingTasks();
-
-    if(pendingTasks.length == 0){
-      isNewDocument = true
-    }else{
-      for (const task of pendingTasks) {
-        console.log('Polling for task:', task)
-        if(task.taskName == TASK_NAMES.SPLIT_DATA_INTO_CHUNKS && task.docId == document?.id && task.taskStatus === STATUS.COMPLETED){
-            isNewDocument = false
-          }else{
-            isNewDocument = true
-          }
+    const response = await axios.post('http://18.116.66.245:9100/v2/data_exists', dataExistsRequest, {
+      headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
       }
+    });
+    if(response.data){
+      isNewDocument = false
+    }else{
+      isNewDocument = true
     }
 
     
