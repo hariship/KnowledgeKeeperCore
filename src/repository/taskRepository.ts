@@ -68,6 +68,7 @@ export class TaskRepository {
 
     public async createTask(taskId: string, taskStatus: string, taskName: string, dataId?: string, byteId?: number, docId?:number){
         const taskRequest: Partial<Task> = {taskId,taskStatus,taskName}
+        console.log("documentId", docId)
         if(dataId){
             taskRequest.dataId = dataId
         }
