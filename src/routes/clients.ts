@@ -21,10 +21,7 @@ import { Folder } from '../entities/folder';
 import { TaskRepository } from '../repository/taskRepository';
 import { UserTeamspaceRepository } from '../repository/userTeamspaceRepository';
 import { UserTeamspace } from '../entities/user_teamspace';
-import { verify } from 'crypto';
-import { Client } from '../entities/client';
 import { getDiffWordsWithSpace } from '../modules/userModule';
-import { STATUS, TASK_NAMES } from '../utils/constants';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -245,26 +242,31 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       });
     }
 
+
+    // Calculate the difference between the new document (html1) and existing document (html2)
+    const html1 = file.buffer.toString('utf-8');
+    console.log(html1)
+    // const differences = await getDiffWordsWithSpace(html1, html2)
     // Upload new file to S3
-    const s3Url = await uploadToS3(file, clientName);
-    console.log(s3Url)
     // Fetch existing document (if any) from S3 to compare with the new one
     let html2 = '';
-    let document = docId ? await documentRepo.findDocumentById(parseInt(docId)) : await documentRepo.findDocumentByDocUrl(s3Url);
+    let document:any;
+    if(docId){
+      document = await documentRepo.findDocumentById(parseInt(docId));
+    }
     let isNewDocument = true;
-  
-
+    let differences = []
     
     if (document && document.docContentUrl) {
       // Use the existing document's S3 URL to fetch HTML content
       const response = await axios.get(document.docContentUrl);
       html2 = response.data;
+      // Calculate the difference between the new document (html1) and existing document (html2)
+      differences = await getDiffWordsWithSpace(html1, html2)
     }
 
-    // Calculate the difference between the new document (html1) and existing document (html2)
-    const html1 = file.buffer.toString('utf-8');
-    console.log(html1)
-    const differences = await getDiffWordsWithSpace(html1, html2)
+    const s3Url = await uploadToS3(file, clientName);
+    console.log(s3Url)
 
     const teamspace = folder ? folder.teamspace : document?.teamspace;
 
