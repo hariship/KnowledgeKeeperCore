@@ -252,21 +252,21 @@ export class DocumentRepository {
     public async callUpdateDocumentDifference(teamspaceName: string, differences?: object, docId?: number) {
         try {
             const taskRepo = new TaskRepository();
-            const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
+            const taskName = TASK_NAMES.UPDATE_DATA_INTO_CHUNKS;
     
             // Fetch the most recent task for SPLIT_DATA_INTO_CHUNKS
             const recentTask = await taskRepo.getMostRecentTaskByName(taskName);
     
             // If the recent task exists, check if the createdAt is older than 1 hour
-            if (recentTask) {
-                const oneHourAgo = new Date();
-                oneHourAgo.setHours(oneHourAgo.getMinutes() - 5);
+            // if (recentTask) {
+            //     const oneHourAgo = new Date();
+            //     oneHourAgo.setHours(oneHourAgo.getMinutes() - 5);
     
-                if (new Date(recentTask.createdAt) > oneHourAgo) {
-                    console.log('Skipping API call as the last task was created less than 1 hour ago.');
-                    return;
-                }
-            }
+            //     if (new Date(recentTask.createdAt) > oneHourAgo) {
+            //         console.log('Skipping API call as the last task was created less than 1 hour ago.');
+            //         return;
+            //     }
+            // }
             const teamspaceRepo = new TeamspaceRepository();
             const teamspace = await teamspaceRepo.getTeamspaceByName(teamspaceName)
             let documents:any = []
@@ -283,7 +283,7 @@ export class DocumentRepository {
                 console.log('s3DocumentPaths',s3DocumentPaths)
                 console.log(differences)
 
-                const splitDataIntoChunksRequest = {
+                const updateDataIntoChunksRequest = {
                     data_id: uuidv4(),
                     s3_document_path: s3DocumentPaths,
                     s3_bucket: "knowledge-keeper-results",
@@ -295,7 +295,7 @@ export class DocumentRepository {
                 };
 
                 // Call the split_data_into_chunks API
-                const response = await axios.post('http://18.116.66.245:9100/v2/update_data_into_chunks', splitDataIntoChunksRequest, {
+                const response = await axios.post('http://18.116.66.245:9100/v2/update_data_into_chunks', updateDataIntoChunksRequest, {
                     headers: {
                         'Content-Type': 'application/json',
                         'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
@@ -308,7 +308,7 @@ export class DocumentRepository {
 
                 // Update task table with the task_id and status (PENDING)
                 const taskRepo = new TaskRepository();
-                const taskName = TASK_NAMES.SPLIT_DATA_INTO_CHUNKS;
+                const taskName = TASK_NAMES.UPDATE_DATA_INTO_CHUNKS;
                 const dataId = uuidv4();
                 await taskRepo.createTask(task_id, STATUS.PENDING, taskName, dataId);
             } else {

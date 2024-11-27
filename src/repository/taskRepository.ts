@@ -226,7 +226,6 @@ export class TaskRepository {
                 const result = response.data.result;
     
                 console.log(`Task ${task.taskId} status: ${reponseTaskStatus}`);
-    
                 if (task.taskStatus == STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.SPLIT_DATA_INTO_CHUNKS) {
                     // Update task status in the DB
                     await this.updateTaskStatus(task.taskId, reponseTaskStatus);
@@ -239,6 +238,11 @@ export class TaskRepository {
                     await documentRepo.updateDocumentsWithParsedData(parsed_document, db_path);
     
                     console.log(`Documents updated with parsed data for task: ${task.taskId}`);
+                }else if (task.taskStatus == STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.UPDATE_DATA_INTO_CHUNKS) {
+                    // Update task status in the DB
+                    await this.updateTaskStatus(task.taskId, reponseTaskStatus);
+                    // Once the task is completed, update the documents
+                    console.log(`Updated with parsed data for task: ${task.taskId}`);
                 }else if(task.taskStatus == STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.RECOMMEND_BYTES) {
                     // Update task status in the DB
                     await this.updateTaskStatus(task.taskId, reponseTaskStatus);
