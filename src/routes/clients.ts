@@ -250,18 +250,19 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
     // Fetch existing document (if any) from S3 to compare with the new one
     let html2 = '';
     let document = docId ? await documentRepo.findDocumentById(parseInt(docId)) : await documentRepo.findDocumentByDocUrl(s3Url);
+    let isNewDocument = false;
 
     if (document && document.docContentUrl) {
       // Use the existing document's S3 URL to fetch HTML content
       const response = await axios.get(document.docContentUrl);
       html2 = response.data;
+      isNewDocument = false;
     }
 
 
     // Calculate the difference between the new document (html1) and existing document (html2)
     const html1 = file.buffer.toString('utf-8');
     const differences = getDiffWordsWithSpace(html1, html2)
-    let isNewDocument = false;
 
     const teamspace = folder ? folder.teamspace : document?.teamspace;
 
