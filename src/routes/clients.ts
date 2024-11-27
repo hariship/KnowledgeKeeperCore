@@ -262,7 +262,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
 
     // Calculate the difference between the new document (html1) and existing document (html2)
     const html1 = file.buffer.toString('utf-8');
-    const differences = getDiffWordsWithSpace(html1, html2)
+    const differences = await getDiffWordsWithSpace(html1, html2)
 
     const teamspace = folder ? folder.teamspace : document?.teamspace;
 
