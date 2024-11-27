@@ -231,6 +231,7 @@ export class TaskRepository {
                 console.log(`Task ${task.taskId} status: ${reponseTaskStatus}`);
                 console.log(response.data.result)
                 console.log(task.taskStatus)
+                console.log(task.taskName)
                 if (task.taskStatus == STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.SPLIT_DATA_INTO_CHUNKS) {
                     // Update task status in the DB
                     await this.updateTaskStatus(task.taskId, reponseTaskStatus);
