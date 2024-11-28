@@ -2205,6 +2205,7 @@ router.delete('/:clientId/documents/:documentId', async (req, res) => {
       console.log(response.data)
       res.status(200).json({ message: 'Document deleted successfully' });
   } catch (error) {
+    console.log(error)
       res.status(500).json({ error: 'Could not delete document' });
   }
 });
