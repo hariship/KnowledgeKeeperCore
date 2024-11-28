@@ -32,7 +32,32 @@ export async function getStructuredHTMLDiff(html1: string, html2: string) {
     };
 
     const extractTextContent = (node: HTMLElement) => {
-        return node.textContent.trim();
+        // Allowed tags
+        const allowedTags = ['b', 'i', 'strikethrough'];
+    
+        const traverseAndClean = (child: any): string => {
+            if (child instanceof HTMLElement) {
+                // If the tag is allowed, rebuild the tag with its content
+                if (allowedTags.includes(child.tagName.toLowerCase())) {
+                    const innerHTML = child.childNodes
+                        .map((grandChild) =>
+                            grandChild instanceof HTMLElement
+                                ? traverseAndClean(grandChild)
+                                : grandChild.rawText
+                        )
+                        .join('');
+                    return `<${child.tagName.toLowerCase()}>${innerHTML}</${child.tagName.toLowerCase()}>`;
+                } else {
+                    // Replace the child node with its text content if tag is not allowed
+                    return child.textContent || '';
+                }
+            }
+            // For non-HTMLElement nodes, return raw text
+            return child.rawText || '';
+        };
+    
+        // Process the node and return its cleaned HTML
+        return traverseAndClean(node).trim();
     };
 
     const extractSections = (root: HTMLElement) => {
