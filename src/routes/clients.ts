@@ -2196,7 +2196,7 @@ router.delete('/:clientId/documents/:documentId', async (req, res) => {
           s3_document_path: document.s3SentencedDocumentPath,
           document_ids: [document?.id]
       }
-      const response = await axios.post('http://18.116.66.245:9100/v2/delete_data_from_dunks', deleteDataFromChunksRequest, {
+      const response = await axios.post('http://18.116.66.245:9100/v2/delete_data_from_chunks', deleteDataFromChunksRequest, {
         headers: {
             'Content-Type': 'application/json',
             'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
