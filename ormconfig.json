@@ -4,7 +4,7 @@
     "port": 5432,
     "username": "admin",
     "password": "admin",
-    "database": "knowledgekeeper_develop",
+    "database": "knowledgekeeper",
     "synchronize": false,
     "logging": true,
     "entities": [
