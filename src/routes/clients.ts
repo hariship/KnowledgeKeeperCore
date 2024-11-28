@@ -2194,7 +2194,7 @@ router.delete('/:clientId/documents/:documentId', async (req, res) => {
           teamspace_name: document?.teamspace?.teamspaceName,
           s3_bucket: 'knowledge-keeper-results',
           s3_document_path: document.s3SentencedDocumentPath,
-          document_ids: [document?.id]
+          document_ids: [`${document?.id}`]
       }
       const response = await axios.post('http://18.116.66.245:9100/v2/delete_data_from_chunks', deleteDataFromChunksRequest, {
         headers: {
