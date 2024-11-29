@@ -99,6 +99,8 @@ export class UserTeamspaceRepository{
               teamspace: { id: teamspaceId },
             },
           });
+
+          console.log('accessRecord',accessRecord)
       
           return !!accessRecord; // Returns true if accessRecord exists, false otherwise      
     }
