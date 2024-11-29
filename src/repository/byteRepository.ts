@@ -371,7 +371,8 @@ export class ByteRepository {
           if(teamspaceIds && teamspaceIds.length > 0){
             const byteTeamRepo = AppDataSource.getRepository(ByteTeamspace);
             for(const teamspaceId of teamspaceIds){
-              await byteTeamRepo.create({byteId: newByte.id, teamspaceId})
+              const byteSaved = await byteTeamRepo.create({byteId: newByte.id, teamspaceId})
+              await byteTeamRepo.save(byteSaved)
             }
           }
           let dataId = uuidv4();
