@@ -100,7 +100,8 @@ export class UserTeamspaceRepository{
             },
             relations:['teamspace','user']
           });
-      
+     
+          console.log(accessRecord)
           return !!accessRecord; // Returns true if accessRecord exists, false otherwise      
     }
 

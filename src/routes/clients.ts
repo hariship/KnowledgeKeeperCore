@@ -3191,9 +3191,7 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
 
       // Find the user and teamspace
       let user:any = ''
-      if(userId){
-        user = await userRepository.findUserById(userId)
-      }else if(email){
+      if(email){
         user = await userRepository.findUserByEmail(email)
       }
       
