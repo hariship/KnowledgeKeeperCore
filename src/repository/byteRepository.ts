@@ -367,6 +367,7 @@ export class ByteRepository {
             requestedByEmail: email
           });
           let byteSaved = await this.byteRepo.save(newByte);
+          console.log('teamspaceIds',teamspaceIds)
           if(teamspaceIds && teamspaceIds.length > 0){
             const byteTeamRepo = AppDataSource.getRepository(ByteTeamspace);
             for(const teamspaceId of teamspaceIds){
