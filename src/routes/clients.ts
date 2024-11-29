@@ -295,7 +295,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       document_id : `${document?.id}`
     }
     // Check for pending task status and mark flag accordingly
-    const response = await axios.post('http://18.116.66.245:9100/v2/data_exists', dataExistsRequest, {
+    const response = await axios.post('http://18.116.66.245:5000/v2/data_exists', dataExistsRequest, {
       headers: {
           'Content-Type': 'application/json',
           'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
@@ -2221,7 +2221,7 @@ router.delete('/:clientId/documents/:documentId', async (req, res) => {
           s3_document_path: document.s3SentencedDocumentPath,
           document_ids: [`${document?.id}`]
       }
-      const response = await axios.post('http://18.116.66.245:9100/v2/delete_data_from_chunks', deleteDataFromChunksRequest, {
+      const response = await axios.post('http://18.116.66.245:5000/v2/delete_data_from_chunks', deleteDataFromChunksRequest, {
         headers: {
             'Content-Type': 'application/json',
             'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token

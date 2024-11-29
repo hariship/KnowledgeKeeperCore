@@ -19,7 +19,7 @@ export const AppDataSource = new DataSource({
     port: 5432,
     username: "postgres",
     password: "admin",
-    database: "knowledgekeeper_develop",
+    database: "knowledgekeeper",
     synchronize: false,
     logging: true,
     entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document, Task, Teamspace, UserTeamspace, ByteTeamspace],
