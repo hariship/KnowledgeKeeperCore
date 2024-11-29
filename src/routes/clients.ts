@@ -3192,24 +3192,27 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
       // Find the user and teamspace
       let user:any = ''
       if(email){
-        user = await userRepository.findUserByEmail(email)
+        for(const eachEmail of email){
+          user = await userRepository.findUserByEmail(eachEmail)
+          const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId)
+          console.log(user)
+          console.log(teamspace)
+          if (!user || !teamspace) {
+              return res.status(404).json({ error: 'User or Teamspace not found' });
+          }
+          const userTeamspace = new UserTeamspace();
+          // Check if the user is already part of the teamspace
+          const existingUserTeamspace = await userTeamspaceRepository.checkUserAccessToTeamspace(userId,teamspaceId);
+    
+          if (existingUserTeamspace) {
+              return res.status(400).json({ error: 'User is already invited to this teamspace' });
+          }
+    
+          await userTeamspaceRepository.saveUserTeamspace(user.id, teamspace.id);
+        }
       }
       
-      const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId)
-      console.log(user)
-      console.log(teamspace)
-      if (!user || !teamspace) {
-          return res.status(404).json({ error: 'User or Teamspace not found' });
-      }
-      const userTeamspace = new UserTeamspace();
-      // Check if the user is already part of the teamspace
-      const existingUserTeamspace = await userTeamspaceRepository.checkUserAccessToTeamspace(userId,teamspaceId);
-
-      if (existingUserTeamspace) {
-          return res.status(400).json({ error: 'User is already invited to this teamspace' });
-      }
-
-      await userTeamspaceRepository.saveUserTeamspace(user.id, teamspace.id);
+      
 
       return res.status(200).json({ message: 'User invited successfully' });
   } catch (error) {
