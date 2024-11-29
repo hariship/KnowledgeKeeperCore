@@ -11,7 +11,11 @@ export class UserRepository {
 
     // Find a user by email
     async findUserByEmail(email: string): Promise<UserDetails | null> {
-        return await this.userRepo.findOneBy({ email });
+        return await this.userRepo.findOne({ 
+            where: {
+                email 
+            }}
+        );
     }
 
     // Create and save a new user
