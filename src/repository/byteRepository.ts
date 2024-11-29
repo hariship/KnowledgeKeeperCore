@@ -539,7 +539,7 @@ export class ByteRepository {
             )`);
 
         if (teamspaceIds && teamspaceIds.length > 0) {
-          queryBuilder.andWhere("recommendation.document.teamspace IN (:...teamspaceIds)", { teamspaceIds });
+          queryBuilder.andWhere("document.teamspace IN (:...teamspaceIds)", { teamspaceIds });
         }
 
         const recommendationsForByte = await queryBuilder.getMany();
