@@ -36,7 +36,11 @@ export class ByteRepository {
       }
     });
     const byteTeamspaceRepo = await AppDataSource.getRepository(ByteTeamspace)
-    const byteTeamspaceEntries = await byteTeamspaceRepo.find();
+    const byteTeamspaceEntries = await byteTeamspaceRepo.find({
+      where:{
+        teamspaceId: In(teamspaceIds)
+      }
+    });
     const byteIdsInTeamspace = byteTeamspaceEntries.map(entry => entry.byteId);
     bytes = bytes.filter(byte => byteIdsInTeamspace.includes(byte.id));
     let filteredBytes = []
@@ -86,7 +90,11 @@ export class ByteRepository {
         }
       });
       const byteTeamspaceRepo = await AppDataSource.getRepository(ByteTeamspace)
-      const byteTeamspaceEntries = await byteTeamspaceRepo.find();
+      const byteTeamspaceEntries = await byteTeamspaceRepo.find({
+        where:{
+          teamspaceId: In(teamspaceIds)
+        }
+      });
       console.log('---before---')
       console.log(bytes.length)
       const byteIdsInTeamspace = new Set(byteTeamspaceEntries.map(entry => entry.byteId)); // Convert array to Set
@@ -154,7 +162,11 @@ export class ByteRepository {
     let filteredBytes = []
     let noOfRecommendations = 0
     const byteTeamspaceRepo = await AppDataSource.getRepository(ByteTeamspace)
-    const byteTeamspaceEntries = await byteTeamspaceRepo.find();
+    const byteTeamspaceEntries = await byteTeamspaceRepo.find({
+      where:{
+        teamspaceId: In(teamspaceIds)
+      }
+    });
     const byteIdsInTeamspace = byteTeamspaceEntries.map(entry => entry.byteId);
      bytes = bytes.filter(byte => byteIdsInTeamspace.includes(byte.id));
     for(const byte of bytes){
