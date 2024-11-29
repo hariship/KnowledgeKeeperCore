@@ -13,7 +13,7 @@ export class UserRepository {
     async findUserByEmail(email: string): Promise<UserDetails | null> {
         return await this.userRepo.findOne({ 
             where: {
-                email 
+                email
             }}
         );
     }

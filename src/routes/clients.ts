@@ -3196,7 +3196,8 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
       }
       
       const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId)
-
+      console.log(user)
+      console.log(teamspace)
       if (!user || !teamspace) {
           return res.status(404).json({ error: 'User or Teamspace not found' });
       }

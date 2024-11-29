@@ -51,7 +51,7 @@ export class TeamspaceRepository{
   async getTeamspaceById(teamspaceId: number): Promise<Teamspace | null> {
     return this.teamspaceRepo.findOne({
         where:{
-            id:teamspaceId
+            id: teamspaceId
         }, 
         relations: ['document'] }
     );
