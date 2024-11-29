@@ -3202,7 +3202,7 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
           }
           const userTeamspace = new UserTeamspace();
           // Check if the user is already part of the teamspace
-          const existingUserTeamspace = await userTeamspaceRepository.checkUserAccessToTeamspace(userId,teamspaceId);
+          const existingUserTeamspace = await userTeamspaceRepository.checkUserAccessToTeamspace(user.id,teamspaceId);
     
           if (existingUserTeamspace) {
               return res.status(400).json({ error: 'User is already invited to this teamspace' });
