@@ -2752,7 +2752,7 @@ router.get('/:clientId/bytes/:byteId', verifyToken, async (req: any, res: Respon
  *       400:
  *         description: Invalid data
  */
-router.post('/:clientId/teamspaces', async (req:any, res) => {
+router.post('/:clientId/teamspaces', verifyToken, async (req:any, res) => {
   const clientId = parseInt(req.params.clientId);
   const { teamspaceName } = req.body;
   const userId = req.user.userId
@@ -2816,7 +2816,7 @@ router.post('/:clientId/teamspaces', async (req:any, res) => {
  *       400:
  *         description: Invalid client ID
  */
-router.get('/:clientId/teamspaces', async (req:any, res) => {
+router.get('/:clientId/teamspaces', verifyToken, async (req:any, res) => {
   const clientId = parseInt(req.params.clientId);
   const userId = req.user.userId;
   const userTeamspaceRepo = new UserTeamspaceRepository();
