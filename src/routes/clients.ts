@@ -1533,7 +1533,8 @@ router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
  */
 router.get('/clientDetails', verifyToken, async (req:any, res:any) => {
   const clientId = Array.isArray(req.query.clientId) ? req.query.clientId[0] : req.query.clientId;
-  const userId = req.user?.userId; // Assuming `userId` is set in `verifyToken` middleware
+  const userId = parseInt(req.user?.userId); // Assuming `userId` is set in `verifyToken` middleware
+  console.log(typeof userId);
 
   if (!clientId || typeof clientId !== 'string') {
     return res.status(400).json({
