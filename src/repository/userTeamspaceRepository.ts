@@ -98,9 +98,8 @@ export class UserTeamspaceRepository{
               user: { id: userId },
               teamspace: { id: teamspaceId },
             },
+            relations:['teamspace','user']
           });
-
-          console.log('accessRecord',accessRecord)
       
           return !!accessRecord; // Returns true if accessRecord exists, false otherwise      
     }
