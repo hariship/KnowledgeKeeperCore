@@ -295,7 +295,7 @@ router.post('/load-document', verifyToken, upload.single('file'), async (req: Re
       document_id : `${document?.id}`
     }
     // Check for pending task status and mark flag accordingly
-    const response = await axios.post('http://18.116.66.245:5000/v2/data_exists', dataExistsRequest, {
+    const response = await axios.post('http://18.116.66.245:9100/v2/data_exists', dataExistsRequest, {
       headers: {
           'Content-Type': 'application/json',
           'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
@@ -631,11 +631,15 @@ router.post('/modify', async (req: Request, res: Response) => {
 
 
 // Get all bytes with a status of 'open' and high recommendation counts
-router.get('/:clientId/bytes/open', verifyToken, async (req, res) => {
+router.get('/:clientId/bytes/open', verifyToken, async (req:any, res) => {
   try {
     const clientId = req.params.clientId;
+    let userId = req.user.userId
+    let userTeamspaceRepo = new UserTeamspaceRepository();
+    const userTeampsaces = await userTeamspaceRepo.findTeamspacesForUser(userId);
+    const teamspaceIds = userTeampsaces.map((userTeamspace)=> userTeamspace.teamspace.id)
     const byteRepo = new ByteRepository();
-      const bytes = await byteRepo.findAllOpenWithHighRecommendations(parseInt(clientId));
+      const bytes = await byteRepo.findAllOpenWithHighRecommendations(parseInt(clientId),teamspaceIds);
       res.json({
           status: 'success',
           data: bytes
@@ -922,16 +926,19 @@ router.post('/:clientId/documents/:docId/upload-image', upload.single('image'), 
  */
 
 // Get all bytes with a status of 'closed' and high resolved recommendation counts
-router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
+router.get('/:clientId/bytes/closed', verifyToken, async (req:any, res) => {
   try {
     let { clientId }: any = req.params;
-
-    clientId = parseInt(clientId)
+    let userId = req.user.userId
+    let userTeamspaceRepo = new UserTeamspaceRepository();
+    const userTeampsaces = await userTeamspaceRepo.findTeamspacesForUser(userId);
+    const teamspaceIds = userTeampsaces.map((userTeamspace)=> userTeamspace.teamspace.id)
+    clientId = parseInt(clientId);
     
     const byteRepo = new ByteRepository();
 
     // Fetch bytes with a status of 'closed' and high resolved recommendation counts for the given documentId
-    let bytes = await byteRepo.findAllClosedWithHighResolvedRecommendations(parseInt(clientId));
+    let bytes = await byteRepo.findAllClosedWithHighResolvedRecommendations(parseInt(clientId), teamspaceIds);
 
     if (!bytes || bytes.length === 0) {
       bytes = []
@@ -1033,7 +1040,7 @@ router.get('/:clientId/bytes/closed', verifyToken, async (req, res) => {
  */
 
 // Mark byte as deleted (isDeleted: true)
-router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
+router.post('/:clientId/bytes/delete', verifyToken, async (req:any, res) => {
   const { byteId } = req.body;
   
   if (!byteId || isNaN(byteId)) {
@@ -1042,6 +1049,7 @@ router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
 
   try {
     const byteRepo = new ByteRepository();
+    const userId = req.user.userId
     
     // Check if the byte exists before attempting to update
     const byteExists = await byteRepo.findByteById(byteId);
@@ -1049,6 +1057,9 @@ router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
     if (!byteExists) {
       return res.status(404).json({ status: 'error', message: 'Byte not found' });
     }
+
+    // Resolve all byte based recommendations
+    await byteRepo.handleRecommendationsRejected(byteExists, userId)
 
     // Mark the byte as deleted (isDeleted: true)
     await byteRepo.updateByte(byteId, { isDeleted: true });
@@ -1117,12 +1128,17 @@ router.post('/:clientId/bytes/delete', verifyToken, async (req, res) => {
  */
 
 // List all deleted bytes
-router.get('/:clientId/bytes/trash', verifyToken, async (req, res) => {
+router.get('/:clientId/bytes/trash', verifyToken, async (req:any, res) => {
   try {
     const byteRepo = new ByteRepository();
+    const userId = req.user.userId
+    const userTeamspaceRepo = new UserTeamspaceRepository();
+
+    const userTeamspaces = await userTeamspaceRepo.findTeamspacesForUser(userId)
+    const teamspaceIds = userTeamspaces.map((userTeamspace)=> userTeamspace.teamspace.id)
     
     // Retrieve all bytes marked as deleted
-    const deletedBytes = await byteRepo.findDeletedBytes(parseInt(req.params.clientId));
+    const deletedBytes = await byteRepo.findDeletedBytes(parseInt(req.params.clientId),teamspaceIds);
     
     res.json(deletedBytes);
   } catch (error) {
@@ -1820,14 +1836,17 @@ router.delete('/:clientId/teamspaces/:teamspaceId/users/:userId', verifyToken, a
 router.get('/:clientId/bytes/:byteId/recommendations', verifyToken, async (req:any, res) => {
   const byteId = parseInt(req.params.byteId);
   const clientId = parseInt(req.params.clientId);
+  const userId = parseInt(req.user.userId);
+  const userTeampsaceRepo = new UserTeamspaceRepository();
+  const userTeamspaces = await userTeampsaceRepo.findTeamspacesForUser(userId);
+  const teamspaceIds = await userTeamspaces.map((userTeamspace)=> userTeamspace.teamspace.id)
 
 
   try {
       const byteRepo = new ByteRepository();
       const byte =  await byteRepo.findByteById(byteId);
-      const userId = req.user.userId; 
       if(byte){
-        const recommendations = await byteRepo.getRecommendations(byte);
+        const recommendations = await byteRepo.getRecommendations(byte,teamspaceIds);
         res.json({
             status: 'success',
             data: recommendations
@@ -2196,7 +2215,7 @@ router.delete('/:clientId/documents/:documentId', async (req, res) => {
           s3_document_path: document.s3SentencedDocumentPath,
           document_ids: [`${document?.id}`]
       }
-      const response = await axios.post('http://18.116.66.245:5000/v2/delete_data_from_chunks', deleteDataFromChunksRequest, {
+      const response = await axios.post('http://18.116.66.245:9100/v2/delete_data_from_chunks', deleteDataFromChunksRequest, {
         headers: {
             'Content-Type': 'application/json',
             'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
@@ -2662,11 +2681,12 @@ router.get('/:clientId/documents/:docId/html', verifyToken, async (req: Request,
  *       500:
  *         description: Server error
  */
-router.get('/:clientId/bytes/:byteId', verifyToken, async (req: Request, res: Response) => {
+router.get('/:clientId/bytes/:byteId', verifyToken, async (req: any, res: Response) => {
   let { clientId, byteId }: any = req.params;
-
+  let userId = req.user.userId
   clientId = parseInt(byteId)
   byteId = parseInt(byteId)
+
 
   // Validate clientId, documentId, and byteId
   if (isNaN(parseInt(clientId)) ||  isNaN(parseInt(byteId))) {
@@ -2675,9 +2695,13 @@ router.get('/:clientId/bytes/:byteId', verifyToken, async (req: Request, res: Re
 
   try {
     const byteRepository = new ByteRepository();
+    const userTeamspaceRepo = new UserTeamspaceRepository();
+
+    const userTeamspaces = await userTeamspaceRepo.findTeamspacesForUser(userId);
+    const teamspaceIds  = userTeamspaces.map((userTeamspace)=> userTeamspace.teamspace.id)
 
     // Fetch the byte by id, ensuring it belongs to the correct client and document
-    const byte = await byteRepository.findByteByClientAndDocument(byteId);
+    const byte = await byteRepository.findByteByClientAndDocument(byteId,teamspaceIds);
 
     if (!byte) {
       return res.status(404).json({ message: 'Byte not found' });
@@ -2728,9 +2752,12 @@ router.get('/:clientId/bytes/:byteId', verifyToken, async (req: Request, res: Re
  *       400:
  *         description: Invalid data
  */
-router.post('/:clientId/teamspaces', async (req, res) => {
+router.post('/:clientId/teamspaces', async (req:any, res) => {
   const clientId = parseInt(req.params.clientId);
   const { teamspaceName } = req.body;
+  const userId = req.user.userId
+  const userTeamspaceRepo = new UserTeamspaceRepository();
+
   const teamspaceRepository = new TeamspaceRepository();
   const clientRepository = new ClientRepository();
 
@@ -2752,6 +2779,8 @@ router.post('/:clientId/teamspaces', async (req, res) => {
       };
   
       const newTeamspace = await teamspaceRepository.createTeamspace(teamspaceData);
+      const userTeamspace = await userTeamspaceRepo.saveUserTeamspace(userId, newTeamspace?.id)
+
       res.status(200).json(newTeamspace);
     }
   } catch (error) {
@@ -2787,8 +2816,13 @@ router.post('/:clientId/teamspaces', async (req, res) => {
  *       400:
  *         description: Invalid client ID
  */
-router.get('/:clientId/teamspaces', async (req, res) => {
+router.get('/:clientId/teamspaces', async (req:any, res) => {
   const clientId = parseInt(req.params.clientId);
+  const userId = req.user.userId;
+  const userTeamspaceRepo = new UserTeamspaceRepository();
+  const userTeamspaces = await userTeamspaceRepo.findTeamspacesForUser(userId);
+  const teamspaceIds = userTeamspaces.map((userTeamspace)=> userTeamspace.teamspace.id)
+  
   const teamspaceRepository = new TeamspaceRepository();
 
   if (isNaN(clientId)) {
@@ -2796,6 +2830,7 @@ router.get('/:clientId/teamspaces', async (req, res) => {
   }
 
   try {
+    
     // Fetch all teamspaces for the specific client
     const teamspaces = await teamspaceRepository.findTeamspacesByClientId(clientId);
 
@@ -2933,6 +2968,7 @@ router.delete('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
   try {
     const teamspaceRepository = new TeamspaceRepository();
     const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId);
+
     if (!teamspace) {
       return res.status(404).json({ error: 'Teamspace not found' });
     }
@@ -3025,7 +3061,7 @@ router.get('/:clientId/byte/:byteId/is-pending-user-recommendation', verifyToken
   const byteId = parseInt(req.params.byteId);
 
   try {
-    const taskRepository = new TaskRepository;
+    const taskRepository = new TaskRepository();
 
     // Get the count of pending recommendations for the specified byteId
     const pendingStatus = await taskRepository.isPendingUserRecommendationForByte(byteId);
@@ -3168,13 +3204,7 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
           return res.status(400).json({ error: 'User is already invited to this teamspace' });
       }
 
-      // Create a new UserTeamspace entry (invite the user)
-      userTeamspace.user = user;
-      userTeamspace.teamspace = teamspace;
-      userTeamspace.status = 'INVITED';
-      userTeamspace.role = 'MEMBER'; // Default to MEMBER role
-
-      await userTeamspaceRepository.saveTeamspace(userTeamspace);
+      await userTeamspaceRepository.saveUserTeamspace(user.id, teamspace.id);
 
       return res.status(200).json({ message: 'User invited successfully' });
   } catch (error) {

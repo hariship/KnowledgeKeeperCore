@@ -23,30 +23,87 @@ export class ByteRepository {
         this.byteRepo = AppDataSource.getRepository(Byte);  // Get the Document repository from the AppDataSource
     }
 
-    async findDeletedBytes(clientId: number) {
-      return await this.byteRepo.find({
+    async filterBytesWithUpdatedNoOfRecommendationCountForDeleted(clientId:any,teamspaceIds:any){
+      let bytes = await this.byteRepo.find({
         where: {
-          clientId: { id: clientId },  // Correctly reference the client relationship
-          isDeleted: true,
+            clientId,
+            isDeleted: true
         },
-        relations: ['clientId']  // Ensure the client relation is loaded
-      });
+        relations: ['clientId'],
+        order: {
+          createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
+      }
+    });
+    let filteredBytes = []
+    let noOfRecommendations = 0
+    for(const byte of bytes){
+      const recommendationData = await this.recommendationRepo.find({
+        where:{
+          byte,
+          document: {
+            teamspace: {
+              id: In(teamspaceIds)
+            }
+          }
+        },
+        relations: ['byte','document','document.teamspace']
+      })
+      if(recommendationData){
+        noOfRecommendations = recommendationData.length
+        byte.noOfRecommendations = noOfRecommendations
+        filteredBytes.push(byte)
+      }
+    }
+    return { bytes:filteredBytes };
+  }
+
+
+    async findDeletedBytes(clientId: number,teamspaceIds:any) {
+      let { bytes } = await this.filterBytesWithUpdatedNoOfRecommendationCountForDeleted(clientId, teamspaceIds);
+      return bytes;
     }
 
-    async findAllOpenWithHighRecommendations(clientId:any) {
+    async filterBytesWithUpdatedNoOfRecommendationCount(clientId:any, status: string,teamspaceIds:any){
+        let bytes = await this.byteRepo.find({
+          where: {
+              status,
+              clientId,
+              isDeleted: false
+          },
+          relations: ['clientId'],
+          order: {
+            createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
+        }
+      });
+      let filteredBytes = []
+      let noOfRecommendations = 0
+      for(const byte of bytes){
+        const recommendationData = await this.recommendationRepo.find({
+          where:{
+            byte,
+            document: {
+              teamspace: {
+                id: In (teamspaceIds)
+              }
+            }
+          },
+          relations: ['byte','document','document.teamspace']
+        })
+        if(recommendationData){
+          noOfRecommendations = recommendationData.length
+          byte.noOfRecommendations = noOfRecommendations
+          filteredBytes.push(byte)
+        }
+      }
+      return { bytes:filteredBytes };
+    }
+
+    async findAllOpenWithHighRecommendations(clientId:any,teamspaceIds:any) {
         // This method should fetch all bytes marked as 'open' with a high recommendationCount.
         // Implement the query based on your database schema.
-        return this.byteRepo.find({
-            where: {
-                status: 'open',
-                clientId,
-                isDeleted: false
-            },
-            relations: ['clientId'],
-            order: {
-              createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
-          }
-        });
+
+      let { bytes } = await this.filterBytesWithUpdatedNoOfRecommendationCount(clientId, 'open',teamspaceIds);
+      return bytes;
     }
 
     async findByteWithDocById(id: number): Promise<Byte | null> {
@@ -60,19 +117,89 @@ export class ByteRepository {
       return await this.byteRepo.save(byte)
    }
 
+    async filterBytesWithUpdatedNoOfRecommendationCountForOthers(clientId:any, teamspaceIds: number []){
+      let bytes = await this.byteRepo.find({
+        where: {
+            status:  Not('open'),
+            clientId,
+            isDeleted: false
+        },
+        relations: ['clientId'],
+        order: {
+          createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
+      }
+    });
+    let filteredBytes = []
+    let noOfRecommendations = 0
+    for(const byte of bytes){
+      const recommendationData = await this.recommendationRepo.find({
+        where:{
+          byte,
+          document: {
+            teamspace: {
+              id: In(teamspaceIds)
+            }
+          }
+        },
+        relations: ['byte','document','document.teamspace']
+      })
+      if(recommendationData){
+        noOfRecommendations = recommendationData.length
+        byte.noOfRecommendations = noOfRecommendations
+        filteredBytes.push(byte)
+      }
+    }
+    return { bytes:filteredBytes };
+  }
+
         // Fetch all bytes with 'closed' status and high resolved recommendation count
-    async findAllClosedWithHighResolvedRecommendations(clientId:any) {
-        return this.byteRepo.find({
-            where: {
-                status: Not('open'),
-                clientId,
-                isDeleted: false
-            },
-            relations: ['docId','clientId']
-        });
+    async findAllClosedWithHighResolvedRecommendations(clientId:any, teamspaceIds: number []) {
+        let {bytes } = await this.filterBytesWithUpdatedNoOfRecommendationCountForOthers(clientId,teamspaceIds);
+        return bytes;
+    }
+
+    async handleRecommendationsRejected(byte: any, userId: number) {
+      // Step 1: Call getRecommendations to get the list of documents and recommendations
+      const response = await this.getRecommendations(byte);  // Assume this returns the recommendations in a set of documents
+    
+      // Step 2: Loop through the documents and their recommendations
+      for (const doc of response.documents) {
+        const docId = doc.doc_id;
+    
+        for (const recommendation of doc.recommendations) {
+          const recommendationId = recommendation.id;
+          const changeRequestType = recommendation.change_request_type; // 'Add' or 'Replace' based on your logic
+          const changeSummary = 'REJECTED';  // As per your example
+          const isTrained = false;  // Default to false unless updated otherwise
+          const recommendationAction = 'REJECTED';  // Based on the action taken
+    
+          // Step 3: Call the changeLogRepo.createChangeLog function for each recommendation
+          const changes:any = [];  // Assuming this is the format for changes, customize as needed
+    
+          try {
+            const changeLogRepo = new ChangeLogRepository();
+            await changeLogRepo.createChangeLog(
+              userId,                 // User ID already available
+              docId,                  // From the document object
+              byte.id,                // Byte ID from the byte object
+              changeRequestType,       // 'Add' or 'Replace'
+              changes,                // Set to an empty array or provide actual changes
+              changeSummary,          // Summary for the change
+              isTrained,              // Whether or not it's trained
+              recommendationAction,   // Action taken, in this case 'ACCEPT'
+              recommendationId        // ID of the specific recommendation
+            );
+    
+            console.log(`Change log created for recommendation ${recommendationId} in document ${docId}`);
+          } catch (error) {
+            console.error(`Error creating change log for recommendation ${recommendationId} in document ${docId}: `, error);
+          }
+        }
+      }
     }
 
     async handleRecommendations(byte: any, userId: number) {
+      
       // Step 1: Call getRecommendations to get the list of documents and recommendations
       const response = await this.getRecommendations(byte);  // Assume this returns the recommendations in a set of documents
     
@@ -119,13 +246,34 @@ export class ByteRepository {
         });
     }
 
-    async findByteByClientAndDocument(byteId: number): Promise<Byte | null> {
-        return await this.byteRepo.findOne({
+    async findByteByClientAndDocument(byteId: number, teamspaceIds: number []): Promise<Byte | null> {
+        let filteredByte: any = {}
+        let noOfRecommendations = 0;
+        const byte = await this.byteRepo.findOne({
           where: {
             id: byteId
           },
           relations: ['requestedBy', 'docId'],
         });
+        if(byte){
+          const recommendationData = await this.recommendationRepo.find({
+            where:{
+              byte,
+              document: {
+                teamspace: {
+                  id: In(teamspaceIds)
+                }
+              }
+            },
+            relations: ['byte','document','document.teamspace']
+          })
+          if(recommendationData){
+            noOfRecommendations = recommendationData.length
+            byte.noOfRecommendations = noOfRecommendations
+            filteredByte = byte
+          }
+        }
+        return filteredByte;        
       }
 
       async callExternalRecommendationByteService(byteInfo: any, byteSaved: any) {
@@ -149,7 +297,7 @@ export class ByteRepository {
       
             try {
               // Send Axios POST request for each teamspace
-              const response = await axios.post('http://18.116.66.245:5000/v2/recommend-bytes', requestData, {
+              const response = await axios.post('http://18.116.66.245:9100/v2/recommend-bytes', requestData, {
                 headers: {
                   'Content-Type': 'application/json',
                   'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499'
@@ -233,7 +381,7 @@ export class ByteRepository {
     async callExternalRecommendationService(byte: Partial<Byte>){
         let uuid = uuidv4();
         let response = await axios.post(
-            `http://18.116.66.245:5000/v1/predict`,
+            `http://18.116.66.245:9100/v1/predict`,
             { 
               input_text: byte?.byteInfo,
               data_id: uuid
@@ -378,18 +526,23 @@ export class ByteRepository {
       }
     }
 
-    async getRecommendations(byte: Partial<Byte>) {
+    async getRecommendations(byte: Partial<Byte>,teamspaceIds?: number []) {
       try {
         // Fetch recommendations that are not present in change_log
-        let recommendationsForByte = await this.recommendationRepo
+        const queryBuilder = this.recommendationRepo
           .createQueryBuilder("recommendation")
           .leftJoinAndSelect("recommendation.document", "document")
           .where("recommendation.byteId = :byteId", { byteId: byte?.id })
           .andWhere(`recommendation.id NOT IN (
               SELECT "recommendationId" FROM "change_log"
               WHERE "recommendationId" IS NOT NULL
-            )`)
-          .getMany();
+            )`);
+
+        if (teamspaceIds && teamspaceIds.length > 0) {
+          queryBuilder.andWhere("recommendation.document.teamspace IN (:...teamspaceIds)", { teamspaceIds });
+        }
+
+        const recommendationsForByte = await queryBuilder.getMany();
     
         console.log(byte);
     

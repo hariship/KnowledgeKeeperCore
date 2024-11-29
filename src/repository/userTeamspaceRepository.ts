@@ -3,6 +3,8 @@ import { UserTeamspace } from '../entities/user_teamspace';
 import { AppDataSource } from '../db/data_source';
 import { Teamspace } from '../entities/teamspace';
 import { UserDetails } from '../entities/user_details';
+import { UserRepository } from './userRepository';
+import { TeamspaceRepository } from './teamspaceRepository';
 
 export class UserTeamspaceRepository{
 
@@ -115,8 +117,30 @@ export class UserTeamspaceRepository{
         });
     }
 
-        // Function to get all users invited to a specific teamspace
-        async saveTeamspace(teamspace: Partial<Teamspace>): Promise<UserTeamspace> {
-            return this.userTeamspaceRepo.save(teamspace);
+      // Function to get all users invited to a specific teamspace
+      async saveUserTeamspace(userId: number, teamspaceId: number, role?: string): Promise<UserTeamspace> {
+        const userRepo = new UserRepository();
+        const teamspaceRepo = new TeamspaceRepository();
+        // Fetch the related UserDetails and Teamspace entities
+        const user = await userRepo.findUserById(userId)
+        if (!user) {
+            throw new Error(`User with id ${userId} not found`);
         }
+    
+        const teamspace = await teamspaceRepo.getTeamspaceById(teamspaceId)
+        if (!teamspace) {
+            throw new Error(`Teamspace with id ${teamspaceId} not found`);
+        }
+    
+        // Create a new UserTeamspace entity
+        const userTeamspace = this.userTeamspaceRepo.create({
+            user,
+            teamspace,
+            role: 'MEMBER', // Set role if provided, otherwise leave it null
+            status: "INVITED", // Default status
+        });
+    
+        // Save the entity
+        return this.userTeamspaceRepo.save(userTeamspace);
+    }
 }
