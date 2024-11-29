@@ -70,7 +70,7 @@ export class UserTeamspaceRepository{
           where: {
             user: { id: userId },
           },
-          relations: ['teamspace']
+          relations: ['user','teamspace']
         }).then((results) => results.map((record) => record.teamspace));
       }
 
