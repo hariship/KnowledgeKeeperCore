@@ -1548,7 +1548,7 @@ router.get('/clientDetails', verifyToken, async (req:any, res:any) => {
     // Fetch teamspaces the user has access to for this client
     const userTeamspaceRepo = new UserTeamspaceRepository();
     const teamspaces = await userTeamspaceRepo.findUserTeamspacesForClient(userId);
-
+    client.teamspaces = teamspaces
     res.json({
       status: 'success',
       message: 'Client details and teamspaces fetched successfully',
