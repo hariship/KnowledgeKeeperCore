@@ -13,6 +13,7 @@ const {v4: uuidv4 } = require('uuid');
 import { Not } from 'typeorm';
 import { Teamspace } from "../entities/teamspace";
 import { ChangeLogRepository } from "./changeLogRespository";
+import { ByteTeamspace } from "../entities/byte_teamspace";
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
@@ -34,6 +35,10 @@ export class ByteRepository {
           createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
       }
     });
+    const byteTeamspaceRepo = await AppDataSource.getRepository(ByteTeamspace)
+    const byteTeamspaceEntries = await byteTeamspaceRepo.find();
+    const byteIdsInTeamspace = byteTeamspaceEntries.map(entry => entry.byteId);
+    bytes = bytes.filter(byte => byteIdsInTeamspace.includes(byte.id));
     let filteredBytes = []
     let noOfRecommendations = 0
     for(const byte of bytes){
@@ -80,6 +85,10 @@ export class ByteRepository {
             createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
         }
       });
+      const byteTeamspaceRepo = await AppDataSource.getRepository(ByteTeamspace)
+      const byteTeamspaceEntries = await byteTeamspaceRepo.find();
+      const byteIdsInTeamspace = byteTeamspaceEntries.map(entry => entry.byteId);
+      bytes = bytes.filter(byte => byteIdsInTeamspace.includes(byte.id));
       let filteredBytes = []
       let noOfRecommendations = 0
       for(const byte of bytes){
@@ -140,6 +149,10 @@ export class ByteRepository {
     });
     let filteredBytes = []
     let noOfRecommendations = 0
+    const byteTeamspaceRepo = await AppDataSource.getRepository(ByteTeamspace)
+    const byteTeamspaceEntries = await byteTeamspaceRepo.find();
+    const byteIdsInTeamspace = byteTeamspaceEntries.map(entry => entry.byteId);
+     bytes = bytes.filter(byte => byteIdsInTeamspace.includes(byte.id));
     for(const byte of bytes){
       const recommendationData = await this.recommendationRepo.find({
         where:{
@@ -354,6 +367,12 @@ export class ByteRepository {
             requestedByEmail: email
           });
           let byteSaved = await this.byteRepo.save(newByte);
+          if(teamspaceIds && teamspaceIds.length > 0){
+            const byteTeamRepo = AppDataSource.getRepository(ByteTeamspace);
+            for(const teamspaceId of teamspaceIds){
+              await byteTeamRepo.create({byteId: newByte.id, teamspaceId})
+            }
+          }
           let dataId = uuidv4();
           let response = await this.callExternalRecommendationByteService(byteInfo, byteSaved, teamspaceIds, source)
           return byteSaved;

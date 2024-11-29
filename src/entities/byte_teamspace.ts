@@ -3,7 +3,7 @@ import { Entity, PrimaryColumn } from 'typeorm';
 @Entity('byte_teamspace')
 export class ByteTeamspace {
     @PrimaryColumn()
-    userId: number;
+    byteId: number;
 
     @PrimaryColumn()
     teamspaceId: number;
