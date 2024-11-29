@@ -2785,7 +2785,7 @@ router.post('/:clientId/teamspaces', verifyToken, async (req:any, res) => {
       };
   
       const newTeamspace = await teamspaceRepository.createTeamspace(teamspaceData);
-      const userTeamspace = await userTeamspaceRepo.saveUserTeamspace(userId, newTeamspace?.id)
+      const userTeamspace = await userTeamspaceRepo.saveUserTeamspace(userId, newTeamspace?.id, 'MEMBER', 'OWNER')
 
       res.status(200).json(newTeamspace);
     }
@@ -3181,7 +3181,7 @@ router.post('/:clientId/byte/:byteId/feedback', async (req, res) => {
  *         description: Could not invite user
  */
 router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
-  const { userId, email } = req.body;
+  const { email } = req.body;
   const teamspaceId = parseInt(req.params.teamspaceId);
 
   try {

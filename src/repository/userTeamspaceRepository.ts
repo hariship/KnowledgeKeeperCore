@@ -132,7 +132,7 @@ export class UserTeamspaceRepository{
     }
 
       // Function to get all users invited to a specific teamspace
-      async saveUserTeamspace(userId: number, teamspaceId: number, role?: string): Promise<UserTeamspace> {
+      async saveUserTeamspace(userId: number, teamspaceId: number, role?: string,status?: string): Promise<UserTeamspace> {
         const userRepo = new UserRepository();
         const teamspaceRepo = new TeamspaceRepository();
         // Fetch the related UserDetails and Teamspace entities
@@ -145,13 +145,15 @@ export class UserTeamspaceRepository{
         if (!teamspace) {
             throw new Error(`Teamspace with id ${teamspaceId} not found`);
         }
-    
+        if(!status){
+          status = 'INVITED'
+        }
         // Create a new UserTeamspace entity
         const userTeamspace = this.userTeamspaceRepo.create({
             user,
             teamspace,
             role: 'MEMBER', // Set role if provided, otherwise leave it null
-            status: "INVITED", // Default status
+            status, // Default status
         });
     
         // Save the entity
