@@ -83,7 +83,9 @@ export class ByteRepository {
       for(const byte of bytes){
         const recommendationData = await this.recommendationRepo.find({
           where:{
-            byte,
+            byte: {
+              id: byte?.id
+            },
             document: {
               teamspace: {
                 id: In (teamspaceIds)
