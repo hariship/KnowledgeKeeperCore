@@ -15,7 +15,7 @@ export class UserTeamspace {
 
     @Column({
         type: "enum",
-        enum: ["INVITED", "ACCEPTED", "REJECTED"],
+        enum: ["INVITED", "ACCEPTED", "REJECTED", "OWNER"],
         default: "INVITED"
     })
     status: string;

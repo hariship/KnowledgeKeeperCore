@@ -1435,7 +1435,7 @@ router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
 
   const userTeamspaceRepo = new UserTeamspaceRepository();
 
-  const userTeamspaces = await userTeamspaceRepo.findTeamspacesForUser(userId);
+  const userTeamspaces = await userTeamspaceRepo.findOwnerTeamspacesForUser(userId);
   const teamspaceIds = userTeamspaces.map((userTeamspace)=> userTeamspace.teamspace.id)
 
 

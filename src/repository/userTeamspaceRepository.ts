@@ -123,6 +123,14 @@ export class UserTeamspaceRepository{
         });
     }
 
+    // Function to get all teamspace invites for a specific user
+    async findOwnerTeamspacesForUser(userId: number): Promise<UserTeamspace[]> {
+      return this.userTeamspaceRepo.find({
+          where: { user: { id: userId }, status: 'OWNER' },
+          relations: ['teamspace']  // load related teamspace data
+      });
+  }
+
     // Function to get all users invited to a specific teamspace
     async findUsersInTeamspace(teamspaceId: number): Promise<UserTeamspace[]> {
         return this.userTeamspaceRepo.find({
