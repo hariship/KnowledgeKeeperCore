@@ -63,61 +63,44 @@ export class ByteRepository {
       return bytes;
     }
 
-    async filterBytesWithUpdatedNoOfRecommendationCount(clientId: any, status: string, teamspaceIds: any) {
-      console.log('teamspaceIds--------=');
-      console.log(teamspaceIds);  
-      console.log('teamspaceIds--------=');
-    
-      // Fetch all bytes matching the initial criteria
-      const bytes = await this.byteRepo.find({
-        where: {
-          status,
-          clientId,
-          isDeleted: false
-        },
-        relations: ['clientId'],
-        order: {
-          createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
+    async filterBytesWithUpdatedNoOfRecommendationCount(clientId:any, status: string,teamspaceIds:any){
+      console.log('teamspaceIds--------=')
+      console.log(teamspaceIds)  
+      console.log('teamspaceIds--------=')
+      let bytes = await this.byteRepo.find({
+          where: {
+              status,
+              clientId,
+              isDeleted: false
+          },
+          relations: ['clientId'],
+          order: {
+            createdAt: 'DESC'  // Replace `createdAt` with the field you want to sort by
         }
       });
-    
-      if (bytes.length === 0) {
-        return { bytes: [] };
-      }
-    
-      // Extract byte IDs
-      const byteIds = bytes.map(byte => byte.id);
-    
-      // Fetch recommendations for the given bytes in bulk
-      const recommendations = await this.recommendationRepo.find({
-        where: {
-          byte: In(byteIds),
-          document: {
-            teamspace: {
-              id: In(teamspaceIds)
+      let filteredBytes = []
+      let noOfRecommendations = 0
+      for(const byte of bytes){
+        const recommendationData = await this.recommendationRepo.find({
+          where:{
+            byte,
+            document: {
+              teamspace: {
+                id: In (teamspaceIds)
+              }
             }
-          }
-        },
-        relations: ['document', 'document.teamspace']
-      });
-    
-      // Group recommendations by byte ID
-      const recommendationCountMap = recommendations.reduce((acc, rec) => {
-        const byteId = rec.byte.id;
-        acc[byteId] = (acc[byteId] || 0) + 1;
-        return acc;
-      }, {} as Record<number, number>);
-    
-      // Attach recommendation count to bytes and filter
-      const filteredBytes = bytes
-        .map(byte => ({
-          ...byte,
-          noOfRecommendations: recommendationCountMap[byte.id] || 0
-        }))
-        .filter(byte => byte.noOfRecommendations > 0);
-        console.log(filteredBytes)
-
-      return { bytes: filteredBytes };
+          },
+          relations: ['byte','document','document.teamspace']
+        })
+        console.log(recommendationData)
+        if(recommendationData){
+          noOfRecommendations = recommendationData.length
+          byte.noOfRecommendations = noOfRecommendations
+          filteredBytes.push(byte)
+        }
+      }
+      console.log(filteredBytes)
+      return { bytes:filteredBytes };
     }
 
     async findAllOpenWithHighRecommendations(clientId:any,teamspaceIds:any) {
