@@ -64,7 +64,10 @@ export class ByteRepository {
     }
 
     async filterBytesWithUpdatedNoOfRecommendationCount(clientId:any, status: string,teamspaceIds:any){
-        let bytes = await this.byteRepo.find({
+      console.log('teamspaceIds--------=')
+      console.log(teamspaceIds)  
+      console.log('teamspaceIds--------=')
+      let bytes = await this.byteRepo.find({
           where: {
               status,
               clientId,
