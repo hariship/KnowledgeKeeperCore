@@ -1428,10 +1428,15 @@ router.post('/:clientId/teamspaces/:teamspaceId/folders/unique', async (req, res
 
 // Create a new byte (recommendation)
 router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
-  let { recommendation, email } = req.body;
+  let { recommendation, email, source } = req.body;
   let { clientId }: any = req.params;
-
   const userId = req.user.userId
+
+  const userTeamspaceRepo = new UserTeamspaceRepository();
+
+  const userTeamspaces = await userTeamspaceRepo.findTeamspacesForUser(userId);
+  const teamspaceIds = userTeamspaces.map((userTeamspace)=> userTeamspace.teamspace.id)
+
 
   clientId = parseInt(clientId)
 
@@ -1455,7 +1460,7 @@ router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
     const byteRepo = new ByteRepository();
 
     // Create the new byte
-    const newByte = await byteRepo.createByte(recommendation, userId,clientId,email);
+    const newByte = await byteRepo.createByte(recommendation, userId,clientId,email, teamspaceIds, source);
 
     res.json({
       status: 'success',

@@ -287,13 +287,22 @@ export class ByteRepository {
         return filteredByte;        
       }
 
-      async callExternalRecommendationByteService(byteInfo: any, byteSaved: any) {
+      async callExternalRecommendationByteService(byteInfo: any, byteSaved: any, teamspaceIds: any, source: any) {
         try {
           const dataId = uuidv4();
           const teamspaceRepository = AppDataSource.getRepository(Teamspace);
+          let teamspaces = []
+          if(source == 'slack'){
+            // Retrieve all teamspaces from the database
+            teamspaces = await teamspaceRepository.find();
+          }else{
+            teamspaces = await teamspaceRepository.find({
+              where: {
+                id: In(teamspaceIds)
+              }
+            });
+          }
           
-          // Retrieve all teamspaces from the database
-          const teamspaces = await teamspaceRepository.find();
       
           for (const teamspace of teamspaces) {
             // Update s3_db_path and s3_sentenced_document_path dynamically with the teamspace name
@@ -334,7 +343,7 @@ export class ByteRepository {
       }
 
     // Find a byte by its ID
-    async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string): Promise<Byte | null> {
+    async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string, teamspaceIds?: number [], source?: any): Promise<Byte | null> {
         const newByte = await this.byteRepo.create({
             byteInfo,
             requestedBy: user,
@@ -346,7 +355,7 @@ export class ByteRepository {
           });
           let byteSaved = await this.byteRepo.save(newByte);
           let dataId = uuidv4();
-          let response = await this.callExternalRecommendationByteService(byteInfo, byteSaved)
+          let response = await this.callExternalRecommendationByteService(byteInfo, byteSaved, teamspaceIds, source)
           return byteSaved;
     }  
     
