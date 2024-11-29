@@ -66,15 +66,22 @@ export class UserTeamspaceRepository{
       }
 
     async findUserTeamspacesForClient(userId: number): Promise<Teamspace[]> {
-        const results = await this.userTeamspaceRepo
-        .createQueryBuilder('userTeamspace')
-        .innerJoinAndSelect('userTeamspace.user', 'user')
-        .innerJoinAndSelect('userTeamspace.teamspace', 'teamspace')
-        .where('user.id = :userId', { userId })
-        .getMany();
+        // Fetch records with the given userId
+        const results = await this.userTeamspaceRepo.find({
+          where: {
+            user: { id: userId }, // Ensure filtering by userId
+          },
+          relations: ['user', 'teamspace'], // Load the required relations
+        });
       
         console.log('Fetched UserTeamspace records:', results);
-        
+      
+        // If no records are found, return an empty array
+        if (results.length === 0) {
+          console.log('No UserTeamspace records found for userId:', userId);
+          return [];
+        }
+      
         // Map and return only the teamspace objects
         return results.map((record) => record.teamspace);
       }
