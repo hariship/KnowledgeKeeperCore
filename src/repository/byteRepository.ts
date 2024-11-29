@@ -87,8 +87,12 @@ export class ByteRepository {
       });
       const byteTeamspaceRepo = await AppDataSource.getRepository(ByteTeamspace)
       const byteTeamspaceEntries = await byteTeamspaceRepo.find();
-      const byteIdsInTeamspace = byteTeamspaceEntries.map(entry => entry.byteId);
-      bytes = bytes.filter(byte => byteIdsInTeamspace.includes(byte.id));
+      console.log('---before---')
+      console.log(bytes.length)
+      const byteIdsInTeamspace = new Set(byteTeamspaceEntries.map(entry => entry.byteId)); // Convert array to Set
+      bytes = bytes.filter(byte => byteIdsInTeamspace.has(byte.id));
+      console.log('---after---')
+      console.log(bytes.length)
       let filteredBytes = []
       let noOfRecommendations = 0
       for(const byte of bytes){
