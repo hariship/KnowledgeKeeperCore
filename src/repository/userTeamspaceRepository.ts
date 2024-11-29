@@ -71,7 +71,7 @@ export class UserTeamspaceRepository{
           where: {
             user: { id: userId }, // Ensure filtering by userId
           },
-          relations: ['user', 'teamspace'], // Load the required relations
+          relations: ['user', 'teamspace', 'teamspace.folder','teamspace.folder.documents'], // Load the required relations
         });
       
         console.log('Fetched UserTeamspace records:', results);
