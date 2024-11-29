@@ -11,6 +11,7 @@ import { Document } from '../entities/document';
 import { Task } from '../entities/task';
 import { Teamspace } from '../entities/teamspace';
 import { UserTeamspace } from '../entities/user_teamspace';
+import { ByteTeamspace } from '../entities/byte_teamspace';
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -21,7 +22,7 @@ export const AppDataSource = new DataSource({
     database: "knowledgekeeper_develop",
     synchronize: false,
     logging: true,
-    entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document, Task, Teamspace, UserTeamspace],
+    entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document, Task, Teamspace, UserTeamspace, ByteTeamspace],
     migrations: [path.join(__dirname, "migration/*.ts")]
 });
 
