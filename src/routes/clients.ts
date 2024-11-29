@@ -569,7 +569,7 @@ router.post('/modify', async (req: Request, res: Response) => {
     // Update the byte status to resolved
 
     let recommendationsForByte = await byteRepo.getRecommendations(byteDetails);
-
+    console.log(recommendationsForByte)
     if(recommendationsForByte.documents.length == 0){
       // No more recommendations so update the byte as resolved
       const updatedByte = await byteRepo.updateByte(byteId, {status:'resolved'});

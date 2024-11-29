@@ -554,9 +554,9 @@ export class ByteRepository {
         }
 
         const recommendationsForByte = await queryBuilder.getMany();
-    
-        console.log(byte);
-    
+        console.log('recommendationsForByte--',recommendationsForByte)
+        console.log(recommendationsForByte);
+        console.log('recommendationsForByte--',recommendationsForByte)
         const response: any = {
           request_id: byte.id,
           request_text: byte.byteInfo,
