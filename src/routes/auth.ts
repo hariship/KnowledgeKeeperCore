@@ -22,7 +22,7 @@ router.get('/bot/callback', async (req, res) => {
   
   const slackClientId = '7270388447441.8105422196354';
   const slackClientSecret = '5668e19056daddf8624a73ab6c961b58';
-  const redirectUri = 'https://api-core.knowledgekeeper.ai/api/v1/bot/slack/callback'; // Your redirect URL
+  const redirectUri = 'https://api-core.knowledgekeeper.ai/api/v1/auth/bot/callback'; // Your redirect URL
 
   try {
     // Exchange the authorization code for an access token
