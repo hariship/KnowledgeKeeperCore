@@ -40,6 +40,8 @@ router.get('/slack/callback', async (req, res) => {
       // Redirect or show a success message to the user
       res.send("Slack app installed successfully!");
     } else {
+      console.log(response)
+      console.log(response.data)
       res.status(500).send("Slack OAuth failed");
     }
   } catch (error) {
