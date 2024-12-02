@@ -12,6 +12,8 @@ import { Task } from '../entities/task';
 import { Teamspace } from '../entities/teamspace';
 import { UserTeamspace } from '../entities/user_teamspace';
 import { ByteTeamspace } from '../entities/byte_teamspace';
+import { Slack } from '../entities/slack';
+import { SlackTeamspace } from '../entities/slack_teamspace';
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -22,7 +24,7 @@ export const AppDataSource = new DataSource({
     database: "knowledgekeeper",
     synchronize: false,
     logging: true,
-    entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document, Task, Teamspace, UserTeamspace, ByteTeamspace],
+    entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document, Task, Teamspace, UserTeamspace, ByteTeamspace, Slack, SlackTeamspace],
     migrations: [path.join(__dirname, "migration/*.ts")]
 });
 
