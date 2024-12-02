@@ -15,7 +15,6 @@ export class DataSourcets1732699189227 implements MigrationInterface {
                     \"slackId\" INT,
                     \"teamspaceId\" INT,
                     PRIMARY KEY (\"slackId\", \"teamspaceId\")
-                    CONSTRAINT fk_slack FOREIGN KEY ("slackId") REFERENCES slack("id") ON DELETE CASCADE
                 );
             `
         )
