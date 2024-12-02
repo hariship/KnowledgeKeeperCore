@@ -14,6 +14,76 @@ import { Slack } from '../entities/slack';
 const router = Router();
 const userRepository = new UserRepository(); // Initialize the repository
 
+router.get('/bot/callback', async (req, res) => {
+  const code = req.query.code;
+  console.log(req.query)
+  console.log(code)
+  console.log(req.query)
+  
+  const slackClientId = '7270388447441.8105422196354';
+  const slackClientSecret = '5668e19056daddf8624a73ab6c961b58';
+  const redirectUri = 'https://api-core.knowledgekeeper.ai/api/v1/bot/slack/callback'; // Your redirect URL
+
+  try {
+    // Exchange the authorization code for an access token
+    const response = await axios.post('https://slack.com/api/oauth.v2.access', null, {
+      params: {
+        client_id: slackClientId,
+        client_secret: slackClientSecret,
+        code: code,
+        redirect_uri: redirectUri
+      }
+    });
+    console.log(response.data)
+    
+    const { access_token, team } = response.data;
+    
+    if (response.data.ok) {
+      // Store the access token and team details in your database
+      console.log(`Access token: ${access_token}`);
+      console.log(`Team info:`, team);
+
+
+      // Step 2: Save workspace data in the `slack` table
+      const slackRepo = AppDataSource.getRepository(Slack);
+      let slack = await slackRepo.findOne({ where: { id: team.id } });
+
+      if (!slack) {
+        slack = new Slack();
+        slack.id = team.id;
+        slack.teamName = team.name;
+        await slackRepo.save(slack);
+      }
+
+        // // Step 3: Create an entry in the `slack_teamspace` table
+        // const slackTeamspaceRepo = AppDataSource.getRepository(SlackTeamspace);
+        // const slackTeamspace = new SlackTeamspace();
+        // slackTeamspace.slackId = slack.id;
+        // slackTeamspace.teamspaceId = 1; // Default teamspace ID (update based on your logic)
+        // await slackTeamspaceRepo.save(slackTeamspace);
+
+        // Step 4: Give access to all channels (optional based on your app logic)
+        // const channelResponse = await axios.get('https://slack.com/api/conversations.list', {
+        //   headers: {
+        //     Authorization: `Bearer ${access_token}`,
+        //   },
+        // });
+
+        // const channels = channelResponse.data.channels;
+        // console.log('Channels:', channels);
+
+        res.send('Slack integration successful!');
+    } else {
+      // console.log(response)
+      // console.log(response.data)
+      res.status(500).send("Slack OAuth failed");
+    }
+  } catch (error) {
+    console.error("Error in Slack OAuth callback:", error);
+    res.status(500).send("Error during Slack OAuth");
+  }
+});
+
 
 router.get('/slack/callback', async (req, res) => {
   const code = req.query.code;
