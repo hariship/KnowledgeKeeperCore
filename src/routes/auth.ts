@@ -16,6 +16,7 @@ router.get('/slack/callback', async (req, res) => {
   const code = req.query.code;
   console.log(req.query)
   console.log(code)
+  console.log(req.query)
   
   const slackClientId = '7270388447441.7774073893426';
   const slackClientSecret = '99bcc2858d7d9f40792e21faf6b7f90b';
@@ -31,6 +32,7 @@ router.get('/slack/callback', async (req, res) => {
         redirect_uri: redirectUri
       }
     });
+    console.log(response.data)
     
     const { access_token, team } = response.data;
     
