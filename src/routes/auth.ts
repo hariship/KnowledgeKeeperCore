@@ -45,15 +45,15 @@ router.get('/bot/callback', async (req, res) => {
 
 
       // Step 2: Save workspace data in the `slack` table
-      const slackRepo = AppDataSource.getRepository(Slack);
-      let slack = await slackRepo.findOne({ where: { id: team.id } });
+      // const slackRepo = AppDataSource.getRepository(Slack);
+      // let slack = await slackRepo.findOne({ where: { id: team.id } });
 
-      if (!slack) {
-        slack = new Slack();
-        slack.id = team.id;
-        slack.teamName = team.name;
-        await slackRepo.save(slack);
-      }
+      // if (!slack) {
+      //   slack = new Slack();
+      //   slack.id = team.id;
+      //   slack.teamName = team.name;
+      //   await slackRepo.save(slack);
+      // }
 
         // // Step 3: Create an entry in the `slack_teamspace` table
         // const slackTeamspaceRepo = AppDataSource.getRepository(SlackTeamspace);
@@ -116,15 +116,15 @@ router.get('/slack/callback', async (req, res) => {
 
 
       // Step 2: Save workspace data in the `slack` table
-      const slackRepo = AppDataSource.getRepository(Slack);
-      let slack = await slackRepo.findOne({ where: { id: team.id } });
+      // const slackRepo = AppDataSource.getRepository(Slack);
+      // let slack = await slackRepo.findOne({ where: { id: team.id } });
 
-      if (!slack) {
-        slack = new Slack();
-        slack.id = team.id;
-        slack.teamName = team.name;
-        await slackRepo.save(slack);
-      }
+      // if (!slack) {
+      //   slack = new Slack();
+      //   slack.id = team.id;
+      //   slack.teamName = team.name;
+      //   await slackRepo.save(slack);
+      // }
 
         // // Step 3: Create an entry in the `slack_teamspace` table
         // const slackTeamspaceRepo = AppDataSource.getRepository(SlackTeamspace);
