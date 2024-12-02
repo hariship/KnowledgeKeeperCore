@@ -14,6 +14,8 @@ const userRepository = new UserRepository(); // Initialize the repository
 
 router.get('/slack/callback', async (req, res) => {
   const code = req.query.code;
+  console.log(req.query)
+  console.log(code)
   
   const slackClientId = '7270388447441.7774073893426';
   const slackClientSecret = '99bcc2858d7d9f40792e21faf6b7f90b';
@@ -40,8 +42,8 @@ router.get('/slack/callback', async (req, res) => {
       // Redirect or show a success message to the user
       res.send("Slack app installed successfully!");
     } else {
-      console.log(response)
-      console.log(response.data)
+      // console.log(response)
+      // console.log(response.data)
       res.status(500).send("Slack OAuth failed");
     }
   } catch (error) {
