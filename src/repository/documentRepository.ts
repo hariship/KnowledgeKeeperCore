@@ -135,6 +135,8 @@ export class DocumentRepository {
         // Your logic to remove the document from the recommendation system goes here
         // For example, you might call a service to update the recommendation system.
         const byteRepo = new ByteRepository();
+        const changeLogRepo = new ChangeLogRepository();
+        await changeLogRepo.deleteChangeLogBasedOnDocId([docId])
         await byteRepo.deleteRecommendationByDocId(docId);
         return true;
     }
