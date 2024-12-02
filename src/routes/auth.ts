@@ -7,6 +7,9 @@ import { GOOGLE_OAUTH_URL, MESSAGES, OAUTH_PROVIDERS } from '../utils/constants'
 import { KnowledgeKeeperError } from '../errors/errors';
 import { KNOWLEDGE_KEEPER_ERROR } from '../errors/errorConstants';
 import { authenticate } from '../modules/authModule';
+import { AppDataSource } from '../db/data_source';
+import { SlackTeamspace } from '../entities/slack_teamspace';
+import { Slack } from '../entities/slack';
 
 const router = Router();
 const userRepository = new UserRepository(); // Initialize the repository
@@ -41,8 +44,36 @@ router.get('/slack/callback', async (req, res) => {
       console.log(`Access token: ${access_token}`);
       console.log(`Team info:`, team);
 
-      // Redirect or show a success message to the user
-      res.send("Slack app installed successfully!");
+
+      // Step 2: Save workspace data in the `slack` table
+      const slackRepo = AppDataSource.getRepository(Slack);
+      let slack = await slackRepo.findOne({ where: { id: team.id } });
+
+      if (!slack) {
+        slack = new Slack();
+        slack.id = team.id;
+        slack.teamName = team.name;
+        await slackRepo.save(slack);
+      }
+
+        // // Step 3: Create an entry in the `slack_teamspace` table
+        // const slackTeamspaceRepo = AppDataSource.getRepository(SlackTeamspace);
+        // const slackTeamspace = new SlackTeamspace();
+        // slackTeamspace.slackId = slack.id;
+        // slackTeamspace.teamspaceId = 1; // Default teamspace ID (update based on your logic)
+        // await slackTeamspaceRepo.save(slackTeamspace);
+
+        // Step 4: Give access to all channels (optional based on your app logic)
+        // const channelResponse = await axios.get('https://slack.com/api/conversations.list', {
+        //   headers: {
+        //     Authorization: `Bearer ${access_token}`,
+        //   },
+        // });
+
+        // const channels = channelResponse.data.channels;
+        // console.log('Channels:', channels);
+
+        res.send('Slack integration successful!');
     } else {
       // console.log(response)
       // console.log(response.data)

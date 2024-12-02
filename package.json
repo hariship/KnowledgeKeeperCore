@@ -14,7 +14,7 @@
     "migration:run:dev": "npm run typeorm:dev -- migration:run -d src/db/data_source.ts",
     "migration:run:prod": "npm run typeorm:prod -- migration:run -d dist/db/data_source.ts",
     "migration:generate": "npm run typeorm migration:generate -d src/db/data_source.ts",
-    "migration:create": "npm run typeorm migration:create -d src/db/data_source.ts"
+    "migration:create": "npm run typeorm:dev migration:create -d src/db/data_source.ts"
   },
   "keywords": [],
   "author": "",
