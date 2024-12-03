@@ -42,6 +42,19 @@ router.get('/bot/callback', async (req, res) => {
       // Store the access token and team details in your database
       console.log(`Access token: ${access_token}`);
       console.log(`Team info:`, team);
+     
+     
+      // Step 2: Save workspace data in the `slack` table
+      const slackRepo = AppDataSource.getRepository(Slack);
+      let slack = await slackRepo.findOne({ where: { id: team.id } });
+
+      if (!slack) {
+        slack = new Slack();
+        slack.id = team.id;
+        slack.teamName = team.name;
+        slack.accessToken = team.access_token
+        await slackRepo.save(slack);
+      }
 
 
       // Step 2: Save workspace data in the `slack` table
