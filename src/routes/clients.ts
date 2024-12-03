@@ -2889,6 +2889,7 @@ router.get('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
     }
     res.status(200).json(teamspace);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: 'Could not retrieve teamspace' });
   }
 });
@@ -3228,7 +3229,7 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
  * /clients/{clientId}/teamspaces/channels:
  *   get:
  *     summary: Get teamspace channels by user email
- *     tags: [Teamspaces]
+ *     tags: [Slack]
  *     parameters:
  *       - in: path
  *         name: clientId
@@ -3265,7 +3266,7 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
  *       404:
  *         description: No channels found for the given email
  *       500:
- *         description: Could not retrieve teamspace channels
+ *         description: Could not retrieve teamspace-channels
  */
 router.get('/:clientId/teamspaces/channels', async (req, res) => {
   const { email } = req.query;
@@ -3273,6 +3274,7 @@ router.get('/:clientId/teamspaces/channels', async (req, res) => {
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ error: 'Invalid or missing email parameter' });
   }
+  console.log(email)
 
   try {
     const teamspaceChannelsRepository = new TeamspaceChannelsRepository(); // Assuming repository class exists
@@ -3282,7 +3284,7 @@ router.get('/:clientId/teamspaces/channels', async (req, res) => {
     return res.status(200).json(channels);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Could not retrieve teamspace channels' });
+    return res.status(500).json({ error: 'Could not retrieve teamspace-channels' });
   }
 });
 
