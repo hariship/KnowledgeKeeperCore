@@ -14,6 +14,9 @@ import {
   
     @Column({ type: 'varchar', length: 255 })
     teamName: string;
+
+    @Column({ type: 'varchar', length: 500 })
+    accessToken: string;
   
     @CreateDateColumn()
     createdAt: Date;
