@@ -6,7 +6,7 @@ export class DataSourcets1732699189228 implements MigrationInterface {
         await queryRunner.query(
             `
             CREATE TABLE teamspace_channels (
-                teamspaceId UUID PRIMARY KEY,   -- Unique identifier for each teamspace
+                "teamspaceId" UUID PRIMARY KEY,   -- Unique identifier for each teamspace
                 email VARCHAR(500) DEFAULT NULL,   --- Unique email of the user
                 channels TEXT[] DEFAULT '{}'    -- Array of channels, defaulting to an empty array
             );
