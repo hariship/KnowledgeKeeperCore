@@ -1430,7 +1430,8 @@ router.post('/:clientId/teamspaces/:teamspaceId/folders/unique', async (req, res
 
 // Create a new byte (recommendation)
 router.post('/:clientId/bytes/create', verifyToken, async (req:any, res) => {
-  let { recommendation, email, source } = req.body;
+  console.log(req.body)
+  let { recommendation, email, source  } = req.body;
   let { clientId }: any = req.params;
   const userId = req.user.userId
 
