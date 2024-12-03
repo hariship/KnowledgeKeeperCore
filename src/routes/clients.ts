@@ -2881,7 +2881,6 @@ router.get('/:clientId/teamspaces', verifyToken, async (req:any, res) => {
 router.get('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
   const teamspaceId = parseInt(req.params.teamspaceId);
   const teamspaceRepository = new TeamspaceRepository();
-  console.log('I am called')
   try {
     const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId);
     if (!teamspace) {
@@ -3226,7 +3225,7 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
 
 /**
  * @swagger
- * /clients/{clientId}/teamspaces/channels:
+ * /clients/{clientId}/teamspace/channels:
  *   get:
  *     summary: Get teamspace channels by user email
  *     tags: [Slack]
@@ -3268,7 +3267,7 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
  *       500:
  *         description: Could not retrieve teamspace-channels
  */
-router.get('/:clientId/teamspaces/channels', async (req, res) => {
+router.get('/:clientId/teamspace/channels', async (req, res) => {
   const { email } = req.query;
 
   if (!email || typeof email !== 'string') {
