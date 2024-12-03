@@ -3396,7 +3396,7 @@ router.get('/:clientId/slack', async (req, res) => {
  *       500:
  *         description: Could not save the channel
  */
-router.post('/:clientId/slack/assign-user-to-channel-and-bot', async (req, res) => {
+router.post('/:clientId/slack/assign-user-to-channel-and-bot',authenticate, async (req, res) => {
   const { clientId } = req.params;
   const { teamspaceName, email, channel } = req.body;
 
