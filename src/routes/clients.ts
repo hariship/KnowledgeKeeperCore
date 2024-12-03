@@ -3349,4 +3349,99 @@ router.get('/:clientId/slack', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /clients/{clientId}/slack/assign-user-to-channel-and-bot:
+ *   post:
+ *     summary: Save a Slack channel for a teamspace
+ *     tags: [Slack]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               teamspaceName:
+ *                 type: string
+ *                 example: "WakeCap"
+ *               email:
+ *                 type: string
+ *                 example: "rahul.shetty@wakecap.com"
+ *               channel:
+ *                 type: string
+ *                 example: "backend"
+ *     responses:
+ *       200:
+ *         description: Channel saved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Channel saved successfully"
+ *       400:
+ *         description: Invalid or missing parameters
+ *       404:
+ *         description: Teamspace not found
+ *       500:
+ *         description: Could not save the channel
+ */
+router.post('/:clientId/slack/assign-user-to-channel-and-bot', async (req, res) => {
+  const { clientId } = req.params;
+  const { teamspaceName, email, channel } = req.body;
+
+  // Validate input
+  if (!teamspaceName || !email || !channel || typeof teamspaceName !== 'string' || typeof email !== 'string' || typeof channel !== 'string') {
+    return res.status(400).json({ error: 'Invalid or missing parameters' });
+  }
+
+  try {
+    const teamspaceChannelsRepository = new TeamspaceChannelsRepository(); // Assuming repository class exists
+    const teamspaceRepository = new TeamspaceRepository(); // Assuming repository for teamspace exists
+    // Find teamspace by name
+    const teamspace = await teamspaceRepository.findByTeamspaceName(teamspaceName);
+
+    if (!teamspace) {
+      // Create Teamspace using that name if not already exists and add to user_teamspace
+      const clientRepo = new ClientRepository();
+      const userTeampsaceRepo = new UserTeamspaceRepository();
+      const userRepo = new UserRepository();
+      const user = await userRepo.findUserByEmail(email)
+      const client = await clientRepo.findClientById(5);
+      if(client){
+        const teamspaceData = {
+          teamspaceName,
+          client,
+          isTrained: false,
+          reTrainingRequired: false,
+          totalNumberOfDocs: 0
+        };
+        const teamspace = await teamspaceRepository.createTeamspace(teamspaceData)
+        if(user){
+          await userTeampsaceRepo.saveUserTeamspace(user.id,teamspace?.id,'MEMBER','OWNER')
+        }  
+      }
+
+    }
+
+    // Save the channel
+    await teamspaceChannelsRepository.saveTeamspaceChannelUsingTeamspaceName(teamspaceName, email, channel);
+
+    return res.status(200).json({ message: 'Channel saved successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Could not save the channel' });
+  }
+});
+
 export default router;
