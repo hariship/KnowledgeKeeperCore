@@ -52,7 +52,10 @@ router.get('/bot/callback', async (req, res) => {
         slack = new Slack();
         slack.id = team.id;
         slack.teamName = team.name;
-        slack.accessToken = team.access_token
+        slack.accessToken = access_token
+        await slackRepo.save(slack);
+      }else if(slack){
+        slack.accessToken = access_token
         await slackRepo.save(slack);
       }
 
