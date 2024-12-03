@@ -22,6 +22,7 @@ import { TaskRepository } from '../repository/taskRepository';
 import { UserTeamspaceRepository } from '../repository/userTeamspaceRepository';
 import { UserTeamspace } from '../entities/user_teamspace';
 import { getStructuredHTMLDiff } from '../modules/userModule';
+import { TeamspaceChannelsRepository } from '../repository/teamspaceChannelsRepository';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -3219,6 +3220,68 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
   } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Could not invite user' });
+  }
+});
+
+/**
+ * @swagger
+ * /clients/{clientId}/teamspaces/channels:
+ *   get:
+ *     summary: Get teamspace channels by user email
+ *     tags: [Teamspaces]
+ *    parameters:
+ *       - in: path
+ *         name: teamspaceId
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The email of the user to fetch associated teamspace channels
+ *     responses:
+ *       200:
+ *         description: Teamspace channels retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   teamspaceId:
+ *                     type: string
+ *                     example: "550e8400-e29b-41d4-a716-446655440000"
+ *                   channels:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: ["backend", "design"]
+ *       400:
+ *         description: Invalid or missing email
+ *       404:
+ *         description: No channels found for the given email
+ *       500:
+ *         description: Could not retrieve teamspace channels
+ */
+router.get('/:clientId/teamspaces/channels', async (req, res) => {
+  const { email } = req.query;
+
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Invalid or missing email parameter' });
+  }
+
+  try {
+    const teamspaceChannelsRepository = new TeamspaceChannelsRepository(); // Assuming repository class exists
+    const channels = await teamspaceChannelsRepository.getTeamspaceChannelsByUser(email.toLowerCase());
+
+    if (!channels || channels.length === 0) {
+      return res.status(404).json({ error: 'No channels found for the given email' });
+    }
+
+    return res.status(200).json(channels);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Could not retrieve teamspace channels' });
   }
 });
 
