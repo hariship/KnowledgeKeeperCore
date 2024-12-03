@@ -381,6 +381,7 @@ export class ByteRepository {
         const teamspaceChannelRepo = new TeamspaceChannelsRepository();
         if(email){
           const teamspaceChannels = await teamspaceChannelRepo.getTeamspaceChannelsByUser(email);
+          console.log(teamspaceChannels)
           // Iterate through the results to check if the channel exists
           for (const entry of teamspaceChannels) {
             teamspaceIds = []
