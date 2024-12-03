@@ -2881,7 +2881,7 @@ router.get('/:clientId/teamspaces', verifyToken, async (req:any, res) => {
 router.get('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
   const teamspaceId = parseInt(req.params.teamspaceId);
   const teamspaceRepository = new TeamspaceRepository();
-
+  console.log('I am called')
   try {
     const teamspace = await teamspaceRepository.getTeamspaceById(teamspaceId);
     if (!teamspace) {
