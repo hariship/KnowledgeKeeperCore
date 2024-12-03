@@ -14,6 +14,7 @@ import { Not } from 'typeorm';
 import { Teamspace } from "../entities/teamspace";
 import { ChangeLogRepository } from "./changeLogRespository";
 import { ByteTeamspace } from "../entities/byte_teamspace";
+import { TeamspaceChannelsRepository } from "./teamspaceChannelsRepository";
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
@@ -372,8 +373,26 @@ export class ByteRepository {
       }
 
     // Find a byte by its ID
-    async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string, teamspaceIds?: number [], source?: any): Promise<Byte | null> {
-        const newByte = await this.byteRepo.create({
+    async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string, teamspaceIds?: number [], source?: any, channel?: any): Promise<Byte | null> {
+        
+      if(source == 'slack'){
+        // check for channel
+        // get user recommendation by email
+        const teamspaceChannelRepo = new TeamspaceChannelsRepository();
+        if(email){
+          const teamspaceChannels = await teamspaceChannelRepo.getTeamspaceChannelsByUser(email);
+          // Iterate through the results to check if the channel exists
+          for (const entry of teamspaceChannels) {
+            teamspaceIds = []
+            if (entry.channels.includes(channel)) {
+              console.log(`Channel found! TeamspaceId: ${entry.teamspaceId}`);
+              teamspaceIds?.push(parseInt(entry.teamspaceId)); // Return the teamspaceId if the channel is found
+            }
+          }
+
+        }
+      }
+      const newByte = await this.byteRepo.create({
             byteInfo,
             requestedBy: user,
             noOfRecommendations: 0,
@@ -383,7 +402,7 @@ export class ByteRepository {
             requestedByEmail: email
           });
           let byteSaved = await this.byteRepo.save(newByte);
-          console.log('teamspaceIds',teamspaceIds)
+          console.log('teamspaceIds',teamspaceIds);
           if(teamspaceIds && teamspaceIds.length > 0){
             const byteTeamRepo = AppDataSource.getRepository(ByteTeamspace);
             for(const teamspaceId of teamspaceIds){
