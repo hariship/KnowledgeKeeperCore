@@ -226,17 +226,10 @@ export class TaskRepository {
     
                 const reponseTaskStatus = response.data.status;
                 const taskName = response.data.task_name;
-                console.log(response.data.task_name)
                 const result = response.data.result;
     
-                console.log(`Task ${task.taskId} status: ${reponseTaskStatus}`);
-                console.log(response.data.result)
-                console.log('taskStatus',task.taskStatus)
-                console.log('responseTaskName',task.taskName)
-                console.log('responseStatus',reponseTaskStatus)
                 if (task.taskStatus === STATUS.PENDING && reponseTaskStatus === STATUS.COMPLETED && taskName === TASK_NAMES.SPLIT_DATA_INTO_CHUNKS) {
                     // Update task status in the DB
-                    console.log('coming here')
                     await this.updateTaskStatus(task.taskId, reponseTaskStatus);
 
                     // Once the task is completed, update the documents
@@ -246,7 +239,6 @@ export class TaskRepository {
                     const documentRepo = new DocumentRepository();
                     console.log(response.data.result)
 
-                    console.log('split data',response.data)
                     await documentRepo.updateDocumentsWithParsedData(parsed_document, collection_name);
     
                     console.log(`Documents updated with parsed data for task: ${task.taskId}`);
@@ -269,7 +261,6 @@ export class TaskRepository {
     
                     console.log(`Documents updated with parsed data for task: ${task.taskId}`);
                 }
-                console.log('not coming here')
 
             }
         } catch (error:any) {
