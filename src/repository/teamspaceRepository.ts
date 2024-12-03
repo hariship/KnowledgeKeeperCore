@@ -47,6 +47,14 @@ export class TeamspaceRepository{
     });
   }
 
+  async findByTeamspaceName(teamspaceName: string) {
+    return this.teamspaceRepo.findOne({
+      where: {
+        teamspaceName
+      }
+    })
+  }
+
   // Get a teamspace by its ID
   async getTeamspaceById(teamspaceId: number): Promise<Teamspace | null> {
     return this.teamspaceRepo.findOne({
