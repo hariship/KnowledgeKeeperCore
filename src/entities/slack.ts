@@ -10,7 +10,7 @@ import {
   @Entity('slack')
   export class Slack {
     @PrimaryGeneratedColumn()
-    id: number;
+    id: string;
   
     @Column({ type: 'varchar', length: 255 })
     teamName: string;

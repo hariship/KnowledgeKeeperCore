@@ -6,7 +6,7 @@ export class DataSourcets1732699189227 implements MigrationInterface {
         await queryRunner.query(
             `
                 CREATE TABLE slack (
-                    "id" INT PRIMARY KEY,   
+                    "id" TEXT PRIMARY KEY,   
                     "teamName" VARCHAR(255) NOT NULL,
                     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
                 );
