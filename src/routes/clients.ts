@@ -2894,7 +2894,6 @@ router.get('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
   }
 });
 
-// Update a teamspace by ID
 /**
  * @swagger
  * /clients/{clientId}/teamspaces/{teamspaceId}:
@@ -2941,6 +2940,7 @@ router.put('/:clientId/teamspaces/:teamspaceId', async (req, res) => {
     }
     res.status(200).json(updatedTeamspace);
   } catch (error) {
+    console.log(error)
     res.status(400).json({ error: 'Could not update teamspace' });
   }
 });
