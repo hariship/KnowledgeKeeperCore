@@ -23,6 +23,7 @@ import { UserTeamspaceRepository } from '../repository/userTeamspaceRepository';
 import { UserTeamspace } from '../entities/user_teamspace';
 import { getStructuredHTMLDiff } from '../modules/userModule';
 import { TeamspaceChannelsRepository } from '../repository/teamspaceChannelsRepository';
+import { SlackRepository } from '../repository/slackRepository';
 const { v4: uuidv4 } = require('uuid');
 
 const router = Router();
@@ -3282,6 +3283,66 @@ router.get('/:clientId/teamspace/channels', async (req, res) => {
     console.log(channels)
 
     return res.status(200).json(channels);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Could not retrieve teamspace-channels' });
+  }
+});
+
+/**
+ * @swagger
+ * /clients/{clientId}/slack:
+ *   get:
+ *     summary: Get slack Token by Id
+ *     tags: [Slack]
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
+ *       - in: query
+ *         name: slackId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The slackId to retrieve token
+ *     responses:
+ *       200:
+ *         description: Slack Token retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 slackId:
+ *                   type: string
+ *                   example: "T3DSDF3FD"
+ *                 accessToken:
+ *                   type: string
+ *                   example: "xof-adfasdfsddf-dafdsfdasf-sadfasdfasx"
+ *       400:
+ *         description: Invalid or missing email
+ *       404:
+ *         description: No channels found for the given email
+ *       500:
+ *         description: Could not retrieve teamspace-channels
+ */
+router.get('/:clientId/slack', async (req, res) => {
+  const { slackId } = req.query;
+
+  if (!slackId || typeof slackId !== 'string') {
+    return res.status(400).json({ error: 'Invalid or missing slackId parameter' });
+  }
+  console.log(slackId)
+
+  try {
+    const slackRepository = new SlackRepository(); // Assuming repository class exists
+    const slackDetails = await slackRepository.getSlackTokensById(slackId);
+    console.log(slackDetails)
+
+    return res.status(200).json(slackDetails);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Could not retrieve teamspace-channels' });
