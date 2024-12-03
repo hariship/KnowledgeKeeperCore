@@ -373,7 +373,7 @@ export class ByteRepository {
       }
 
     // Find a byte by its ID
-    async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string, teamspaceIds?: number [], source?: any, channel?: any): Promise<Byte | null> {
+    async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string, teamspaceIds?: number [], source?: any, channel?: any): Promise<Byte | null | Boolean> {
         
       if(source == 'slack'){
         // check for channel
@@ -382,38 +382,42 @@ export class ByteRepository {
         if(email){
           const teamspaceChannels = await teamspaceChannelRepo.getTeamspaceChannelsByUser(email);
           console.log(teamspaceChannels)
+          teamspaceIds = []
           // Iterate through the results to check if the channel exists
           for (const entry of teamspaceChannels) {
-            teamspaceIds = []
+            console.log(channel)
+            console.log(`Channels for TeamspaceId ${entry.teamspaceId}:`, entry.channels);
             if (entry.channels.includes(channel)) {
               console.log(`Channel found! TeamspaceId: ${entry.teamspaceId}`);
-              teamspaceIds?.push(parseInt(entry.teamspaceId)); // Return the teamspaceId if the channel is found
+              teamspaceIds.push(parseInt(entry.teamspaceId)); // Accumulate the teamspaceId
             }
           }
-
         }
       }
-      const newByte = await this.byteRepo.create({
-            byteInfo,
-            requestedBy: user,
-            noOfRecommendations: 0,
-            isProcessedByRecommendation: false,
-            status: 'open',
-            clientId,
-            requestedByEmail: email
-          });
-          let byteSaved = await this.byteRepo.save(newByte);
-          console.log('teamspaceIds',teamspaceIds);
-          if(teamspaceIds && teamspaceIds.length > 0){
-            const byteTeamRepo = AppDataSource.getRepository(ByteTeamspace);
-            for(const teamspaceId of teamspaceIds){
-              const byteSaved = await byteTeamRepo.create({byteId: newByte.id, teamspaceId})
-              await byteTeamRepo.save(byteSaved)
-            }
+      if(teamspaceIds && teamspaceIds.length > 0){
+        const newByte = await this.byteRepo.create({
+          byteInfo,
+          requestedBy: user,
+          noOfRecommendations: 0,
+          isProcessedByRecommendation: false,
+          status: 'open',
+          clientId,
+          requestedByEmail: email
+        });
+        let byteSaved = await this.byteRepo.save(newByte);
+        console.log('teamspaceIds',teamspaceIds);
+        if(teamspaceIds && teamspaceIds.length > 0){
+          const byteTeamRepo = AppDataSource.getRepository(ByteTeamspace);
+          for(const teamspaceId of teamspaceIds){
+            const byteSaved = await byteTeamRepo.create({byteId: newByte.id, teamspaceId})
+            await byteTeamRepo.save(byteSaved)
           }
-          let dataId = uuidv4();
-          let response = await this.callExternalRecommendationByteService(byteInfo, byteSaved, teamspaceIds, source)
-          return byteSaved;
+        }
+        let dataId = uuidv4();
+        let response = await this.callExternalRecommendationByteService(byteInfo, byteSaved, teamspaceIds, source)
+        return byteSaved;
+      }
+      return true;
     }  
     
     async updateByte(byteId: any, updatedData: any): Promise<Byte | null> {
