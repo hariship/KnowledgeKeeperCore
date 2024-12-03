@@ -4,12 +4,13 @@ import {
     Column,
     OneToMany,
     CreateDateColumn,
+    PrimaryColumn,
   } from 'typeorm';
   import { SlackTeamspace } from './slack_teamspace';
   
   @Entity('slack')
   export class Slack {
-    @PrimaryGeneratedColumn()
+    @PrimaryColumn({ type: 'varchar', length: 255 }) // Set id as a primary key with type 'varchar'
     id: string;
   
     @Column({ type: 'varchar', length: 255 })

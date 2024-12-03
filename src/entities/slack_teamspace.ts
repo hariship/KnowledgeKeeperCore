@@ -9,7 +9,7 @@ import {
   @Entity('slack_teamspace')
   export class SlackTeamspace {
     @PrimaryColumn()
-    slackId: number;
+    slackId: string;
   
     @PrimaryColumn()
     teamspaceId: number;
