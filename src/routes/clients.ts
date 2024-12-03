@@ -3277,7 +3277,7 @@ router.get('/:clientId/teamspaces/channels', async (req, res) => {
   try {
     const teamspaceChannelsRepository = new TeamspaceChannelsRepository(); // Assuming repository class exists
     const channels = await teamspaceChannelsRepository.getTeamspaceChannelsByUser(email.toLowerCase());
-
+    console.log(channels)
     if (!channels || channels.length === 0) {
       return res.status(404).json({ error: 'No channels found for the given email' });
     }
