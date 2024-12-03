@@ -3229,9 +3229,13 @@ router.post('/:clientId/teamspaces/:teamspaceId/invite', async (req, res) => {
  *   get:
  *     summary: Get teamspace channels by user email
  *     tags: [Teamspaces]
- *    parameters:
+ *     parameters:
  *       - in: path
- *         name: teamspaceId
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the client
  *       - in: query
  *         name: email
  *         schema:
