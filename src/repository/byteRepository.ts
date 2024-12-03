@@ -374,7 +374,7 @@ export class ByteRepository {
 
     // Find a byte by its ID
     async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string, teamspaceIds?: number [], source?: any, channel?: any): Promise<Byte | null | Boolean> {
-        
+      let userTeamspaceIds = teamspaceIds
       if(source == 'slack'){
         // check for channel
         // get user recommendation by email
@@ -386,6 +386,9 @@ export class ByteRepository {
           // Iterate through the results to check if the channel exists
           for (const entry of teamspaceChannels) {
             console.log(channel)
+            if(entry.channels.length == 0 && userTeamspaceIds){
+              teamspaceIds.push(...userTeamspaceIds)
+            }
             console.log(`Channels for TeamspaceId ${entry.teamspaceId}:`, entry.channels);
             if (entry.channels.includes(channel)) {
               console.log(`Channel found! TeamspaceId: ${entry.teamspaceId}`);

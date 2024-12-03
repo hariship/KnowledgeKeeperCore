@@ -55,6 +55,7 @@ router.get('/bot/callback', async (req, res) => {
         slack.accessToken = access_token
         await slackRepo.save(slack);
       }else if(slack){
+        console.log('Saving access token', access_token)
         slack.accessToken = access_token
         await slackRepo.save(slack);
       }
