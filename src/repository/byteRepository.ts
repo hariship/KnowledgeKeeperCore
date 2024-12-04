@@ -422,6 +422,8 @@ export class ByteRepository {
             if (!userTeamspaceIds.includes(entry.teamspaceId)) {
               await userTeamspaceRepo.saveUserTeamspace(user.id, entry.teamspaceId);
             }
+          }else if(entry.channels.length == 0){
+            teamspaceIds.push(parseInt(entry.teamspaceId));
           }
         }
       
