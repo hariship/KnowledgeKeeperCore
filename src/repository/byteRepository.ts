@@ -78,7 +78,7 @@ export class ByteRepository {
     }
 
     async filterBytesWithUpdatedNoOfRecommendationCount(clientId:any, status: string,teamspaceIds:any){
-      console.log('teamspaceIds--------=')
+      console.log('Existing teamspaceIds--------=')
       console.log(teamspaceIds)  
       console.log('teamspaceIds--------=')
       let bytes = await this.byteRepo.find({
@@ -374,62 +374,93 @@ export class ByteRepository {
         }
       }
 
-    // Find a byte by its ID
-    async createByte(byteInfo: any, user: UserDetails, clientId:any, email?:string, teamspaceIds?: number [], source?: any, channel?: any): Promise<Byte | null | Boolean> {
-      let userTeamspaceIds = teamspaceIds
-      if(source == 'slack'){
-        // check for channel
-        // get user recommendation by email
-        const teamspaceChannelRepo = new TeamspaceChannelsRepository();
-        if(email){
-          const teamspaceChannels = await teamspaceChannelRepo.getTeamspaceChannelsByUser(email);
-          console.log(teamspaceChannels)
-          teamspaceIds = []
-          // Iterate through the results to check if the channel exists
-          for (const entry of teamspaceChannels) {
-            console.log(channel)
-            if(entry.channels.length == 0 && userTeamspaceIds){
-              teamspaceIds.push(...userTeamspaceIds)
-            }
-            console.log(`Channels for TeamspaceId ${entry.teamspaceId}:`, entry.channels);
-            if (entry.channels.includes(channel)) {
-              console.log(`Channel found! TeamspaceId: ${entry.teamspaceId}`);
-              teamspaceIds.push(parseInt(entry.teamspaceId)); // Accumulate the teamspaceId
-              // Insert the teamspace for user if not already present
-              const userTeamspaceRepo = new UserTeamspaceRepository();
-              const teamspacesForUser = await userTeamspaceRepo.findTeamspacesForUser(user.id);
-              const userTeamspaceIds = teamspacesForUser.map((userTeamspace) => userTeamspace.teamspace.id);
-              if(!userTeamspaceIds.includes(entry.teamspaceId)){
-                await userTeamspaceRepo.saveUserTeamspace(user.id, entry.teamspaceId)
-              }
-            }
-          }
-        }
-      }
-      if(teamspaceIds && teamspaceIds.length > 0){
-        const newByte = await this.byteRepo.create({
+      private async saveNewByte(
+        byteInfo: any,
+        user: UserDetails,
+        clientId: any,
+        email?: string
+      ): Promise<Byte> {
+        const newByte = this.byteRepo.create({
           byteInfo,
           requestedBy: user,
           noOfRecommendations: 0,
           isProcessedByRecommendation: false,
           status: 'open',
           clientId,
-          requestedByEmail: email
+          requestedByEmail: email,
         });
-        let byteSaved = await this.byteRepo.save(newByte);
-        console.log('teamspaceIds',teamspaceIds);
-        if(teamspaceIds && teamspaceIds.length > 0){
-          const byteTeamRepo = AppDataSource.getRepository(ByteTeamspace);
-          for(const teamspaceId of teamspaceIds){
-            const byteSaved = await byteTeamRepo.create({byteId: newByte.id, teamspaceId})
-            await byteTeamRepo.save(byteSaved)
+      
+        return this.byteRepo.save(newByte);
+      }
+
+      private async linkByteToTeamspaces(byteId: number, teamspaceIds: number[]): Promise<void> {
+        const byteTeamRepo = AppDataSource.getRepository(ByteTeamspace);
+      
+        for (const teamspaceId of teamspaceIds) {
+          const byteTeamspace = byteTeamRepo.create({ byteId, teamspaceId });
+          await byteTeamRepo.save(byteTeamspace);
+        }
+      }
+
+      private async handleSlackSource(
+        email: string | undefined,
+        channel: string,
+        user: UserDetails
+      ): Promise<number[]> {
+        if (!email) return [];
+      
+        const teamspaceChannelRepo = new TeamspaceChannelsRepository();
+        const userTeamspaceRepo = new UserTeamspaceRepository();
+        const teamspaceChannels = await teamspaceChannelRepo.getTeamspaceChannelsByUser(email);
+      
+        const teamspaceIds: number[] = [];
+      
+        for (const entry of teamspaceChannels) {
+          console.log(`Channels for TeamspaceId ${entry.teamspaceId}:`, entry.channels);
+          if (entry.channels.includes(channel)) {
+            console.log(`Channel found! TeamspaceId: ${entry.teamspaceId}`);
+            teamspaceIds.push(parseInt(entry.teamspaceId));
+      
+            const teamspacesForUser = await userTeamspaceRepo.findTeamspacesForUser(user.id);
+            const userTeamspaceIds = teamspacesForUser.map((userTeamspace) => userTeamspace.teamspace.id);
+      
+            if (!userTeamspaceIds.includes(entry.teamspaceId)) {
+              await userTeamspaceRepo.saveUserTeamspace(user.id, entry.teamspaceId);
+            }
           }
         }
-        let dataId = uuidv4();
-        let response = await this.callExternalRecommendationByteService(byteInfo, byteSaved, teamspaceIds, source)
-        return byteSaved;
+      
+        return teamspaceIds;
       }
-      return true;
+
+    // Find a byte by its ID
+    async createByte(
+      byteInfo: any,
+      user: UserDetails,
+      clientId: any,
+      email?: string,
+      teamspaceIds?: number[],
+      source?: any,
+      channel?: any
+    ): Promise<Byte | null | boolean> {
+      let userTeamspaceIds = teamspaceIds;
+    
+      if (source === 'slack') {
+        userTeamspaceIds = await this.handleSlackSource(email, channel, user);
+      }
+    
+      if (userTeamspaceIds && userTeamspaceIds.length > 0) {
+        const newByte = await this.saveNewByte(byteInfo, user, clientId, email);
+    
+        console.log('teamspaceIds', userTeamspaceIds);
+    
+        await this.linkByteToTeamspaces(newByte.id, userTeamspaceIds);
+        await this.callExternalRecommendationByteService(byteInfo, newByte, userTeamspaceIds, source);
+    
+        return newByte;
+      }
+    
+      return null;
     }  
     
     async updateByte(byteId: any, updatedData: any): Promise<Byte | null> {
