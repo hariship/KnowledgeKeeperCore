@@ -120,7 +120,7 @@ export class ByteRepository {
           },
           relations: ['byte','document','document.teamspace']
         })
-        // console.log(recommendationData)
+        console.log('recommendationDataLength::',recommendationData.length)
         if(recommendationData){
           noOfRecommendations = recommendationData.length
           byte.noOfRecommendations = noOfRecommendations
