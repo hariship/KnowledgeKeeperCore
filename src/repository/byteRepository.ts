@@ -120,14 +120,14 @@ export class ByteRepository {
           },
           relations: ['byte','document','document.teamspace']
         })
-        console.log(recommendationData)
+        // console.log(recommendationData)
         if(recommendationData){
           noOfRecommendations = recommendationData.length
           byte.noOfRecommendations = noOfRecommendations
           filteredBytes.push(byte)
         }
       }
-      console.log(filteredBytes)
+      // console.log(filteredBytes)
       return { bytes:filteredBytes };
     }
 
