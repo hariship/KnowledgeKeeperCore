@@ -324,16 +324,11 @@ export class ByteRepository {
           const dataId = uuidv4();
           const teamspaceRepository = AppDataSource.getRepository(Teamspace);
           let teamspaces = []
-          if(source == 'slack'){
-            // Retrieve all teamspaces from the database
-            teamspaces = await teamspaceRepository.find();
-          }else{
-            teamspaces = await teamspaceRepository.find({
-              where: {
-                id: In(teamspaceIds)
-              }
-            });
-          }
+          teamspaces = await teamspaceRepository.find({
+            where: {
+              id: In(teamspaceIds)
+            }
+          });
           
       
           for (const teamspace of teamspaces) {
