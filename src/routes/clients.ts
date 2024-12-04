@@ -638,6 +638,7 @@ router.get('/:clientId/bytes/open', verifyToken, async (req:any, res) => {
   try {
     const clientId = req.params.clientId;
     let userId = req.user.userId
+    console.log(userId)
     let userTeamspaceRepo = new UserTeamspaceRepository();
     const userTeampsaces = await userTeamspaceRepo.findTeamspacesForUser(userId);
     const teamspaceIds = userTeampsaces.map((userTeamspace)=> userTeamspace.teamspace.id)
