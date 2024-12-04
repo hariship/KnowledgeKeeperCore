@@ -651,7 +651,9 @@ export class ByteRepository {
         const queryBuilder = this.recommendationRepo
           .createQueryBuilder("recommendation")
           .leftJoinAndSelect("recommendation.document", "document")
-          .where("recommendation.byteId = :byteId", { byteId: byte?.id })
+          .leftJoin("recommendation.byte", "byte") // Join the byte entity
+          .where(`recommendation."byteId" = :byteId`, { byteId: byte?.id })
+          .andWhere(`byte."isDeleted" = false`) // Add condition for isDeleted
           .andWhere(`recommendation.id NOT IN (
               SELECT "recommendationId" FROM "change_log"
               WHERE "recommendationId" IS NOT NULL
