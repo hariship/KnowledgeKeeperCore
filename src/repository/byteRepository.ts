@@ -330,7 +330,7 @@ export class ByteRepository {
             }
           });
           
-      
+          console.log('Teamspaces for which recommendation made for the byte', teamspaceIds )
           for (const teamspace of teamspaces) {
             // Update s3_db_path and s3_sentenced_document_path dynamically with the teamspace name
             const requestData = {
