@@ -132,8 +132,6 @@ export class DocumentRepository {
     }
 
     private async removeDocumentFromRecommendation(docId: number): Promise<Boolean> {
-        // Your logic to remove the document from the recommendation system goes here
-        // For example, you might call a service to update the recommendation system.
         const byteRepo = new ByteRepository();
         await byteRepo.deleteRecommendationByDocId(docId);
         return true;

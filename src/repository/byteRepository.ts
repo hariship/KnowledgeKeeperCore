@@ -15,6 +15,8 @@ import { Teamspace } from "../entities/teamspace";
 import { ChangeLogRepository } from "./changeLogRespository";
 import { ByteTeamspace } from "../entities/byte_teamspace";
 import { TeamspaceChannelsRepository } from "./teamspaceChannelsRepository";
+import { UserTeamspace } from "../entities/user_teamspace";
+import { UserTeamspaceRepository } from "./userTeamspaceRepository";
 
 export class ByteRepository {
     private byteRepo: Repository<Byte>;
@@ -393,6 +395,13 @@ export class ByteRepository {
             if (entry.channels.includes(channel)) {
               console.log(`Channel found! TeamspaceId: ${entry.teamspaceId}`);
               teamspaceIds.push(parseInt(entry.teamspaceId)); // Accumulate the teamspaceId
+              // Insert the teamspace for user if not already present
+              const userTeamspaceRepo = new UserTeamspaceRepository();
+              const teamspacesForUser = await userTeamspaceRepo.findTeamspacesForUser(user.id);
+              const userTeamspaceIds = teamspacesForUser.map((userTeamspace) => userTeamspace.teamspace.id);
+              if(!userTeamspaceIds.includes(entry.teamspaceId)){
+                await userTeamspaceRepo.saveUserTeamspace(user.id, entry.teamspaceId)
+              }
             }
           }
         }
