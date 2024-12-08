@@ -22,7 +22,7 @@ export const AppDataSource = new DataSource({
     port: 5432,
     username: "postgres",
     password: "admin",
-    database: "knowledgekeeper",
+    database: "knowledgekeeper_develop",
     synchronize: false,
     logging: true,
     entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document, Task, Teamspace, UserTeamspace, ByteTeamspace, Slack, SlackTeamspace, TeamspaceChannels],
