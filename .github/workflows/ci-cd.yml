@@ -3,58 +3,46 @@ name: CI/CD for KnowledgeKeeperCore
 on:
   push:
     branches:
-      - develop  # Trigger deployment for `develop`
-      - main     # Trigger deployment for `main`
+      - develop
+      - main
 
 jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
-
+    
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      # Step 2: Set up Node.js environment
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      # Step 3: Install dependency
-      - name: Install Dependencies
-        run: npm install
-
-      # Step 4: Build the application
-      - name: Build Application
-        run: npm run build
-
-      # Step 5: Deploy to the appropriate environment
-      - name: Deploy to Server
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-        run: |
-          # Prepare SSH
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/github_hariship
-          chmod 600 ~/.ssh/github_hariship
-          ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
-
-          # Deployment logic
-          if [ "${{ github.ref_name }}" = "develop" ]; then
-            echo "Deploying to Staging Server (develop)..."
-            ssh -i ~/.ssh/github_hariship ubuntu@$SERVER_HOST \
-              "cd ~/KnowledgeKeeperCore_Develop && \
-              git pull origin develop && \
-              docker-compose down && \
-              docker-compose up --build -d"
-          elif [ "${{ github.ref_name }}" = "main" ]; then
-            echo "Deploying to Production Server (main)..."
-            ssh -i ~/.ssh/github_hariship ubuntu@$SERVER_HOST \
-              "cd ~/KnowledgeKeeperCore && \
-              git pull origin main && \
-              docker-compose down && \
-              docker-compose up --build -d"
-          fi
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      
+    - name: Prepare SSH
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/github_hariship
+        chmod 600 ~/.ssh/github_hariship
+        ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+        
+    - name: Deploy to Staging Server (develop)
+      if: github.ref_name == 'develop'
+      env:
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}  
+      run: |
+        ssh -i ~/.ssh/github_hariship ubuntu@$SERVER_HOST \
+          "cd ~/KnowledgeKeeperCore_Develop && \
+          git pull origin develop && \
+          docker-compose down && \
+          docker-compose up --build -d"
+          
+    - name: Deploy to Production Server (main)
+      if: github.ref_name == 'main'
+      env:
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      run: |
+        ssh -i ~/.ssh/github_hariship ubuntu@$SERVER_HOST \
+          "cd ~/KnowledgeKeeperCore && \
+          git pull origin main && \
+          docker-compose down && \
+          docker-compose up --build -d"
