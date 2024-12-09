@@ -30,7 +30,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'https://api-core-develop.knowledgekeeper.ai/api/v1',
+        url: `${process.env.BASE_URL}/api/v1`,
         description: 'Development server',
       },
     ],

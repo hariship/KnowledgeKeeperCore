@@ -1,4 +1,6 @@
 // src/data-source.ts
+import dotenv from 'dotenv';
+dotenv.config();
 import { DataSource } from 'typeorm';
 import path from 'path';
 import { UserDetails } from '../entities/user_details';
@@ -20,9 +22,9 @@ export const AppDataSource = new DataSource({
     type: "postgres",
     host: process.env.DB_HOST || 'localhost',
     port: 5432,
-    username: process.env.DATABASE_USER || 'postgrs',
+    username: process.env.DATABASE_USER || 'postgres',
     password: process.env.DATABASE_PASSWORD || 'admin',
-    database: process.env.DATABASE_NAME || 'knowledgekeepers',
+    database: process.env.DATABASE_NAME || 'knowledgekeeper_develop',
     synchronize: false,
     logging: true,
     entities: [UserDetails,Client,Byte, ChangeLog, Folder, Recommendation, Document, Task, Teamspace, UserTeamspace, ByteTeamspace, Slack, SlackTeamspace, TeamspaceChannels],
