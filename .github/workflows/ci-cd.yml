@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 16
 
-      # Step 3: Install dependencies
+      # Step 3: Install dependency
       - name: Install Dependencies
         run: npm install
 
