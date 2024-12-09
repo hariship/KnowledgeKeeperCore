@@ -1,26 +1,22 @@
-# Base image for Node.js
+# Use Node.js as the base image
 FROM node:16-alpine
 
-# Set working directory
-WORKDIR /app
+# Set the working directory
+WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+RUN rm -rf node_modules && npm install
 
-# Copy the rest of the application files
+# Copy the entire project
 COPY . .
 
-# Build the TypeScript files
+# Build the TypeScript code
 RUN npm run build
 
-# Expose the port the app will run on
-EXPOSE 5000
-
-# Define environment variable for production
-ENV NODE_ENV=production
+# Expose the application port
+EXPOSE 3000
 
 # Start the application
 CMD ["npm", "start"]

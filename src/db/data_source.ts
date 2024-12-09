@@ -20,7 +20,7 @@ import { TeamspaceChannels } from '../entities/teamspace_channels';
 
 export const AppDataSource = new DataSource({
     type: "postgres",
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || 'postgres-db',
     port: 5432,
     username: process.env.DATABASE_USER || 'postgres',
     password: process.env.DATABASE_PASSWORD || 'admin',

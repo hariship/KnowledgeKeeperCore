@@ -1,19 +1,14 @@
-version: '3.8'
-
+version: "3.8"
 services:
   app:
-    image: knowledgekeeper-core:latest
-    container_name: node_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: knowledgekeepercore
     ports:
-      - "6000:6000"
-    environment:
-      NODE_ENV: production
+      - 3000:3000  # Port mapping uses the .env variable
+    env_file:
+      - .env  # Load variables from the .env file
     volumes:
-      - ./src:/app/src
-      - ./package.json:/app/package.json
-      - /app/node_modules
-    deploy:
-      resources:
-        limits:
-          memory: 8g   # Adjust memory limit here (e.g., 4 GB)
-          cpus: "2.0"  # Adjust CPU limit (optional)
+      - .:/usr/src/app
+    command: npm run start  # Runs the start script

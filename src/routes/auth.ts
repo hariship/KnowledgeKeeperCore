@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { UserRepository } from '../repository/userRepository';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { generateToken } from '../modules/userModule';
 import axios from 'axios';
 import { GOOGLE_OAUTH_URL, MESSAGES, OAUTH_PROVIDERS } from '../utils/constants';
