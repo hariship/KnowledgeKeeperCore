@@ -26,13 +26,13 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # Step 4: Run tests
-      - name: Run Tests
-        run: npm run:migration:run:dev
-
       # Step 5: Build the application
       - name: Build Application
         run: npm run build
+
+      # Step 4: Run migration
+      - name: Run Tests
+        run: npm run:migration:run:dev
 
       # Step 6: Deploy to the appropriate environment
       - name: Deploy to Server
