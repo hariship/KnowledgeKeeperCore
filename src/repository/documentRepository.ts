@@ -277,7 +277,7 @@ export class DocumentRepository {
                 };
 
                 // Call the update_data_into_chunks API
-                const response = await axios.post('http://18.116.66.245:9100/v2/update_data_into_chunks', updateDataIntoChunksRequest, {
+                const response = await axios.post(`${process.env.ML_ENDPOINT}/v2/update_data_into_chunks`, updateDataIntoChunksRequest, {
                     headers: {
                         'Content-Type': 'application/json',
                         'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token
@@ -345,7 +345,7 @@ export class DocumentRepository {
                 };
 
                 // Call the split_data_into_chunks API
-                const response = await axios.post('http://18.116.66.245:9100/v2/split_data_into_chunks', splitDataIntoChunksRequest, {
+                const response = await axios.post(`${process.env.ML_ENDPOINT}/v2/split_data_into_chunks`, splitDataIntoChunksRequest, {
                     headers: {
                         'Content-Type': 'application/json',
                         'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499' // Replace with your API token

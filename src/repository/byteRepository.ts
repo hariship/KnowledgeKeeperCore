@@ -344,7 +344,7 @@ export class ByteRepository {
       
             try {
               // Send Axios POST request for each teamspace
-              const response = await axios.post('http://18.116.66.245:9100/v2/recommend-bytes', requestData, {
+              const response = await axios.post(`${process.env.ML_ENDPOINT}/v2/recommend-bytes`, requestData, {
                 headers: {
                   'Content-Type': 'application/json',
                   'x-api-key': 'Bearer a681787caab4a0798df5f33898416157dbfc50a65f49e3447d33fc7981920499'
