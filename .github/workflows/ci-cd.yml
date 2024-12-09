@@ -38,8 +38,8 @@ jobs:
         run: |
           if [ "${{ github.ref_name }}" = "develop" ]; then
             echo "Deploying to Development Server (develop)..."
-            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/github_hariship
+            chmod 600 ~/.ssh/github_hariship
             ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
             ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com \
               "cd ~/KnowledgeKeeperCore_Develop && \
@@ -48,8 +48,8 @@ jobs:
               docker-compose up --build -d"
           elif [ "${{ github.ref_name }}" = "main" ]; then
             echo "Deploying to Production Server (main)..."
-            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/github_hariship
+            chmod 600 ~/.ssh/github_hariship
             ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
             ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com \
               "cd ~/KnowledgeKeeperCore && \
