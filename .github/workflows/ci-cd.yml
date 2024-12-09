@@ -34,24 +34,25 @@ jobs:
       - name: Deploy to Server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
-          DEPLOY_ENV: ${{ github.ref_name }}  # Get the branch name
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
         run: |
+          # Prepare SSH
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/github_hariship
+          chmod 600 ~/.ssh/github_hariship
+          ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+
+          # Deployment logic
           if [ "${{ github.ref_name }}" = "develop" ]; then
-            echo "Deploying to Development Server (develop)..."
-            echo "$SSH_PRIVATE_KEY" > ~/.ssh/github_hariship
-            chmod 600 ~/.ssh/github_hariship
-            ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
-            ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com \
+            echo "Deploying to Staging Server (develop)..."
+            ssh -i ~/.ssh/github_hariship ubuntu@$SERVER_HOST \
               "cd ~/KnowledgeKeeperCore_Develop && \
               git pull origin develop && \
               docker-compose down && \
               docker-compose up --build -d"
           elif [ "${{ github.ref_name }}" = "main" ]; then
             echo "Deploying to Production Server (main)..."
-            echo "$SSH_PRIVATE_KEY" > ~/.ssh/github_hariship
-            chmod 600 ~/.ssh/github_hariship
-            ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
-            ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com \
+            ssh -i ~/.ssh/github_hariship ubuntu@$SERVER_HOST \
               "cd ~/KnowledgeKeeperCore && \
               git pull origin main && \
               docker-compose down && \
