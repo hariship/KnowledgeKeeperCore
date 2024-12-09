@@ -33,10 +33,14 @@ jobs:
       # Step 5: Deploy to the appropriate environment
       - name: Deploy to Server
         env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           DEPLOY_ENV: ${{ github.ref_name }}  # Get the branch name
         run: |
           if [ "${{ github.ref_name }}" = "develop" ]; then
-            echo "Deploying to Staging Server (develop)..."
+            echo "Deploying to Development Server (develop)..."
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
             ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com \
               "cd ~/KnowledgeKeeperCore_Develop && \
               git pull origin develop && \
@@ -44,6 +48,9 @@ jobs:
               docker-compose up --build -d"
           elif [ "${{ github.ref_name }}" = "main" ]; then
             echo "Deploying to Production Server (main)..."
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
             ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com \
               "cd ~/KnowledgeKeeperCore && \
               git pull origin main && \
