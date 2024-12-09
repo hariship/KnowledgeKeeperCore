@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: knowledgekeepercore
     ports:
-      - 3000:3000  # Port mapping uses the .env variable
+      - "${PORT}:3000"  # Port mapping uses the .env variable
     env_file:
       - .env  # Load variables from the .env file
     volumes:
