@@ -26,15 +26,11 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # Step 5: Build the application
+      # Step 4: Build the application
       - name: Build Application
         run: npm run build
 
-      # # Step 4: Run migration
-      # - name: Run Tests
-      #   run: npm run migration:run:dev
-
-      # Step 6: Deploy to the appropriate environment
+      # Step 5: Deploy to the appropriate environment
       - name: Deploy to Server
         env:
           DEPLOY_ENV: ${{ github.ref_name }}  # Get the branch name
@@ -42,17 +38,17 @@ jobs:
           if [ "${{ github.ref_name }}" = "develop" ]; then
             echo "Deploying to Staging Server (develop)..."
             ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com <<EOF
-              cd ~/KnowledgeKeeperCore_Develop
-              git pull origin develop
-              docker-compose down
-              docker-compose up --build -d
-            EOF
+cd ~/KnowledgeKeeperCore_Develop
+git pull origin develop
+docker-compose down
+docker-compose up --build -d
+EOF
           elif [ "${{ github.ref_name }}" = "main" ]; then
             echo "Deploying to Production Server (main)..."
             ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com <<EOF
-              cd ~/KnowledgeKeeperCore
-              git pull origin main
-              docker-compose down
-              docker-compose up --build -d
-            EOF
+cd ~/KnowledgeKeeperCore
+git pull origin main
+docker-compose down
+docker-compose up --build -d
+EOF
           fi
