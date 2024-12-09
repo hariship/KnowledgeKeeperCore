@@ -4,9 +4,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: knowledgekeepercore
+    container_name: knowledgekeepercore_prod
     ports:
-      - "${PORT}:3000"  # Port mapping uses the .env variable
+      - "5000:5000"  # Port mapping uses the .env variable
     env_file:
       - .env  # Load variables from the .env file
     volumes:

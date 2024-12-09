@@ -16,7 +16,7 @@ RUN rm -rf node_modules && npm install
 RUN npm run build
 
 # Expose the application port
-EXPOSE 3000
+EXPOSE 5000
 
 # Start the application
 CMD ["npm", "start"]
