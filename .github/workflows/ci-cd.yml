@@ -20,6 +20,7 @@ jobs:
       - name: Prepare SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }} # Ensure the private key is set in GitHub Secrets
+          SSH_PASSPHRASE: 7842
         run: |
           # Create .ssh directory and set permissions
           mkdir -p ~/.ssh
@@ -28,6 +29,10 @@ jobs:
           # Save the private key as id_rsa
           echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+
+          # Use ssh-agent to add the private keys with passphrase
+          eval "$(ssh-agent -s)"
+          echo "${SSH_PASSPHRASE}" | ssh-add ~/.ssh/id_rsa
 
           # Add server to known_hosts
           ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
