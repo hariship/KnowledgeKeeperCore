@@ -20,8 +20,8 @@ jobs:
         SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
       run: |
         mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/github_hariship
-        chmod 600 ~/.ssh/github_hariship
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/knowledge-keeper-develop.pem
+        chmod 600 ~/.ssh/knowledge-keeper-develop.pem
         ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
         
     - name: Deploy to Staging Server (develop)
@@ -29,7 +29,7 @@ jobs:
       env:
         SERVER_HOST: ec2-18-189-31-171.us-east-2.compute.amazonaws.com
       run: |
-        ssh -i ~/.ssh/github_hariship ubuntu@$SERVER_HOST \
+        ssh -i ~/Downloads/knowledge-keeper-develop.pem ubuntu@$SERVER_HOST \
           "cd ~/KnowledgeKeeperCore_Develop && \
           git pull origin develop && \
           docker-compose down && \
@@ -40,7 +40,7 @@ jobs:
       env:
         SERVER_HOST: ec2-18-189-31-171.us-east-2.compute.amazonaws.com
       run: |
-        ssh -i ~/.ssh/github_hariship ubuntu@$SERVER_HOST \
+        ssh -i ~/Downloads/knowledge-keeper-develop.pem ubuntu@$SERVER_HOST \
           "cd ~/KnowledgeKeeperCore && \
           git pull origin main && \
           docker-compose down && \
