@@ -30,9 +30,9 @@ jobs:
       - name: Build Application
         run: npm run build
 
-      # Step 4: Run migration
-      - name: Run Tests
-        run: npm run migration:run:dev
+      # # Step 4: Run migration
+      # - name: Run Tests
+      #   run: npm run migration:run:dev
 
       # Step 6: Deploy to the appropriate environment
       - name: Deploy to Server
