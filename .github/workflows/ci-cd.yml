@@ -21,8 +21,8 @@ jobs:
       run: |
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
-        echo "${SSH_PRIVATE_KEY}" > ~/Downloads/knowledge-keeper-develop.pem
-        chmod 600 ~/Downloads/knowledge-keeper-develop.pem
+        echo "${SSH_PRIVATE_KEY}" > ~/.ssh/knowledge-keeper-develop.pem
+        chmod 600 ~/.ssh/knowledge-keeper-develop.pem
 
         ssh-keyscan -H ec2-18-189-31-171.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
         chmod 644 ~/.ssh/known_hosts
