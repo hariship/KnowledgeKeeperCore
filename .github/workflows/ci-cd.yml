@@ -37,18 +37,16 @@ jobs:
         run: |
           if [ "${{ github.ref_name }}" = "develop" ]; then
             echo "Deploying to Staging Server (develop)..."
-            ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com <<EOF
-              cd ~/KnowledgeKeeperCore_Develop
-              git pull origin develop
-              docker-compose down
-              docker-compose up --build -d
-EOF
+            ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com \
+              "cd ~/KnowledgeKeeperCore_Develop && \
+              git pull origin develop && \
+              docker-compose down && \
+              docker-compose up --build -d"
           elif [ "${{ github.ref_name }}" = "main" ]; then
             echo "Deploying to Production Server (main)..."
-            ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com <<EOF
-              cd ~/KnowledgeKeeperCore
-              git pull origin main
-              docker-compose down
-              docker-compose up --build -d
-EOF
+            ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com \
+              "cd ~/KnowledgeKeeperCore && \
+              git pull origin main && \
+              docker-compose down && \
+              docker-compose up --build -d"
           fi
