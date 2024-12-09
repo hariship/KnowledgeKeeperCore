@@ -1,0 +1,58 @@
+name: CI/CD for KnowledgeKeeperCore
+
+on:
+  push:
+    branches:
+      - develop  # Trigger deployment for `develop`
+      - main     # Trigger deployment for `main`
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Step 4: Run tests
+      - name: Run Tests
+        run: npm test
+
+      # Step 5: Build the application
+      - name: Build Application
+        run: npm run build
+
+      # Step 6: Deploy to the appropriate environment
+      - name: Deploy to Server
+        env:
+          DEPLOY_ENV: ${{ github.ref_name }}  # Get the branch name
+        run: |
+          if [ "${{ github.ref_name }}" = "develop" ]; then
+            echo "Deploying to Staging Server (develop)..."
+            ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com <<EOF
+              cd ~/KnowledgeKeeperCore_Develop
+              git pull origin develop
+              docker-compose down
+              docker-compose up --build -d
+            EOF
+          elif [ "${{ github.ref_name }}" = "main" ]; then
+            echo "Deploying to Production Server (main)..."
+            ssh ubuntu@ec2-18-189-31-171.us-east-2.compute.amazonaws.com <<EOF
+              cd ~/KnowledgeKeeperCore
+              git pull origin main
+              docker-compose down
+              docker-compose up --build -d
+            EOF
+          fi
