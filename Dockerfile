@@ -7,10 +7,10 @@ WORKDIR /usr/src/app
 # Copy package files
 COPY package*.json ./
 
-RUN rm -rf node_modules && npm install
-
 # Copy the entire project
 COPY . .
+
+RUN rm -rf node_modules && npm install
 
 # Build the TypeScript code
 RUN npm run build
